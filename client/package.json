@@ -1,0 +1,23 @@
+{
+	"name": "12dpl-lsp-client",
+	"description": "12dPL Language Server Extension",
+	"author": "Ben Olsen",
+	"license": "MIT",
+	"version": "0.0.1",
+	"publisher": "",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ben-nightworks/12dpl-lang-server"
+	},
+	"engines": {
+		"vscode": "^1.63.0"
+	},
+	"dependencies": {
+		"vscode-languageclient": "^7.0.0"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.63.0",
+		"@vscode/test-electron": "^2.1.2",
+		"js-yaml": "^3.13.1"
+	}
+}

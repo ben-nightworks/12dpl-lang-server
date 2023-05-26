@@ -1,0 +1,19 @@
+{
+	"name": "12dpl-lsp-server",
+	"description": "A language server for 12dPL",
+	"version": "1.0.0",
+	"author": "Ben Olsen",
+	"license": "MIT",
+	"engines": {
+		"node": "*"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ben-nightworks/12dpl-lang-server"
+	},
+	"dependencies": {
+		"vscode-languageserver": "^7.0.0",
+		"vscode-languageserver-textdocument": "^1.0.4"
+	},
+	"scripts": {}
+}
