@@ -1,6 +1,11 @@
 
 #define LOG
 
+Integer Test()
+{
+
+}
+
 void main()
 {
     Test();
@@ -9,11 +14,7 @@ void main()
     {
         case 1:
         {
-            Get_Widgets();
-            Whatever();
-            Text 
-            Widget
-            break;
+            
         }
     }
 }

@@ -21,13 +21,16 @@ export function activate(context: ExtensionContext) {
 		path.join('server', 'out', 'server.js')
 	);
 
+
+	//let debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] };
 	// If the extension is launched in debug mode then the debug server options are used
 	// Otherwise the run options are used
 	const serverOptions: ServerOptions = {
 		run: { module: serverModule, transport: TransportKind.ipc },
 		debug: {
 			module: serverModule,
-			transport: TransportKind.ipc,
+			transport: TransportKind.ipc//,
+			//options: debugOptions
 		}
 	};
 

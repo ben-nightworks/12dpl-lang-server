@@ -3,12 +3,13 @@
 	"description": "A language server for 12dPL",
 	"author": "Ben Olsen",
 	"license": "MIT",
+	"displayName": "12dPL Language Server",
 	"version": "1.0.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ben-nightworks/12dpl-lang-server"
 	},
-	"publisher": "ben-olsen",
+	"publisher": "nightworks",
 	"categories": [],
 	"keywords": [
 		"programming language",
@@ -62,7 +63,7 @@
 						"messages",
 						"verbose"
 					],
-					"default": "messages",
+					"default": "off",
 					"description": "Traces the communication between VS Code and the language server."
 				}
 			}

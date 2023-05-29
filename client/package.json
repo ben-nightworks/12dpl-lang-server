@@ -4,7 +4,7 @@
 	"author": "Ben Olsen",
 	"license": "MIT",
 	"version": "0.0.1",
-	"publisher": "",
+	"publisher": "nightworks",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ben-nightworks/12dpl-lang-server"
