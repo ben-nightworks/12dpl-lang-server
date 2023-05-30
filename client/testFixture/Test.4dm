@@ -14,6 +14,9 @@ void main()
     {
         case 1:
         {
+            Point test;
+            Integer_Integer_Map test;
+            
             
         }
     }
