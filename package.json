@@ -4,7 +4,7 @@
 	"author": "Ben Olsen",
 	"license": "MIT",
 	"displayName": "12dPL Language Server",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ben-nightworks/12dpl-lang-server"
@@ -67,7 +67,25 @@
 					"description": "Traces the communication between VS Code and the language server."
 				}
 			}
-		}
+		},
+		"problemMatchers": [
+			{
+				"name": "12dPL",
+				"owner": "12dPL",
+				"fileLocation": [
+                    "relative",
+                    "${fileDirname}"
+                ],
+                "pattern": {
+					"regexp": "^\"(.*?)\",(.*?)line (.*?)\\.(.*?)\\: (.*?)\\: (.*)",
+					"file": 1,
+					"line": 3,
+					"column": 4,
+					"code": 5,
+					"message": 6
+				}
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
