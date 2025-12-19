@@ -594,14 +594,29 @@ connection.onCompletionResolve(
 			}
 		}
 
-		// Try to get documentation from prototypes
-		const prototype = prototypesLoader.getPrototype(item.label);
-		if (prototype) {
-			item.documentation = {
-				kind: 'markdown',
-				value: prototypesLoader.generateDocumentation(prototype)
-			};
-			return item;
+		// Try to get documentation from prototypes (including overload selection).
+		if (data && typeof data === 'object' && data.source === 'prototype') {
+			const name = typeof data.name === 'string' ? data.name : item.label;
+			const id = typeof data.id === 'number' ? data.id : undefined;
+			const prototype = (typeof id === 'number')
+				? prototypesLoader.getPrototypeOverload(name, id)
+				: prototypesLoader.getPrototype(name);
+			if (prototype) {
+				item.documentation = {
+					kind: 'markdown',
+					value: prototypesLoader.generateDocumentation(prototype)
+				};
+				return item;
+			}
+		} else {
+			const prototype = prototypesLoader.getPrototype(item.label);
+			if (prototype) {
+				item.documentation = {
+					kind: 'markdown',
+					value: prototypesLoader.generateDocumentation(prototype)
+				};
+				return item;
+			}
 		}
 
 		// Check if it's a documented type

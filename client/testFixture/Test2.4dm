@@ -1,6 +1,10 @@
 #if DEBUG
 Clear_console();
 #endif
+#include "set_ups.h"
+
+
+
 
 {
     Text	program_name	= "12dF Check Exporter";
@@ -10,6 +14,8 @@ Clear_console();
 }
 
 void main(){
+
+
 
 
 }

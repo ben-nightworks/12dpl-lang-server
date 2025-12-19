@@ -242,7 +242,8 @@ bun run compile
 ├── server/                    # Language Server
 │   ├── src/
 │   │   ├── resources/
-│   │   │   └── prototypes.xml # 12dPL function library (8000+ functions)
+│   │   │   ├── functions.enriched.json # PDF-extracted docs (best descriptions)
+│   │   │   └── functions.compiler.json # Compiler-extracted list (full set / overloads)
 │   │   ├── antlr/             # ANTLR parser files
 │   │   ├── server.ts          # LSP server main logic
 │   │   ├── validator.ts       # Code validation with ANTLR parsing
@@ -260,14 +261,13 @@ bun run compile
 
 #### 1. Prototype-Based Auto-Completion ✨
 
-The language server includes **8000+ function prototypes** from the 12dPL library. Each function provides:
-- Function signature
-- Return type
-- Parameter information with types
-- Detailed documentation on hover
+The language server ships a function index built from two sources:
+- **PDF-enriched documentation** (best descriptions): `server/src/resources/functions.enriched.json`
+- **Compiler-extracted library list** (full set + overload variants, often no descriptions): `server/src/resources/functions.compiler.json`
 
-**File**: `server/src/resources/prototypes.xml`
-**Parser**: `server/src/prototypes.ts`
+At runtime, the server merges them so completions include **overloads** and hover prefers the enriched description when available.
+
+**Loader**: `server/src/prototypes.ts`
 
 #### 2. Smart Code Completion
 
@@ -297,9 +297,9 @@ The validator performs actual parsing using ANTLR grammar:
 2. onInitialized() triggered
 	 ↓
 3. prototypesLoader.load()
-	 - Reads prototypes.xml from resources/
-	 - Parses XML using xml2js
-	 - Extracts function metadata
+	 - Reads functions.enriched.json + functions.compiler.json from resources/
+	 - Merges by function name (prefer enriched descriptions)
+	 - Preserves overload variants (multiple signatures per name)
 	 - Builds CompletionItem array
 	 ↓
 4. Prototypes cached in memory
@@ -349,25 +349,13 @@ class PrototypesLoader {
 }
 ```
 
-#### Prototype XML Format
+#### Compiler Prototype Artifacts
 
-Each function in `prototypes.xml` includes:
+The raw compiler outputs are kept out of runtime resources:
+- `compiler/prototypes/compiler_prototypes.xml`
+- `compiler/prototypes/compiler_prototypes_list.txt`
 
-```xml
-<MacroCall>
-	<Name>Sin</Name>
-	<LibraryID>1</LibraryID>
-	<Return>
-		<Type>Real</Type>
-	</Return>
-	<Parameters>
-		<Parameter>
-			<Type>Real</Type>
-			<Name>value</Name>
-		</Parameter>
-	</Parameters>
-</MacroCall>
-```
+These are used only for regenerating the JSON datasets; the language server does not read them at runtime.
 
 ### Compilation
 
@@ -385,7 +373,7 @@ bun run watch
 ### Troubleshooting
 
 **Prototypes not loading?**
-- Check `server/src/resources/prototypes.xml` exists
+- Check `server/src/resources/functions.enriched.json` and `server/src/resources/functions.compiler.json` exist
 - Verify file compiled to `server/out/`
 - Check server console for errors (F1 → "Show Language Server Output")
 
@@ -409,7 +397,7 @@ bun run watch
 
 #### 1. **Professional File Organization**
 Created dedicated `resources/` folder for data files:
-- **Location**: `server/src/resources/prototypes.xml`
+- **Location**: `server/src/resources/functions.enriched.json` and `server/src/resources/functions.compiler.json`
 - **Size**: ~3.5MB (8000+ function definitions)
 - **Purpose**: Separates configuration/data from code
 - **Benefit**: Follows industry best practices for resource management
