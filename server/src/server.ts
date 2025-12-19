@@ -14,7 +14,8 @@ import {
 	CompletionItemKind,
 	TextDocumentPositionParams,
 	TextDocumentSyncKind,
-	InitializeResult
+	InitializeResult,
+	TextEdit
 } from 'vscode-languageserver/node';
 
 import {
@@ -24,6 +25,18 @@ import {
 import {
 	Validator
 } from './validator.js';
+
+import {
+	prototypesLoader
+} from './prototypes.js';
+
+import {
+	typeDocumentation
+} from './documentation.js';
+
+import {
+	format12dplDocument
+} from './formatter.js';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -57,9 +70,13 @@ connection.onInitialize((params: InitializeParams) => {
 		capabilities: {
 			textDocumentSync: TextDocumentSyncKind.Full,
 			// Tell the client that this server supports code completion.
-			// completionProvider: {
-			// 	resolveProvider: true
-			// }
+			completionProvider: {
+				resolveProvider: true,
+				triggerCharacters: ['.', '#']
+			},
+			// Tell the client that this server supports hover.
+			hoverProvider: true,
+			documentFormattingProvider: true
 		}
 	};
 	if (hasWorkspaceFolderCapability) {
@@ -73,12 +90,17 @@ connection.onInitialize((params: InitializeParams) => {
 });
 
 connection.onInitialized(() => {
+	// Load prototypes asynchronously
+	prototypesLoader.load().catch((error) => {
+		connection.console.error(`Failed to load prototypes: ${error}`);
+	});
+
 	if (hasConfigurationCapability) {
 		// Register for all configuration changes.
 		connection.client.register(DidChangeConfigurationNotification.type, undefined);
 	}
 	if (hasWorkspaceFolderCapability) {
-		connection.workspace.onDidChangeWorkspaceFolders(_event => {
+		connection.workspace.onDidChangeWorkspaceFolders((_event) => {
 			connection.console.log('Workspace folder change event received.');
 		});
 	}
@@ -138,6 +160,21 @@ documents.onDidChangeContent(change => {
 	validateTextDocument(change.document);
 });
 
+connection.onDocumentFormatting((params) => {
+	const document = documents.get(params.textDocument.uri);
+	if (!document) {
+		return [];
+	}
+
+	const formatted = format12dplDocument(document.getText(), params.options);
+	const fullRange = {
+		start: document.positionAt(0),
+		end: document.positionAt(document.getText().length)
+	};
+
+	return [TextEdit.replace(fullRange, formatted)];
+});
+
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	// In this simple example we get the settings for every validate run.
 	const settings = await getDocumentSettings(textDocument.uri);
@@ -156,32 +193,201 @@ connection.onDidChangeWatchedFiles(_change => {
 });
 
 // This handler provides the initial list of the completion items.
-// connection.onCompletion(
-// 	(_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
-// 		// The pass parameter contains the position of the text document in
-// 		// which code complete got requested. For the example we ignore this
-// 		// info and always provide the same completion items.
-// 		 return [
-// 			{
-// 				label: 'Test',
-// 				kind: CompletionItemKind.Text,
-// 				data: 1
-// 			}
-// 		];
-// 	}
-// );
+connection.onCompletion(
+	(_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
+		// Get completions from loaded prototypes first
+		const prototypeItems = prototypesLoader.getCompletionItems();
+		
+		// Combine with keyword completions
+		const keywordItems: CompletionItem[] = [
+			{
+				label: 'if',
+				kind: CompletionItemKind.Keyword,
+				detail: 'Conditional statement',
+				data: 1
+			},
+			{
+				label: 'else',
+				kind: CompletionItemKind.Keyword,
+				detail: 'Else clause',
+				data: 2
+			},
+			{
+				label: 'while',
+				kind: CompletionItemKind.Keyword,
+				detail: 'While loop',
+				data: 3
+			},
+			{
+				label: 'for',
+				kind: CompletionItemKind.Keyword,
+				detail: 'For loop',
+				data: 4
+			},
+			{
+				label: 'return',
+				kind: CompletionItemKind.Keyword,
+				detail: 'Return statement',
+				data: 5
+			},
+			{
+				label: 'void',
+				kind: CompletionItemKind.Keyword,
+				detail: 'Void return type',
+				data: 6
+			},
+			{
+				label: 'int',
+				kind: CompletionItemKind.Keyword,
+				detail: 'Integer type',
+				data: 7
+			},
+			{
+				label: 'double',
+				kind: CompletionItemKind.Keyword,
+				detail: 'Double type',
+				data: 8
+			}
+		];
+
+		// Add type completions
+		const typeItems: CompletionItem[] = Object.keys(typeDocumentation).map(type => ({
+			label: type,
+			kind: CompletionItemKind.Class,
+			detail: '12dPL Type',
+			data: type
+		}));
+		
+		return [...keywordItems, ...typeItems, ...prototypeItems];
+	}
+);
+
+// This handler provides hover information for symbols.
+connection.onHover(
+	(textDocumentPositionParams) => {
+		try {
+			const textDocument = documents.get(textDocumentPositionParams.textDocument.uri);
+			if (!textDocument) {
+				return null;
+			}
+
+			const word = getWordAtPosition(textDocument, textDocumentPositionParams.position);
+			if (!word) {
+				return null;
+			}
+
+			// Check if it's a prototype
+			const prototype = prototypesLoader.getPrototype(word);
+			if (prototype) {
+				const signature = prototypesLoader.getPrototypeSignature(word);
+				return {
+					contents: [
+						{
+							language: '12dpl',
+							value: signature || word
+						},
+						prototype.description || 'No description available'
+					]
+				};
+			}
+
+			// Check if it's a documented type
+			if (typeDocumentation[word]) {
+				return {
+					contents: {
+						kind: 'markdown',
+						value: typeDocumentation[word]
+					}
+				};
+			}
+
+			// Check if it's a keyword
+			const keywords = ['if', 'else', 'while', 'for', 'return', 'void', 'int', 'double'];
+			if (keywords.includes(word.toLowerCase())) {
+				return {
+					contents: `**Keyword:** ${word}`
+				};
+			}
+
+			return null;
+		} catch (e) {
+			connection.console.error(`Hover error: ${e}`);
+			return null;
+		}
+	}
+);
+
+// Helper function to get word at position
+function getWordAtPosition(textDocument: TextDocument | undefined, position: any): string | null {
+	if (!textDocument) {
+		return null;
+	}
+
+	const line = textDocument.getText().split('\n')[position.line];
+	if (!line) {
+		return null;
+	}
+
+	let start = position.character;
+	let end = position.character;
+
+	while (start > 0 && /[a-zA-Z0-9_]/.test(line[start - 1])) {
+		start--;
+	}
+
+	while (end < line.length && /[a-zA-Z0-9_]/.test(line[end])) {
+		end++;
+	}
+
+	return line.substring(start, end);
+}
 
 // This handler resolves additional information for the item selected in
 // the completion list.
-// connection.onCompletionResolve(
-// 	(item: CompletionItem): CompletionItem => {
-// 		if (item.data === 1) {
-// 			item.detail = 'Test details';
-// 			item.documentation = 'documentation';
-// 		}
-// 		return item;
-// 	}
-// );
+connection.onCompletionResolve(
+	(item: CompletionItem): CompletionItem => {
+		// Try to get documentation from prototypes
+		const prototype = prototypesLoader.getPrototype(item.label);
+		if (prototype) {
+			item.documentation = {
+				kind: 'markdown',
+				value: prototypesLoader.generateDocumentation(prototype)
+			};
+			return item;
+		}
+
+		// Check if it's a documented type
+		if (typeDocumentation[item.label]) {
+			item.documentation = {
+				kind: 'markdown',
+				value: typeDocumentation[item.label]
+			};
+			return item;
+		}
+
+		// Fallback for keywords
+		const keywordDocs: Record<string, string> = {
+			'if': '**Conditional Statement**\n\nExecute code block if condition is true.\n\n```12dpl\nif (condition) { ... }\n```',
+			'else': '**Else Clause**\n\nExecute code block if if condition is false.\n\n```12dpl\nelse { ... }\n```',
+			'while': '**While Loop**\n\nRepeatedly execute code while condition is true.\n\n```12dpl\nwhile (condition) { ... }\n```',
+			'for': '**For Loop**\n\nLoop with init, condition, and increment.\n\n```12dpl\nfor (init; condition; increment) { ... }\n```',
+			'return': '**Return Statement**\n\nReturn a value from function.\n\n```12dpl\nreturn value;\n```',
+			'void': '**Void Type**\n\nNo return value',
+			'int': '**Integer Type**\n\nWhole number',
+			'double': '**Double Type**\n\nFloating-point number'
+		};
+
+		const keywordDoc = keywordDocs[item.label.toLowerCase()];
+		if (keywordDoc) {
+			item.documentation = {
+				kind: 'markdown',
+				value: keywordDoc
+			};
+		}
+
+		return item;
+	}
+);
 
 // Make the text document manager listen on the connection
 // for open, change and close text document events

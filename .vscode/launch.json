@@ -7,13 +7,13 @@
 			"request": "launch",
 			"name": "Launch Client",
 			"runtimeExecutable": "${execPath}",
-			"args": ["--extensionDevelopmentPath=${workspaceRoot}"],
+			"args": [
+				"--extensionDevelopmentPath=${workspaceRoot}",
+				"${workspaceRoot}/client/testFixture/Test.4dm"
+			],
 			"outFiles": ["${workspaceRoot}/client/out/**/*.js"],
 			"autoAttachChildProcesses": true,
-			"preLaunchTask": {
-				"type": "npm",
-				"script": "watch"
-			}
+			"preLaunchTask": "bun: watch"
 		},
 		{
 			"type": "node",

@@ -2,8 +2,13 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"type": "npm",
-			"script": "compile",
+			"type": "shell",
+			"label": "bun: compile",
+			"command": "bun",
+			"args": [
+				"run",
+				"compile"
+			],
 			"group": "build",
 			"presentation": {
 				"panel": "dedicated",
@@ -14,8 +19,13 @@
 			]
 		},
 		{
-			"type": "npm",
-			"script": "watch",
+			"type": "shell",
+			"label": "bun: watch",
+			"command": "bun",
+			"args": [
+				"run",
+				"watch"
+			],
 			"isBackground": true,
 			"group": {
 				"kind": "build",

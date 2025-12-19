@@ -16,6 +16,7 @@
 		"vscode-languageclient": "^7.0.0"
 	},
 	"devDependencies": {
+		"@types/node": "16.11.36",
 		"@types/vscode": "^1.63.0",
 		"@vscode/test-electron": "^2.1.2",
 		"js-yaml": "^3.13.1"

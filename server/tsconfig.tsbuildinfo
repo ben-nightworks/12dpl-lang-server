@@ -1,0 +1,1 @@
+{"root":["./src/prototypes.ts","./src/reservedwords.ts","./src/server.ts","./src/typedocumentation.ts","./src/validator.ts","./src/antlr/proglang12dlexer.ts","./src/antlr/proglang12dlistener.ts","./src/antlr/proglang12dparser.ts","./src/antlr/proglang12dvisitor.ts"],"version":"5.9.3"}

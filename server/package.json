@@ -12,9 +12,15 @@
 		"url": "https://github.com/ben-nightworks/12dpl-lang-server"
 	},
 	"dependencies": {
+		"antlr4": "^4.13.0",
 		"vscode-languageserver": "^7.0.0",
 		"vscode-languageserver-textdocument": "^1.0.4",
-		"antlr4":"^4.13.0"
+		"xml2js": "^0.6.2"
 	},
-	"scripts": {}
+	"scripts": {
+		"postinstall": "bun copy-resources.js"
+	},
+	"devDependencies": {
+		"@types/xml2js": "^0.4.14"
+	}
 }
