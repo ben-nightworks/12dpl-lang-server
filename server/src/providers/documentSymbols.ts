@@ -53,10 +53,13 @@ export class DocumentSymbolStore {
 			const byName = new Map<string, DocumentSymbolInfo>();
 
 			for (const fn of Object.values(index.functions)) {
+				const callSig = typeof fn.signature === 'string' ? (fn.signature.match(/\([^)]*\)\s*$/)?.[0] ?? '') : '';
+				const displayLabel = callSig ? `${fn.name} ${callSig}` : fn.name;
 				items.push({
-					label: fn.name,
+					label: displayLabel,
 					kind: CompletionItemKind.Function,
 					detail: fn.signature,
+					filterText: fn.name,
 					insertTextFormat: InsertTextFormat.Snippet,
 					insertText: buildFunctionCallSnippet(fn.name, fn.params),
 					data: { source: 'document', kind: 'function', signature: fn.signature }

@@ -119,6 +119,14 @@ export function registerCompletionProvider(opts: {
 	documentSymbols: DocumentSymbolStore;
 }): void {
 	const { connection, documents, documentSymbols } = opts;
+
+	const getLabelText = (item: CompletionItem): string => {
+		return typeof item.label === 'string' ? item.label : String(item.label);
+	};
+
+	const getSymbolName = (item: CompletionItem): string => {
+		return (typeof item.filterText === 'string' && item.filterText.length) ? item.filterText : getLabelText(item);
+	};
 	const includeCompletionsCache: Map<string, IncludeCompletionCacheEntry> = new Map();
 	const includeFileListCache: Map<string, IncludeFileListCacheEntry> = new Map();
 	const defineCompletionsCache: Map<string, IncludeCompletionCacheEntry> = new Map();
@@ -161,10 +169,13 @@ export function registerCompletionProvider(opts: {
 			for (const fn of Object.values(idx.functions)) {
 				if (byLabel.has(fn.name)) continue;
 				byLabel.add(fn.name);
+				const callSig = typeof fn.signature === 'string' ? (fn.signature.match(/\([^)]*\)\s*$/)?.[0] ?? '') : '';
+				const displayLabel = callSig ? `${fn.name} ${callSig}` : fn.name;
 				items.push({
-					label: fn.name,
+					label: displayLabel,
 					kind: CompletionItemKind.Function,
 					detail: fn.signature,
+					filterText: fn.name,
 					insertTextFormat: InsertTextFormat.Snippet,
 					insertText: buildFunctionCallSnippet(fn.name, fn.params),
 					data: { source: 'include', kind: 'function', signature: fn.signature }
@@ -344,7 +355,7 @@ export function registerCompletionProvider(opts: {
 		const seen = new Set<string>();
 		const out: CompletionItem[] = [];
 		for (const originalItem of [...symbolItems, ...defineItems, ...includeItems, ...keywordItems, ...typeItems, ...prototypeItems]) {
-			const key = originalItem.label;
+			const key = getSymbolName(originalItem);
 			if (seen.has(key)) continue;
 			seen.add(key);
 			// Clone to avoid mutating cached/shared items (e.g. prototypes).
@@ -374,7 +385,7 @@ export function registerCompletionProvider(opts: {
 			const qLower = q.toLowerCase();
 			const scored: Array<{ item: CompletionItem; score: number; group: number; label: string }> = [];
 			for (const item of out) {
-				const label = typeof item.label === 'string' ? item.label : String(item.label);
+				const label = getSymbolName(item);
 				const candidate = (typeof item.filterText === 'string' && item.filterText.length) ? item.filterText : label;
 				let s = fuzzyScore(q, candidate) ?? fuzzyScore(q, label);
 				if (s == null) continue;
@@ -421,7 +432,8 @@ export function registerCompletionProvider(opts: {
 				return item;
 			}
 			if (data.kind === 'variable') {
-				const line = typeof data.type === 'string' && data.type.length ? `${data.type} ${item.label}` : `${item.label}`;
+				const labelText = getSymbolName(item);
+				const line = typeof data.type === 'string' && data.type.length ? `${data.type} ${labelText}` : `${labelText}`;
 				item.documentation = {
 					kind: 'markdown',
 					value: `\n\n\`\`\`12dpl\n${line}\n\`\`\`\n`
@@ -431,7 +443,7 @@ export function registerCompletionProvider(opts: {
 		}
 
 		if (data && typeof data === 'object' && data.source === 'define') {
-			const name = typeof data.name === 'string' ? data.name : item.label;
+			const name = typeof data.name === 'string' ? data.name : getSymbolName(item);
 			const params = Array.isArray(data.params) ? data.params : undefined;
 			const value = typeof data.value === 'string' ? data.value : undefined;
 			const definedIn = typeof data.definedInFsPath === 'string' ? data.definedInFsPath : undefined;
@@ -446,7 +458,7 @@ export function registerCompletionProvider(opts: {
 		}
 
 		// Try to get documentation from prototypes
-		const prototype = prototypesLoader.getPrototype(item.label);
+		const prototype = prototypesLoader.getPrototype(getSymbolName(item));
 		if (prototype) {
 			item.documentation = {
 				kind: 'markdown',
@@ -456,10 +468,11 @@ export function registerCompletionProvider(opts: {
 		}
 
 		// Check if it's a documented type
-		if (typeDocumentation[item.label]) {
+		const labelText = getSymbolName(item);
+		if (typeDocumentation[labelText]) {
 			item.documentation = {
 				kind: 'markdown',
-				value: typeDocumentation[item.label]
+				value: typeDocumentation[labelText]
 			};
 			return item;
 		}
@@ -480,7 +493,7 @@ export function registerCompletionProvider(opts: {
 			double: '**Double Type**\n\nFloating-point number'
 		};
 
-		const keywordDoc = keywordDocs[item.label.toLowerCase()];
+		const keywordDoc = keywordDocs[getSymbolName(item).toLowerCase()];
 		if (keywordDoc) {
 			item.documentation = {
 				kind: 'markdown',

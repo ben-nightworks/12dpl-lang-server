@@ -51,11 +51,15 @@ class PrototypesLoader {
 				functions.forEach((func) => {
 					const key = func.name.toLowerCase();
 					this.prototypes.set(key, func);
+					const signature = this.generateSignature(func);
+					const callSig = signature.match(/\([^)]*\)\s*$/)?.[0] ?? '';
+					const displayLabel = callSig ? `${func.name} ${callSig}` : func.name;
 					
 					this.completionItems.push({
-						label: func.name,
+						label: displayLabel,
 						kind: CompletionItemKind.Function,
-						detail: this.generateSignature(func),
+						detail: signature,
+						filterText: func.name,
 						insertText: this.generateSnippet(func),
 						insertTextFormat: InsertTextFormat.Snippet,
 						data: func.name
