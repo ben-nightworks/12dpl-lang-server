@@ -1,4 +1,4 @@
-// Generated from server/src/proglang12d.g4 by ANTLR 4.13.1
+// Generated from src/proglang12d.g4 by ANTLR 4.13.1
 // noinspection ES6UnusedImports,JSUnusedGlobalSymbols,JSUnusedLocalSymbols
 
 import {
@@ -3499,7 +3499,7 @@ export default class proglang12dParser extends Parser {
 				this.state = 531;
 				this.match(proglang12dParser.Colon);
 				this.state = 532;
-				this.compoundStatement();
+				this.statement();
 				}
 				break;
 			case 148:
@@ -4785,7 +4785,7 @@ export default class proglang12dParser extends Parser {
 	0,0,524,489,1,0,0,0,524,490,1,0,0,0,524,491,1,0,0,0,524,492,1,0,0,0,524,
 	493,1,0,0,0,525,95,1,0,0,0,526,527,5,231,0,0,527,528,5,213,0,0,528,538,
 	3,94,47,0,529,530,5,145,0,0,530,531,3,44,22,0,531,532,5,213,0,0,532,533,
-	3,98,49,0,533,538,1,0,0,0,534,535,5,148,0,0,535,536,5,213,0,0,536,538,3,
+	3,94,47,0,533,538,1,0,0,0,534,535,5,148,0,0,535,536,5,213,0,0,536,538,3,
 	98,49,0,537,526,1,0,0,0,537,529,1,0,0,0,537,534,1,0,0,0,538,97,1,0,0,0,
 	539,541,5,191,0,0,540,542,3,100,50,0,541,540,1,0,0,0,541,542,1,0,0,0,542,
 	543,1,0,0,0,543,544,5,192,0,0,544,99,1,0,0,0,545,547,3,102,51,0,546,545,
@@ -6960,11 +6960,11 @@ export class LabeledStatementContext extends ParserRuleContext {
 	public constantExpression(): ConstantExpressionContext {
 		return this.getTypedRuleContext(ConstantExpressionContext, 0) as ConstantExpressionContext;
 	}
-	public compoundStatement(): CompoundStatementContext {
-		return this.getTypedRuleContext(CompoundStatementContext, 0) as CompoundStatementContext;
-	}
 	public Default(): TerminalNode {
 		return this.getToken(proglang12dParser.Default, 0);
+	}
+	public compoundStatement(): CompoundStatementContext {
+		return this.getTypedRuleContext(CompoundStatementContext, 0) as CompoundStatementContext;
 	}
     public get ruleIndex(): number {
     	return proglang12dParser.RULE_labeledStatement;

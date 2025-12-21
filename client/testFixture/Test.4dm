@@ -35,6 +35,20 @@ Real xval[],Real yval[],Real lengths[])
     Text hip_type;
     Integer ret;
     ret = Get_hip_type(align,hip,hip_type);
+    switch(hip_type)
+    {
+    case "Test 1":
+    case "Test 2":
+        {
+            break;
+        }
+    case "Test 3":
+    default:
+        {
+
+        }
+    }
+
     // Get the co-ordinates of the special points for the HIP
     if(hip_type == "IP") {
         //  case of HIP only with no curve or spiral
