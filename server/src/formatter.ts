@@ -1,5 +1,6 @@
 import type { FormattingOptions } from 'vscode-languageserver/node';
 
+/** Counts how many times `charToCount` repeats from the start of `text`. */
 function countLeadingChar(text: string, charToCount: string): number {
 	let count = 0;
 	for (const char of text) {
@@ -26,6 +27,7 @@ type ScanState = {
 	stringQuote: '"' | "'" | null;
 };
 
+/** Scans a line for `{`/`}` while ignoring comments and strings. */
 function scanBraces(line: string, state: ScanState): { opens: number; closes: number } {
 	let opens = 0;
 	let closes = 0;
@@ -93,6 +95,11 @@ function scanBraces(line: string, state: ScanState): { opens: number; closes: nu
 	return { opens, closes };
 }
 
+/**
+ * Formats a full 12dPL document using simple brace-based indentation.
+ *
+ * Intended to be deterministic and safe (best-effort) rather than stylistically perfect.
+ */
 export function format12dplDocument(text: string, options: FormattingOptions): string {
 	// Preserve original newline style.
 	const newline = text.includes('\r\n') ? '\r\n' : '\n';

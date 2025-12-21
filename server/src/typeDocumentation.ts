@@ -2287,10 +2287,12 @@ name_array[2] = "Jane";`,
 	}
 };
 
+/** Looks up documentation metadata for a given type name. */
 export function getTypeDocumentation(typeName: string): TypeDocumentation | undefined {
 	return TYPE_DOCUMENTATION[typeName];
 }
 
+/** Formats a TypeDocumentation object into Markdown for hover display. */
 export function formatTypeDocumentation(doc: TypeDocumentation): string {
 	let markdown = '';
 	

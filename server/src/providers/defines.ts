@@ -1,5 +1,6 @@
 import type { SymbolRange } from '../symbols.js';
 
+/** Represents a `#define` macro found in a source or header file. */
 export type DefineSymbolInfo = {
 	name: string;
 	params?: string[];
@@ -10,6 +11,11 @@ export type DefineSymbolInfo = {
 
 const DEFINE_RE = /^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*\(([^)]*)\))?\s*(.*)?$/;
 
+/**
+ * Parses `#define` macros from raw file text.
+ *
+ * Supports object-like and function-like macros, and returns an identifier range for go-to-definition.
+ */
 export function parseDefinesFromText(text: string, definedInFsPath: string): DefineSymbolInfo[] {
 	// Supports:
 	//   #define NAME value

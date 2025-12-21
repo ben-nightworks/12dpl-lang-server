@@ -2,6 +2,11 @@ import type { Position } from 'vscode-languageserver/node';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import type { ParameterSymbolInfo } from '../symbols.js';
 
+/**
+ * Returns the identifier-like word under the given position.
+ *
+ * Used for completion/hover/definition lookup.
+ */
 export function getWordAtPosition(textDocument: TextDocument | undefined, position: Position): string | null {
 	if (!textDocument) return null;
 
@@ -22,12 +27,17 @@ export function getWordAtPosition(textDocument: TextDocument | undefined, positi
 	return word.length ? word : null;
 }
 
+/** Escapes text for safe use inside a VS Code snippet placeholder. */
 export function escapeSnippetText(text: string): string {
 	// VS Code snippet escaping: $ and } must be escaped.
 	// Also escape backslashes defensively.
 	return text.replace(/\\/g, '\\\\').replace(/\$/g, '\\$').replace(/\}/g, '\\}');
 }
 
+/**
+ * Builds a call snippet like `foo(${1:param1}, ${2:param2})` for function completion.
+ * Falls back to `foo()` when no parameter metadata is available.
+ */
 export function buildFunctionCallSnippet(functionName: string, params: ParameterSymbolInfo[] | undefined): string {
 	const placeholders: string[] = [];
 	const p = params ?? [];
@@ -47,6 +57,12 @@ export function buildFunctionCallSnippet(functionName: string, params: Parameter
 	return `${functionName}(${placeholders.join(', ')})$0`;
 }
 
+/**
+ * IntelliSense-style fuzzy matcher.
+ *
+ * Returns a score (higher is better) when `query` matches `candidate` as a subsequence.
+ * Returns null when there is no match.
+ */
 export function fuzzyScore(query: string, candidate: string): number | null {
 	// IntelliSense-style fuzzy score:
 	// - query must be a subsequence of candidate

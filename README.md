@@ -25,21 +25,23 @@ This repository’s documentation is consolidated into this single `README.md`.
 
 ### Implemented
 - **Syntax Highlighting** - Full 12dPL grammar support
-- **Code Completion** - 8000+ library functions + language keywords
+- **Code Completion** - Builtins + local symbols + include-aware symbols
 - **Real-time Validation** - ANTLR-based code parsing and error detection
 - **AST Parsing** - Complete abstract syntax tree generation
-- **Function Documentation** - Hover over functions to see signatures and parameters
+- **Function Documentation** - Hover over builtins, local symbols, include symbols, and `#define` macros
+- **Go to Definition** - Works for local symbols and across included files (including `#define` macros)
+- **Formatting** - Basic brace-based formatting (supports format-on-save)
+- **Preprocessor Support** - `#include`/`#define` suggestions, include-path completion, and macro completion
+- **Fuzzy Matching** - IntelliSense-like fuzzy matching for completion results
 - **Advanced Grammar Support** - Arrays, Switch statements, Pass-by-reference, Macros
 
 ### Coming Soon
 - Document Highlights: highlights all 'equal' symbols in a text document
 - Signature Help: provides signature help during function calls
-- Goto Definition: navigation to function definitions
 - Goto Type Definition: navigation to type definitions
 - Find References: find all references to a symbol
 - List Document Symbols: lists all symbols in current document
 - List Workspace Symbols: lists all project-wide symbols
-- Document Formatting: formatting of whole documents, ranges, and on-type
 - Rename: project-wide symbol renaming
 
 ---
@@ -75,7 +77,7 @@ bun run watch
 Fast, local sanity checks (recommended while developing):
 
 ```bash
-bun test
+bun run test
 ```
 
 Full confidence checks (typecheck/build + unit tests):
@@ -85,7 +87,8 @@ bun run test:all
 ```
 
 Notes:
-- `bun test` runs the Bun-native test suite in `tests/` (server-level unit/integration tests using the `.4dm` fixtures).
+- `bun run test` runs the Bun-native test suite in `tests/` (server-level unit/integration tests using the `.4dm` fixtures).
+- Running `bun test` without an explicit path will also try to execute the VS Code extension integration tests under `client/src/test/`, which require the VS Code test harness.
 - The legacy end-to-end script is available as `bun run test:e2e` (requires `sh`, so it may not work on Windows without a POSIX shell).
 
 ### 2. Test in VS Code
@@ -242,11 +245,14 @@ bun run compile
 ├── server/                    # Language Server
 │   ├── src/
 │   │   ├── resources/
-│   │   │   └── prototypes.xml # 12dPL function library (8000+ functions)
+│   │   │   └── 12dpl_complete_functions.json # Builtin function metadata
 │   │   ├── antlr/             # ANTLR parser files
-│   │   ├── server.ts          # LSP server main logic
+│   │   ├── providers/         # LSP feature providers (completion/hover/formatting)
+│   │   ├── server.ts          # LSP wiring + provider registration
 │   │   ├── validator.ts       # Code validation with ANTLR parsing
-│   │   ├── prototypes.ts      # Prototype loader & parser
+│   │   ├── prototypes.ts      # Builtin prototype loader
+│   │   ├── includes.ts        # #include graph traversal
+│   │   ├── symbols.ts         # Symbol extraction (functions/variables)
 │   │   └── ...
 │   └── out/                   # Compiled output
 │
@@ -266,17 +272,20 @@ The language server includes **8000+ function prototypes** from the 12dPL librar
 - Parameter information with types
 - Detailed documentation on hover
 
-**File**: `server/src/resources/prototypes.xml`
-**Parser**: `server/src/prototypes.ts`
+**File**: `server/src/resources/12dpl_complete_functions.json`
+**Loader**: `server/src/prototypes.ts`
 
 #### 2. Smart Code Completion
 
 Auto-completion includes:
 - All 12dPL library functions (Sin, Cos, Print, etc.)
 - Language keywords (if, else, while, for, return, etc.)
+- Local symbols (functions/variables) from the current document
+- Symbols from recursively included `#include` files
+- `#define` macro completion (including function-like macros)
 - Trigger characters: `.` and `#` for context-aware suggestions
 
-**Handler**: `server/src/server.ts` - `connection.onCompletion()`
+**Handler**: `server/src/providers/completionProvider.ts`
 
 #### 3. Real-Time Code Validation
 
@@ -286,6 +295,13 @@ The validator performs actual parsing using ANTLR grammar:
 - Graceful error recovery
 
 **Validator**: `server/src/validator.ts`
+
+#### 4. Provider-Based LSP Structure
+
+Feature logic is split into focused modules under `server/src/providers/`:
+- Completion: `completionProvider.ts`
+- Hover: `hoverProvider.ts`
+- Formatting: `formattingProvider.ts`
 
 ### Architecture
 

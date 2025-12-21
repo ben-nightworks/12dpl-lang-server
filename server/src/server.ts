@@ -2,6 +2,13 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
+
+/**
+ * 12dPL language server entrypoint.
+ *
+ * Keeps LSP wiring here and delegates feature logic (completion/hover/formatting) to providers
+ * in `server/src/providers`.
+ */
 import {
 	createConnection,
 	TextDocuments,

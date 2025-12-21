@@ -10,6 +10,7 @@ import { typeDocumentation } from '../documentation.js';
 import type { DocumentSymbolStore } from './documentSymbols.js';
 import { getWordAtPosition } from './utils.js';
 import { parseDefinesFromText, type DefineSymbolInfo } from './defines.js';
+import type { FunctionSymbolInfo, VariableSymbolInfo } from '../symbols.js';
 
 type IncludeSymbolHoverInfo =
 	| { kind: 'function'; signature: string; definedInFsPath: string }
@@ -25,6 +26,7 @@ type DefineHoverCacheEntry = {
 	byName: Map<string, DefineSymbolInfo>;
 };
 
+/** Registers hover support for prototypes, types, symbols (local + includes), and `#define` macros. */
 export function registerHoverProvider(opts: {
 	connection: Connection;
 	documents: TextDocuments<TextDocument>;
@@ -57,7 +59,7 @@ export function registerHoverProvider(opts: {
 			const idx = documentSymbols.getIndexForFsPath(includeFsPath);
 			if (!idx) continue;
 
-			for (const fn of Object.values(idx.functions)) {
+			for (const fn of Object.values(idx.functions) as FunctionSymbolInfo[]) {
 				if (byName.has(fn.name)) continue;
 				byName.set(fn.name, {
 					kind: 'function',
@@ -65,7 +67,7 @@ export function registerHoverProvider(opts: {
 					definedInFsPath: includeFsPath
 				});
 			}
-			for (const v of Object.values(idx.variables)) {
+			for (const v of Object.values(idx.variables) as VariableSymbolInfo[]) {
 				if (byName.has(v.name)) continue;
 				byName.set(v.name, {
 					kind: 'variable',

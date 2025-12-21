@@ -36,6 +36,7 @@ class PrototypesLoader {
 	private completionItems: CompletionItem[] = [];
 	private loaded = false;
 
+	/** Loads prototype metadata and builds completion items (idempotent). */
 	async load(): Promise<void> {
 		if (this.loaded) {
 			return;
@@ -91,6 +92,7 @@ class PrototypesLoader {
 		return `${func.returnType} ${func.name}(${params})`;
 	}
 
+	/** Renders Markdown documentation for hover/completion details. */
 	public generateDocumentation(func: FunctionData): string {
 		const params = func.parameters.map(p => `${p.type} ${p.name}`).join(', ');
 		const signature = `${func.returnType} ${func.name}(${params})`;
@@ -108,14 +110,17 @@ class PrototypesLoader {
 		return doc;
 	}
 
+	/** Returns cached completion items for builtin prototypes. */
 	getCompletionItems(): CompletionItem[] {
 		return this.completionItems;
 	}
 
+	/** Looks up a prototype by name (case-insensitive). */
 	getPrototype(name: string): FunctionData | undefined {
 		return this.prototypes.get(name.toLowerCase());
 	}
 
+	/** Convenience helper for just the signature line. */
 	getPrototypeSignature(name: string): string | undefined {
 		const func = this.getPrototype(name);
 		if (!func) {

@@ -5,6 +5,11 @@ import proglang12dParser, {
 
 import { createLexerAndParser } from './parsePipeline.js';
 
+/**
+ * Utilities for extracting function/variable symbols from a 12dPL document.
+ *
+ * Used by completion/hover/definition and by unit tests.
+ */
 export interface CollectedSymbols {
 	functions: Set<string>;
 	variables: Set<string>;
@@ -231,6 +236,11 @@ function directDeclaratorHasParens(ctx: DirectDeclaratorContext | null | undefin
 	return false;
 }
 
+/**
+ * Parses a document and returns a structured index of discovered functions and variables.
+ *
+ * Best-effort: returns an empty index if parsing fails.
+ */
 export function collectDocumentSymbolIndex(documentText: string): DocumentSymbolIndex {
 	const index: DocumentSymbolIndex = {
 		functions: {},
@@ -362,6 +372,7 @@ export function collectDocumentSymbolIndex(documentText: string): DocumentSymbol
 	}
 }
 
+/** Returns symbol names as sets (functions/variables). */
 export function collectDocumentSymbols(documentText: string): CollectedSymbols {
 	const index = collectDocumentSymbolIndex(documentText);
 	return {
@@ -370,6 +381,7 @@ export function collectDocumentSymbols(documentText: string): CollectedSymbols {
 	};
 }
 
+/** Returns sorted symbol names for stable display/testing. */
 export function collectDocumentSymbolNames(documentText: string): { functions: string[]; variables: string[] } {
 	const symbols = collectDocumentSymbols(documentText);
 	return {
@@ -378,10 +390,12 @@ export function collectDocumentSymbolNames(documentText: string): { functions: s
 	};
 }
 
+/** True when the name belongs to an implicit wrapper inserted by the parse pipeline. */
 export function isGeneratedWrapperFunctionName(name: string): boolean {
 	return name.startsWith(GENERATED_WRAPPER_PREFIX);
 }
 
+/** Validates that a string is a legal 12dPL identifier. */
 export function isValid12dplIdentifier(name: string): boolean {
 	return isValidIdentifier(name);
 }

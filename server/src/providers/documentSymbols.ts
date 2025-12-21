@@ -7,7 +7,7 @@ import type { TextDocument } from 'vscode-languageserver-textdocument';
 import * as fs from 'fs';
 
 import { canonicalizeFsPath, fileUriToFsPath } from '../includes.js';
-import { collectDocumentSymbolIndex, type SymbolRange } from '../symbols.js';
+import { collectDocumentSymbolIndex, type FunctionSymbolInfo, type VariableSymbolInfo, type SymbolRange } from '../symbols.js';
 import { buildFunctionCallSnippet } from './utils.js';
 
 export type DocumentSymbolInfo = {
@@ -32,6 +32,12 @@ type HeaderIndexCacheEntry = {
 	index: SymbolIndex;
 };
 
+/**
+ * Caches parsed function/variable symbols for open documents and included header files.
+ *
+ * - Open documents are cached by URI+version.
+ * - Header files on disk are cached by mtime.
+ */
 export class DocumentSymbolStore {
 	private documentSymbolCompletions: Map<string, DocumentSymbolCompletionCacheEntry> = new Map();
 	private documentSymbolIndexCache: Map<string, DocumentSymbolIndexCacheEntry> = new Map();
@@ -39,11 +45,13 @@ export class DocumentSymbolStore {
 
 	public constructor(private readonly documents: TextDocuments<TextDocument>) {}
 
+	/** Clears cached state for a single open document URI. */
 	public clearForUri(uri: string): void {
 		this.documentSymbolCompletions.delete(uri);
 		this.documentSymbolIndexCache.delete(uri);
 	}
 
+	/** Rebuilds symbol caches for an open document. Safe to call often. */
 	public updateForDocument(textDocument: TextDocument): void {
 		try {
 			const index = collectDocumentSymbolIndex(textDocument.getText());
@@ -52,7 +60,7 @@ export class DocumentSymbolStore {
 			const items: CompletionItem[] = [];
 			const byName = new Map<string, DocumentSymbolInfo>();
 
-			for (const fn of Object.values(index.functions)) {
+			for (const fn of Object.values(index.functions) as FunctionSymbolInfo[]) {
 				const callSig = typeof fn.signature === 'string' ? (fn.signature.match(/\([^)]*\)\s*$/)?.[0] ?? '') : '';
 				const displayLabel = callSig ? `${fn.name} ${callSig}` : fn.name;
 				items.push({
@@ -67,7 +75,7 @@ export class DocumentSymbolStore {
 				byName.set(fn.name, { kind: 'function', signature: fn.signature, range: fn.range });
 			}
 
-			for (const v of Object.values(index.variables)) {
+			for (const v of Object.values(index.variables) as VariableSymbolInfo[]) {
 				items.push({
 					label: v.name,
 					kind: CompletionItemKind.Variable,
@@ -87,6 +95,7 @@ export class DocumentSymbolStore {
 		}
 	}
 
+	/** Returns completion items for the open document at `uri`. */
 	public getCompletionItems(uri: string): CompletionItem[] {
 		const doc = this.documents.get(uri);
 		if (!doc) return [];
@@ -100,6 +109,7 @@ export class DocumentSymbolStore {
 		return this.documentSymbolCompletions.get(uri)?.items ?? [];
 	}
 
+	/** Returns symbol info (signature/type/range) for an open document symbol name. */
 	public getSymbolInfo(uri: string, name: string): DocumentSymbolInfo | null {
 		const doc = this.documents.get(uri);
 		if (!doc) return null;
@@ -112,6 +122,7 @@ export class DocumentSymbolStore {
 		return this.documentSymbolCompletions.get(uri)?.byName.get(name) ?? null;
 	}
 
+	/** Returns text for an open document or reads it from disk (best-effort). */
 	public getTextForFsPath(fsPath: string): string | null {
 		const openText = this.getOpenDocumentTextForFsPath(fsPath);
 		if (openText != null) return openText;
@@ -123,6 +134,7 @@ export class DocumentSymbolStore {
 		}
 	}
 
+	/** Returns a parsed symbol index for an open document or a cached on-disk header file. */
 	public getIndexForFsPath(fsPath: string): SymbolIndex | null {
 		const openIndex = this.getIndexForOpenDocumentFsPath(fsPath);
 		if (openIndex) return openIndex;

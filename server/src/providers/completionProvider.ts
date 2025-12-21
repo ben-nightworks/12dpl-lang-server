@@ -17,6 +17,7 @@ import type { DocumentSymbolStore } from './documentSymbols.js';
 import { collectRecursiveIncludeFiles, fileUriToFsPath } from '../includes.js';
 import { buildFunctionCallSnippet, fuzzyScore, getWordAtPosition } from './utils.js';
 import { parseDefinesFromText } from './defines.js';
+import type { FunctionSymbolInfo, VariableSymbolInfo } from '../symbols.js';
 
 type IncludeCompletionCacheEntry = { version: number; items: CompletionItem[] };
 type IncludeFileListCacheEntry = { version: number; files: string[] };
@@ -27,6 +28,10 @@ type IncludePathContext = {
 	prefix: string;
 };
 
+/**
+ * Detects whether the cursor is currently inside a `#include "..."` or `#include <...>` path.
+ * When present, completion should suggest filesystem paths instead of symbols.
+ */
 function getIncludePathContext(textDocument: TextDocument, position: { line: number; character: number }): IncludePathContext | null {
 	const lineText = textDocument.getText().split('\n')[position.line] ?? '';
 	// Match: optional whitespace, #include, optional whitespace, then " or <, then anything not closing delimiter.
@@ -118,6 +123,10 @@ export function registerCompletionProvider(opts: {
 	documents: TextDocuments<TextDocument>;
 	documentSymbols: DocumentSymbolStore;
 }): void {
+	/**
+	 * NOTE: This provider intentionally returns a fully-ranked completion list.
+	 * VS Code will still apply some client-side heuristics, so we set `filterText`/`sortText` when fuzzing.
+	 */
 	const { connection, documents, documentSymbols } = opts;
 
 	const getLabelText = (item: CompletionItem): string => {
@@ -166,7 +175,7 @@ export function registerCompletionProvider(opts: {
 			const idx = documentSymbols.getIndexForFsPath(includeFsPath);
 			if (!idx) continue;
 
-			for (const fn of Object.values(idx.functions)) {
+			for (const fn of Object.values(idx.functions) as FunctionSymbolInfo[]) {
 				if (byLabel.has(fn.name)) continue;
 				byLabel.add(fn.name);
 				const callSig = typeof fn.signature === 'string' ? (fn.signature.match(/\([^)]*\)\s*$/)?.[0] ?? '') : '';
@@ -182,7 +191,7 @@ export function registerCompletionProvider(opts: {
 				});
 			}
 
-			for (const v of Object.values(idx.variables)) {
+			for (const v of Object.values(idx.variables) as VariableSymbolInfo[]) {
 				if (byLabel.has(v.name)) continue;
 				byLabel.add(v.name);
 				items.push({
