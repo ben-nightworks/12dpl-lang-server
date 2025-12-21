@@ -1,12 +1,23 @@
-import type { Connection } from 'vscode-languageserver/node';
+import type { Connection, HoverParams } from 'vscode-languageserver/node';
 
 import type { TextDocuments } from 'vscode-languageserver/node';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
+
+import { collectRecursiveIncludeFiles, fileUriToFsPath } from '../includes.js';
 
 import { prototypesLoader } from '../prototypes.js';
 import { typeDocumentation } from '../documentation.js';
 import type { DocumentSymbolStore } from './documentSymbols.js';
 import { getWordAtPosition } from './utils.js';
+
+type IncludeSymbolHoverInfo =
+	| { kind: 'function'; signature: string; definedInFsPath: string }
+	| { kind: 'variable'; type?: string; name: string; definedInFsPath: string };
+
+type IncludeHoverCacheEntry = {
+	version: number;
+	byName: Map<string, IncludeSymbolHoverInfo>;
+};
 
 export function registerHoverProvider(opts: {
 	connection: Connection;
@@ -14,8 +25,55 @@ export function registerHoverProvider(opts: {
 	documentSymbols: DocumentSymbolStore;
 }): void {
 	const { connection, documents, documentSymbols } = opts;
+	const includeHoverCache: Map<string, IncludeHoverCacheEntry> = new Map();
 
-	connection.onHover((textDocumentPositionParams) => {
+	const getIncludeSymbolHoverInfo = (uri: string, name: string): IncludeSymbolHoverInfo | null => {
+		const doc = documents.get(uri);
+		if (!doc) return null;
+
+		const cached = includeHoverCache.get(uri);
+		if (cached && cached.version === doc.version) {
+			return cached.byName.get(name) ?? null;
+		}
+
+		const docFsPath = fileUriToFsPath(uri);
+		if (!docFsPath) return null;
+
+		const includeFiles = collectRecursiveIncludeFiles(
+			docFsPath,
+			(fsPath) => documentSymbols.getTextForFsPath(fsPath),
+			{ maxFiles: 500 }
+		);
+
+		const byName = new Map<string, IncludeSymbolHoverInfo>();
+		for (const includeFsPath of includeFiles) {
+			const idx = documentSymbols.getIndexForFsPath(includeFsPath);
+			if (!idx) continue;
+
+			for (const fn of Object.values(idx.functions)) {
+				if (byName.has(fn.name)) continue;
+				byName.set(fn.name, {
+					kind: 'function',
+					signature: fn.signature,
+					definedInFsPath: includeFsPath
+				});
+			}
+			for (const v of Object.values(idx.variables)) {
+				if (byName.has(v.name)) continue;
+				byName.set(v.name, {
+					kind: 'variable',
+					name: v.name,
+					type: v.type,
+					definedInFsPath: includeFsPath
+				});
+			}
+		}
+
+		includeHoverCache.set(uri, { version: doc.version, byName });
+		return byName.get(name) ?? null;
+	};
+
+	connection.onHover((textDocumentPositionParams: HoverParams) => {
 		try {
 			const textDocument = documents.get(textDocumentPositionParams.textDocument.uri);
 			if (!textDocument) return null;
@@ -65,6 +123,26 @@ export function registerHoverProvider(opts: {
 						}
 					};
 				}
+			}
+
+			// Check included files for symbols
+			const includeSymbol = getIncludeSymbolHoverInfo(textDocument.uri, word);
+			if (includeSymbol) {
+				if (includeSymbol.kind === 'function') {
+					return {
+						contents: {
+							kind: 'markdown',
+							value: `\n\n\`\`\`12dpl\n${includeSymbol.signature}\n\`\`\`\n\nDefined in: ${includeSymbol.definedInFsPath}`
+						}
+					};
+				}
+				const line = includeSymbol.type ? `${includeSymbol.type} ${includeSymbol.name}` : includeSymbol.name;
+				return {
+					contents: {
+						kind: 'markdown',
+						value: `\n\n\`\`\`12dpl\n${line}\n\`\`\`\n\nDefined in: ${includeSymbol.definedInFsPath}`
+					}
+				};
 			}
 
 			// Check if it's a keyword
