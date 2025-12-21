@@ -3,10 +3,13 @@ import type {
 	Connection,
 	TextDocumentPositionParams
 } from 'vscode-languageserver/node';
-import { CompletionItemKind, InsertTextFormat } from 'vscode-languageserver/node';
+import { CompletionItemKind, InsertTextFormat, TextEdit } from 'vscode-languageserver/node';
 
 import type { TextDocuments } from 'vscode-languageserver/node';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
+
+import * as fs from 'fs';
+import * as path from 'path';
 
 import { prototypesLoader } from '../prototypes.js';
 import { typeDocumentation } from '../documentation.js';
@@ -15,6 +18,85 @@ import { collectRecursiveIncludeFiles, fileUriToFsPath } from '../includes.js';
 import { buildFunctionCallSnippet } from './utils.js';
 
 type IncludeCompletionCacheEntry = { version: number; items: CompletionItem[] };
+
+type IncludePathContext = {
+	startCharacter: number;
+	endCharacter: number;
+	prefix: string;
+};
+
+function getIncludePathContext(textDocument: TextDocument, position: { line: number; character: number }): IncludePathContext | null {
+	const lineText = textDocument.getText().split('\n')[position.line] ?? '';
+	// Match: optional whitespace, #include, optional whitespace, then " or <, then anything not closing delimiter.
+	const match = /^\s*#\s*include\s*([<"])([^>"]*)/.exec(lineText);
+	if (!match) return null;
+
+	const openDelim = match[1];
+	const openIndex = lineText.indexOf(openDelim);
+	if (openIndex < 0) return null;
+
+	const startCharacter = openIndex + 1;
+	if (position.character < startCharacter) return null;
+
+	// If a closing delimiter is present, don't trigger when cursor is after it.
+	const closeDelim = openDelim === '<' ? '>' : '"';
+	const closeIndex = lineText.indexOf(closeDelim, startCharacter);
+	if (closeIndex !== -1 && position.character > closeIndex) return null;
+
+	const endCharacter = position.character;
+	const prefix = lineText.substring(startCharacter, endCharacter);
+	return { startCharacter, endCharacter, prefix };
+}
+
+function listIncludePathCompletionItems(opts: {
+	documentFsPath: string;
+	ctx: IncludePathContext;
+	uri: string;
+	line: number;
+}): CompletionItem[] {
+	const { documentFsPath, ctx, uri, line } = opts;
+	const baseDir = path.dirname(documentFsPath);
+
+	// Support completing into subdirectories: prefixDir/partialName
+	const normalizedPrefix = ctx.prefix.replace(/\\/g, '/');
+	const lastSlash = normalizedPrefix.lastIndexOf('/');
+	const prefixDir = lastSlash >= 0 ? normalizedPrefix.slice(0, lastSlash) : '';
+	const partial = lastSlash >= 0 ? normalizedPrefix.slice(lastSlash + 1) : normalizedPrefix;
+	const dirOnDisk = prefixDir.length ? path.join(baseDir, prefixDir) : baseDir;
+
+	let entries: fs.Dirent[] = [];
+	try {
+		entries = fs.readdirSync(dirOnDisk, { withFileTypes: true });
+	} catch {
+		return [];
+	}
+
+	const range = {
+		start: { line, character: ctx.startCharacter },
+		end: { line, character: ctx.endCharacter }
+	};
+
+	const items: CompletionItem[] = [];
+	for (const entry of entries) {
+		const name = entry.name;
+		if (partial.length && !name.toLowerCase().startsWith(partial.toLowerCase())) continue;
+
+		// Keep suggestions tight: primarily headers and folders.
+		if (entry.isFile() && !name.toLowerCase().endsWith('.h')) continue;
+
+		const label = name + (entry.isDirectory() ? '/' : '');
+		const insertPath = (prefixDir.length ? `${prefixDir}/${name}` : name) + (entry.isDirectory() ? '/' : '');
+
+		items.push({
+			label,
+			kind: entry.isDirectory() ? CompletionItemKind.Folder : CompletionItemKind.File,
+			detail: entry.isDirectory() ? 'Include folder' : 'Include file',
+			textEdit: TextEdit.replace(range as any, insertPath),
+		});
+	}
+
+	return items;
+}
 
 export function registerCompletionProvider(opts: {
 	connection: Connection;
@@ -77,6 +159,24 @@ export function registerCompletionProvider(opts: {
 	};
 
 	connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
+		const doc = documents.get(textDocumentPosition.textDocument.uri);
+		if (doc) {
+			const ctx = getIncludePathContext(doc, textDocumentPosition.position);
+			if (ctx) {
+				const fsPath = fileUriToFsPath(doc.uri);
+				if (fsPath) {
+					const includePathItems = listIncludePathCompletionItems({
+						documentFsPath: fsPath,
+						ctx,
+						uri: doc.uri,
+						line: textDocumentPosition.position.line
+					});
+					// When completing an include path, don't mix in symbol completions.
+					return includePathItems;
+				}
+			}
+		}
+
 		const symbolItems = documentSymbols.getCompletionItems(textDocumentPosition.textDocument.uri);
 		const includeItems = getIncludeCompletionItems(textDocumentPosition.textDocument.uri);
 
@@ -85,6 +185,24 @@ export function registerCompletionProvider(opts: {
 
 		// Combine with keyword completions
 		const keywordItems: CompletionItem[] = [
+			{
+				label: '#include',
+				kind: CompletionItemKind.Keyword,
+				detail: 'Preprocessor include directive',
+				insertTextFormat: InsertTextFormat.Snippet,
+				insertText: '#include "${1:header.h}"$0',
+				filterText: 'include',
+				data: { source: 'keyword', kind: 'directive', name: '#include' }
+			},
+			{
+				label: 'include',
+				kind: CompletionItemKind.Keyword,
+				detail: 'Preprocessor include directive',
+				insertTextFormat: InsertTextFormat.Snippet,
+				insertText: '#include "${1:header.h}"$0',
+				filterText: 'include',
+				data: { source: 'keyword', kind: 'directive', name: '#include' }
+			},
 			{ label: 'if', kind: CompletionItemKind.Keyword, detail: 'Conditional statement', data: 1 },
 			{ label: 'else', kind: CompletionItemKind.Keyword, detail: 'Else clause', data: 2 },
 			{ label: 'while', kind: CompletionItemKind.Keyword, detail: 'While loop', data: 3 },
@@ -157,6 +275,8 @@ export function registerCompletionProvider(opts: {
 
 		// Fallback for keywords
 		const keywordDocs: Record<string, string> = {
+			'#include': '**Include Directive**\n\nInclude declarations from another file.\n\n```12dpl\n#include "set_ups.h"\n```',
+			include: '**Include Directive**\n\nInclude declarations from another file.\n\n```12dpl\n#include "set_ups.h"\n```',
 			if: '**Conditional Statement**\n\nExecute code block if condition is true.\n\n```12dpl\nif (condition) { ... }\n```',
 			else: '**Else Clause**\n\nExecute code block if if condition is false.\n\n```12dpl\nelse { ... }\n```',
 			while: '**While Loop**\n\nRepeatedly execute code while condition is true.\n\n```12dpl\nwhile (condition) { ... }\n```',
