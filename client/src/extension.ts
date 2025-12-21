@@ -31,9 +31,19 @@ type CompilerInfo = {
 
 async function getCompilerInfo(compilerExe: string): Promise<CompilerInfo> {
 	return new Promise((resolve) => {
+		// Prepare environment with any configured includePaths added to PATH
+		const config = workspace.getConfiguration('12dpl');
+		const includePaths = (config.get<string[]>('compiler.includePaths') ?? []).map((p) => String(p).trim()).filter(Boolean);
+		const env = { ...process.env } as NodeJS.ProcessEnv;
+		if (includePaths.length > 0) {
+			const sep = process.platform === 'win32' ? ';' : ':';
+			env.PATH = `${includePaths.join(sep)}${sep}${env.PATH ?? ''}`;
+		}
+
 		const child = cp.spawn(compilerExe, ['?'], {
 			cwd: path.dirname(compilerExe),
-			windowsHide: true
+			windowsHide: true,
+			env
 		});
 
 		let combined = '';
@@ -179,9 +189,18 @@ export function activate(context: ExtensionContext) {
 				}
 			}
 
-			const compilerExe = context.asAbsolutePath(path.join('compiler', 'cc4d.exe'));
+			const config = workspace.getConfiguration('12dpl', document.uri);
+			const configuredCompilerFolder = String(config.get<string>('compiler.path') ?? '').trim();
+
+			if (!configuredCompilerFolder) {
+				void window.showErrorMessage('Compiler not configured. Set "12dpl.compiler.path" to the folder containing cc4d.exe.');
+				return;
+			}
+
+			const compilerExe = path.join(configuredCompilerFolder, 'cc4d.exe');
+
 			if (!fs.existsSync(compilerExe)) {
-				void window.showErrorMessage(`Compiler not found: ${compilerExe}`);
+				void window.showErrorMessage(`Compiler not found: ${compilerExe}. Ensure the folder in 12dpl.compiler.path contains cc4d.exe.`);
 				return;
 			}
 
@@ -239,9 +258,19 @@ export function activate(context: ExtensionContext) {
 			outputChannel.appendLine(`> ${compilerExe} ${args.join(' ')}`);
 			outputChannel.show(true);
 
+			// Prepare env for spawn with includePaths
+			const configTop = workspace.getConfiguration('12dpl', document.uri);
+			const includePathsTop = (configTop.get<string[]>('compiler.includePaths') ?? []).map((p) => String(p).trim()).filter(Boolean);
+			const envTop = { ...process.env } as NodeJS.ProcessEnv;
+			if (includePathsTop.length > 0) {
+				const sep = process.platform === 'win32' ? ';' : ':';
+				envTop.PATH = `${includePathsTop.join(sep)}${sep}${envTop.PATH ?? ''}`;
+			}
+
 			const child = cp.spawn(compilerExe, args, {
 				cwd: path.dirname(compilerExe),
-				windowsHide: true
+				windowsHide: true,
+				env: envTop
 			});
 
 			child.stdout.on('data', (data) => outputChannel.append(data.toString()));
@@ -289,15 +318,26 @@ export function activate(context: ExtensionContext) {
 
 	// Best-effort: resolve compiler version early so users can see it in the tooltip.
 	if (process.platform === 'win32') {
-		const compilerExe = context.asAbsolutePath(path.join('compiler', 'cc4d.exe'));
-		if (fs.existsSync(compilerExe)) {
-			void getCompilerInfo(compilerExe).then((info) => {
-				cachedCompilerInfo = info;
-				if (info.versionLine) {
-					playButton.tooltip = `Compile current .4dm with cc4d (Version: ${info.versionLine})`;
-					flagsButton.tooltip = `Compile current .4dm with cc4d (select flags) (Version: ${info.versionLine})`;
-				}
-			});
+		const config = workspace.getConfiguration('12dpl');
+		const configuredCompilerFolder = String(config.get<string>('compiler.path') ?? '').trim();
+		if (!configuredCompilerFolder) {
+			// Don't show a modal here; just update the tooltip to hint configuration is needed.
+			playButton.tooltip = 'Compile current .4dm with cc4d (configure 12dpl.compiler.path)';
+			flagsButton.tooltip = 'Compile current .4dm with cc4d (select flags) (configure 12dpl.compiler.path)';
+		} else {
+			const compilerExe = path.join(configuredCompilerFolder, 'cc4d.exe');
+			if (fs.existsSync(compilerExe)) {
+				void getCompilerInfo(compilerExe).then((info) => {
+					cachedCompilerInfo = info;
+					if (info.versionLine) {
+						playButton.tooltip = `Compile current .4dm with cc4d (Version: ${info.versionLine})`;
+						flagsButton.tooltip = `Compile current .4dm with cc4d (select flags) (Version: ${info.versionLine})`;
+					}
+				});
+			} else {
+				playButton.tooltip = 'Compile current .4dm with cc4d (compiler not found; check 12dpl.compiler.path)';
+				flagsButton.tooltip = 'Compile current .4dm with cc4d (select flags) (compiler not found; check 12dpl.compiler.path)';
+			}
 		}
 	}
 
