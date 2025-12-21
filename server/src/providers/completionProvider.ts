@@ -16,8 +16,10 @@ import { typeDocumentation } from '../documentation.js';
 import type { DocumentSymbolStore } from './documentSymbols.js';
 import { collectRecursiveIncludeFiles, fileUriToFsPath } from '../includes.js';
 import { buildFunctionCallSnippet } from './utils.js';
+import { parseDefinesFromText } from './defines.js';
 
 type IncludeCompletionCacheEntry = { version: number; items: CompletionItem[] };
+type IncludeFileListCacheEntry = { version: number; files: string[] };
 
 type IncludePathContext = {
 	startCharacter: number;
@@ -55,6 +57,7 @@ function listIncludePathCompletionItems(opts: {
 	line: number;
 }): CompletionItem[] {
 	const { documentFsPath, ctx, uri, line } = opts;
+	void uri;
 	const baseDir = path.dirname(documentFsPath);
 
 	// Support completing into subdirectories: prefixDir/partialName
@@ -98,6 +101,15 @@ function listIncludePathCompletionItems(opts: {
 	return items;
 }
 
+
+function buildDefineSnippet(name: string, params: string[] | undefined): { insertText: string; insertTextFormat: InsertTextFormat } {
+	if (!params || !params.length) {
+		return { insertText: name, insertTextFormat: InsertTextFormat.PlainText };
+	}
+	const placeholders = params.map((p, i) => `\${${i + 1}:${p}}`).join(', ');
+	return { insertText: `${name}(${placeholders})$0`, insertTextFormat: InsertTextFormat.Snippet };
+}
+
 export function registerCompletionProvider(opts: {
 	connection: Connection;
 	documents: TextDocuments<TextDocument>;
@@ -105,13 +117,15 @@ export function registerCompletionProvider(opts: {
 }): void {
 	const { connection, documents, documentSymbols } = opts;
 	const includeCompletionsCache: Map<string, IncludeCompletionCacheEntry> = new Map();
+	const includeFileListCache: Map<string, IncludeFileListCacheEntry> = new Map();
+	const defineCompletionsCache: Map<string, IncludeCompletionCacheEntry> = new Map();
 
-	const getIncludeCompletionItems = (uri: string): CompletionItem[] => {
+	const getIncludeFilesForUri = (uri: string): string[] => {
 		const doc = documents.get(uri);
 		if (!doc) return [];
 
-		const cached = includeCompletionsCache.get(uri);
-		if (cached && cached.version === doc.version) return cached.items;
+		const cached = includeFileListCache.get(uri);
+		if (cached && cached.version === doc.version) return cached.files;
 
 		const docPath = fileUriToFsPath(uri);
 		if (!docPath) return [];
@@ -121,6 +135,18 @@ export function registerCompletionProvider(opts: {
 			(fsPath) => documentSymbols.getTextForFsPath(fsPath),
 			{ maxFiles: 500 }
 		);
+		includeFileListCache.set(uri, { version: doc.version, files: includeFiles });
+		return includeFiles;
+	};
+
+	const getIncludeCompletionItems = (uri: string): CompletionItem[] => {
+		const doc = documents.get(uri);
+		if (!doc) return [];
+
+		const cached = includeCompletionsCache.get(uri);
+		if (cached && cached.version === doc.version) return cached.items;
+
+		const includeFiles = getIncludeFilesForUri(uri);
 
 		const items: CompletionItem[] = [];
 		const byLabel = new Set<string>();
@@ -158,6 +184,75 @@ export function registerCompletionProvider(opts: {
 		return items;
 	};
 
+	const getDefineCompletionItems = (uri: string): CompletionItem[] => {
+		const doc = documents.get(uri);
+		if (!doc) return [];
+
+		const cached = defineCompletionsCache.get(uri);
+		if (cached && cached.version === doc.version) return cached.items;
+
+		const docFsPath = fileUriToFsPath(uri);
+		if (!docFsPath) return [];
+
+		const items: CompletionItem[] = [];
+		const seen = new Set<string>();
+
+		// Local defines first.
+		for (const def of parseDefinesFromText(doc.getText(), docFsPath)) {
+			if (seen.has(def.name)) continue;
+			seen.add(def.name);
+			const { insertText, insertTextFormat } = buildDefineSnippet(def.name, def.params);
+			items.push({
+				label: def.name,
+				kind: def.params?.length ? CompletionItemKind.Function : CompletionItemKind.Constant,
+				detail: def.params?.length
+					? `#define ${def.name}(${def.params.join(', ')})${def.value ? ` ${def.value}` : ''}`
+					: `#define ${def.name}${def.value ? ` ${def.value}` : ''}`,
+				insertTextFormat,
+				insertText,
+				data: {
+					source: 'define',
+					kind: def.params?.length ? 'function' : 'object',
+					name: def.name,
+					params: def.params,
+					value: def.value,
+					definedInFsPath: def.definedInFsPath
+				}
+			});
+		}
+
+		// Then defines from includes.
+		for (const includeFsPath of getIncludeFilesForUri(uri)) {
+			const text = documentSymbols.getTextForFsPath(includeFsPath);
+			if (text == null) continue;
+			for (const def of parseDefinesFromText(text, includeFsPath)) {
+				if (seen.has(def.name)) continue;
+				seen.add(def.name);
+				const { insertText, insertTextFormat } = buildDefineSnippet(def.name, def.params);
+				items.push({
+					label: def.name,
+					kind: def.params?.length ? CompletionItemKind.Function : CompletionItemKind.Constant,
+					detail: def.params?.length
+						? `#define ${def.name}(${def.params.join(', ')})${def.value ? ` ${def.value}` : ''}`
+						: `#define ${def.name}${def.value ? ` ${def.value}` : ''}`,
+					insertTextFormat,
+					insertText,
+					data: {
+						source: 'define',
+						kind: def.params?.length ? 'function' : 'object',
+						name: def.name,
+						params: def.params,
+						value: def.value,
+						definedInFsPath: def.definedInFsPath
+					}
+				});
+			}
+		}
+
+		defineCompletionsCache.set(uri, { version: doc.version, items });
+		return items;
+	};
+
 	connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
 		const doc = documents.get(textDocumentPosition.textDocument.uri);
 		if (doc) {
@@ -178,6 +273,7 @@ export function registerCompletionProvider(opts: {
 		}
 
 		const symbolItems = documentSymbols.getCompletionItems(textDocumentPosition.textDocument.uri);
+		const defineItems = getDefineCompletionItems(textDocumentPosition.textDocument.uri);
 		const includeItems = getIncludeCompletionItems(textDocumentPosition.textDocument.uri);
 
 		// Get completions from loaded prototypes
@@ -203,6 +299,24 @@ export function registerCompletionProvider(opts: {
 				filterText: 'include',
 				data: { source: 'keyword', kind: 'directive', name: '#include' }
 			},
+			{
+				label: '#define',
+				kind: CompletionItemKind.Keyword,
+				detail: 'Preprocessor macro definition',
+				insertTextFormat: InsertTextFormat.Snippet,
+				insertText: '#define ${1:NAME} ${2:value}$0',
+				filterText: 'define',
+				data: { source: 'keyword', kind: 'directive', name: '#define' }
+			},
+			{
+				label: 'define',
+				kind: CompletionItemKind.Keyword,
+				detail: 'Preprocessor macro definition',
+				insertTextFormat: InsertTextFormat.Snippet,
+				insertText: '#define ${1:NAME} ${2:value}$0',
+				filterText: 'define',
+				data: { source: 'keyword', kind: 'directive', name: '#define' }
+			},
 			{ label: 'if', kind: CompletionItemKind.Keyword, detail: 'Conditional statement', data: 1 },
 			{ label: 'else', kind: CompletionItemKind.Keyword, detail: 'Else clause', data: 2 },
 			{ label: 'while', kind: CompletionItemKind.Keyword, detail: 'While loop', data: 3 },
@@ -224,7 +338,7 @@ export function registerCompletionProvider(opts: {
 		// De-dupe by label while preserving priority (document symbols first).
 		const seen = new Set<string>();
 		const out: CompletionItem[] = [];
-		for (const item of [...symbolItems, ...includeItems, ...keywordItems, ...typeItems, ...prototypeItems]) {
+		for (const item of [...symbolItems, ...defineItems, ...includeItems, ...keywordItems, ...typeItems, ...prototypeItems]) {
 			const key = item.label;
 			if (seen.has(key)) continue;
 			seen.add(key);
@@ -254,6 +368,21 @@ export function registerCompletionProvider(opts: {
 			}
 		}
 
+		if (data && typeof data === 'object' && data.source === 'define') {
+			const name = typeof data.name === 'string' ? data.name : item.label;
+			const params = Array.isArray(data.params) ? data.params : undefined;
+			const value = typeof data.value === 'string' ? data.value : undefined;
+			const definedIn = typeof data.definedInFsPath === 'string' ? data.definedInFsPath : undefined;
+			const sig = params && params.length
+				? `#define ${name}(${params.join(', ')})${value ? ` ${value}` : ''}`
+				: `#define ${name}${value ? ` ${value}` : ''}`;
+			item.documentation = {
+				kind: 'markdown',
+				value: `${definedIn ? `Defined in: ${definedIn}\n\n` : ''}\`\`\`12dpl\n${sig}\n\`\`\``
+			};
+			return item;
+		}
+
 		// Try to get documentation from prototypes
 		const prototype = prototypesLoader.getPrototype(item.label);
 		if (prototype) {
@@ -277,6 +406,8 @@ export function registerCompletionProvider(opts: {
 		const keywordDocs: Record<string, string> = {
 			'#include': '**Include Directive**\n\nInclude declarations from another file.\n\n```12dpl\n#include "set_ups.h"\n```',
 			include: '**Include Directive**\n\nInclude declarations from another file.\n\n```12dpl\n#include "set_ups.h"\n```',
+			'#define': '**Define Directive**\n\nDefine a preprocessor macro.\n\n```12dpl\n#define NAME value\n```',
+			define: '**Define Directive**\n\nDefine a preprocessor macro.\n\n```12dpl\n#define NAME value\n```',
 			if: '**Conditional Statement**\n\nExecute code block if condition is true.\n\n```12dpl\nif (condition) { ... }\n```',
 			else: '**Else Clause**\n\nExecute code block if if condition is false.\n\n```12dpl\nelse { ... }\n```',
 			while: '**While Loop**\n\nRepeatedly execute code while condition is true.\n\n```12dpl\nwhile (condition) { ... }\n```',

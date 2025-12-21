@@ -9,6 +9,7 @@ import { prototypesLoader } from '../prototypes.js';
 import { typeDocumentation } from '../documentation.js';
 import type { DocumentSymbolStore } from './documentSymbols.js';
 import { getWordAtPosition } from './utils.js';
+import { parseDefinesFromText, type DefineSymbolInfo } from './defines.js';
 
 type IncludeSymbolHoverInfo =
 	| { kind: 'function'; signature: string; definedInFsPath: string }
@@ -19,6 +20,11 @@ type IncludeHoverCacheEntry = {
 	byName: Map<string, IncludeSymbolHoverInfo>;
 };
 
+type DefineHoverCacheEntry = {
+	version: number;
+	byName: Map<string, DefineSymbolInfo>;
+};
+
 export function registerHoverProvider(opts: {
 	connection: Connection;
 	documents: TextDocuments<TextDocument>;
@@ -26,6 +32,7 @@ export function registerHoverProvider(opts: {
 }): void {
 	const { connection, documents, documentSymbols } = opts;
 	const includeHoverCache: Map<string, IncludeHoverCacheEntry> = new Map();
+	const defineHoverCache: Map<string, DefineHoverCacheEntry> = new Map();
 
 	const getIncludeSymbolHoverInfo = (uri: string, name: string): IncludeSymbolHoverInfo | null => {
 		const doc = documents.get(uri);
@@ -70,6 +77,43 @@ export function registerHoverProvider(opts: {
 		}
 
 		includeHoverCache.set(uri, { version: doc.version, byName });
+		return byName.get(name) ?? null;
+	};
+
+	const getDefineHoverInfo = (uri: string, name: string): DefineSymbolInfo | null => {
+		const doc = documents.get(uri);
+		if (!doc) return null;
+
+		const cached = defineHoverCache.get(uri);
+		if (cached && cached.version === doc.version) {
+			return cached.byName.get(name) ?? null;
+		}
+
+		const docFsPath = fileUriToFsPath(uri);
+		if (!docFsPath) return null;
+
+		const byName = new Map<string, DefineSymbolInfo>();
+
+		// Local defines
+		for (const d of parseDefinesFromText(doc.getText(), docFsPath)) {
+			if (!byName.has(d.name)) byName.set(d.name, d);
+		}
+
+		// Included defines
+		const includeFiles = collectRecursiveIncludeFiles(
+			docFsPath,
+			(fsPath) => documentSymbols.getTextForFsPath(fsPath),
+			{ maxFiles: 500 }
+		);
+		for (const includeFsPath of includeFiles) {
+			const text = documentSymbols.getTextForFsPath(includeFsPath);
+			if (text == null) continue;
+			for (const d of parseDefinesFromText(text, includeFsPath)) {
+				if (!byName.has(d.name)) byName.set(d.name, d);
+			}
+		}
+
+		defineHoverCache.set(uri, { version: doc.version, byName });
 		return byName.get(name) ?? null;
 	};
 
@@ -123,6 +167,20 @@ export function registerHoverProvider(opts: {
 						}
 					};
 				}
+			}
+
+			// Check if it's a #define macro (local or from includes)
+			const def = getDefineHoverInfo(textDocument.uri, word);
+			if (def) {
+				const sig = def.params && def.params.length
+					? `#define ${def.name}(${def.params.join(', ')})${def.value ? ` ${def.value}` : ''}`
+					: `#define ${def.name}${def.value ? ` ${def.value}` : ''}`;
+				return {
+					contents: {
+						kind: 'markdown',
+						value: `**Preprocessor Macro**\n\n\`\`\`12dpl\n${sig}\n\`\`\`\n\nDefined in: ${def.definedInFsPath}`
+					}
+				};
 			}
 
 			// Check included files for symbols

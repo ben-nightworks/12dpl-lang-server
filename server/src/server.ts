@@ -41,6 +41,7 @@ import { registerCompletionProvider } from './providers/completionProvider.js';
 import { registerHoverProvider } from './providers/hoverProvider.js';
 import { registerFormattingProvider } from './providers/formattingProvider.js';
 import { getWordAtPosition } from './providers/utils.js';
+import { parseDefinesFromText } from './providers/defines.js';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -181,8 +182,14 @@ connection.onDefinition((params) => {
 		return Location.create(doc.uri, local.range as any);
 	}
 
+	// Prefer local #define
 	const docPath = fileUriToFsPath(doc.uri);
 	if (!docPath) return null;
+	for (const d of parseDefinesFromText(doc.getText(), docPath)) {
+		if (d.name === word && d.range) {
+			return Location.create(doc.uri, d.range as any);
+		}
+	}
 
 	const readText = (fsPath: string): string | null => documentSymbols.getTextForFsPath(fsPath);
 
@@ -205,6 +212,17 @@ connection.onDefinition((params) => {
 		if (fn?.range) pushLocation(candidate, fn.range);
 		const v = (idx.variables as any)[word];
 		if (v?.range) pushLocation(candidate, v.range);
+
+		// Also resolve #define macros in included files
+		const text = readText(candidate);
+		if (text != null) {
+			for (const d of parseDefinesFromText(text, candidate)) {
+				if (d.name === word && d.range) {
+					pushLocation(candidate, d.range);
+					break;
+				}
+			}
+		}
 	}
 
 	return results.length ? results : null;
