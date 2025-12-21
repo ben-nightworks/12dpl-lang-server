@@ -1,3 +1,6 @@
+
+#include "set_ups.h"
+
 #if DEBUG
 Clear_console();
 #endif
@@ -9,7 +12,8 @@ Clear_console();
     Integer Shutdown_code = 424242;
 }
 
-void main(){
 
+void main(){
+    create_rgb(1, 2, 3);
 
 }

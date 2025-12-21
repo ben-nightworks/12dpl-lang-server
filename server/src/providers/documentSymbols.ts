@@ -8,34 +8,7 @@ import * as fs from 'fs';
 
 import { canonicalizeFsPath, fileUriToFsPath } from '../includes.js';
 import { collectDocumentSymbolIndex, type SymbolRange } from '../symbols.js';
-
-function escapeSnippetText(text: string): string {
-	// VS Code snippet escaping: $ and } must be escaped.
-	// Also escape backslashes defensively.
-	return text.replace(/\\/g, '\\\\').replace(/\$/g, '\\$').replace(/\}/g, '\\}');
-}
-
-function buildFunctionCallSnippet(fn: { name: string; params?: Array<{ name?: string; type?: string; byRef?: boolean; isArray?: boolean }> }): string {
-	const params = fn.params ?? [];
-	const placeholders: string[] = [];
-
-	for (let i = 0; i < params.length; i++) {
-		const p = params[i];
-		const ref = p.byRef ? '&' : '';
-		const arr = p.isArray ? '[]' : '';
-		const label = (p.type && p.name)
-			? `${p.type} ${ref}${p.name}${arr}`
-			: (p.type ? `${p.type}${arr}` : (p.name ? `${ref}${p.name}${arr}` : ''));
-		if (!label.length) continue;
-		placeholders.push(`\${${i + 1}:${escapeSnippetText(label)}}`);
-	}
-
-	if (!placeholders.length) {
-		return `${fn.name}()$0`;
-	}
-
-	return `${fn.name}(${placeholders.join(', ')})$0`;
-}
+import { buildFunctionCallSnippet } from './utils.js';
 
 export type DocumentSymbolInfo = {
 	kind: 'function' | 'variable';
@@ -85,7 +58,7 @@ export class DocumentSymbolStore {
 					kind: CompletionItemKind.Function,
 					detail: fn.signature,
 					insertTextFormat: InsertTextFormat.Snippet,
-					insertText: buildFunctionCallSnippet(fn),
+					insertText: buildFunctionCallSnippet(fn.name, fn.params),
 					data: { source: 'document', kind: 'function', signature: fn.signature }
 				});
 				byName.set(fn.name, { kind: 'function', signature: fn.signature, range: fn.range });

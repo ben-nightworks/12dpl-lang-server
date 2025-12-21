@@ -3,7 +3,7 @@ import type {
 	Connection,
 	TextDocumentPositionParams
 } from 'vscode-languageserver/node';
-import { CompletionItemKind } from 'vscode-languageserver/node';
+import { CompletionItemKind, InsertTextFormat } from 'vscode-languageserver/node';
 
 import type { TextDocuments } from 'vscode-languageserver/node';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
@@ -11,16 +11,74 @@ import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { prototypesLoader } from '../prototypes.js';
 import { typeDocumentation } from '../documentation.js';
 import type { DocumentSymbolStore } from './documentSymbols.js';
+import { collectRecursiveIncludeFiles, fileUriToFsPath } from '../includes.js';
+import { buildFunctionCallSnippet } from './utils.js';
+
+type IncludeCompletionCacheEntry = { version: number; items: CompletionItem[] };
 
 export function registerCompletionProvider(opts: {
 	connection: Connection;
 	documents: TextDocuments<TextDocument>;
 	documentSymbols: DocumentSymbolStore;
 }): void {
-	const { connection, documentSymbols } = opts;
+	const { connection, documents, documentSymbols } = opts;
+	const includeCompletionsCache: Map<string, IncludeCompletionCacheEntry> = new Map();
+
+	const getIncludeCompletionItems = (uri: string): CompletionItem[] => {
+		const doc = documents.get(uri);
+		if (!doc) return [];
+
+		const cached = includeCompletionsCache.get(uri);
+		if (cached && cached.version === doc.version) return cached.items;
+
+		const docPath = fileUriToFsPath(uri);
+		if (!docPath) return [];
+
+		const includeFiles = collectRecursiveIncludeFiles(
+			docPath,
+			(fsPath) => documentSymbols.getTextForFsPath(fsPath),
+			{ maxFiles: 500 }
+		);
+
+		const items: CompletionItem[] = [];
+		const byLabel = new Set<string>();
+
+		for (const includeFsPath of includeFiles) {
+			const idx = documentSymbols.getIndexForFsPath(includeFsPath);
+			if (!idx) continue;
+
+			for (const fn of Object.values(idx.functions)) {
+				if (byLabel.has(fn.name)) continue;
+				byLabel.add(fn.name);
+				items.push({
+					label: fn.name,
+					kind: CompletionItemKind.Function,
+					detail: fn.signature,
+					insertTextFormat: InsertTextFormat.Snippet,
+					insertText: buildFunctionCallSnippet(fn.name, fn.params),
+					data: { source: 'include', kind: 'function', signature: fn.signature }
+				});
+			}
+
+			for (const v of Object.values(idx.variables)) {
+				if (byLabel.has(v.name)) continue;
+				byLabel.add(v.name);
+				items.push({
+					label: v.name,
+					kind: CompletionItemKind.Variable,
+					detail: v.type ? `${v.type} ${v.name}` : 'Variable (include)',
+					data: { source: 'include', kind: 'variable', type: v.type }
+				});
+			}
+		}
+
+		includeCompletionsCache.set(uri, { version: doc.version, items });
+		return items;
+	};
 
 	connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
 		const symbolItems = documentSymbols.getCompletionItems(textDocumentPosition.textDocument.uri);
+		const includeItems = getIncludeCompletionItems(textDocumentPosition.textDocument.uri);
 
 		// Get completions from loaded prototypes
 		const prototypeItems = prototypesLoader.getCompletionItems();
@@ -48,7 +106,7 @@ export function registerCompletionProvider(opts: {
 		// De-dupe by label while preserving priority (document symbols first).
 		const seen = new Set<string>();
 		const out: CompletionItem[] = [];
-		for (const item of [...symbolItems, ...keywordItems, ...typeItems, ...prototypeItems]) {
+		for (const item of [...symbolItems, ...includeItems, ...keywordItems, ...typeItems, ...prototypeItems]) {
 			const key = item.label;
 			if (seen.has(key)) continue;
 			seen.add(key);
@@ -60,7 +118,7 @@ export function registerCompletionProvider(opts: {
 	connection.onCompletionResolve((item: CompletionItem): CompletionItem => {
 		// Document symbols (from ANTLR) carry their own signature/type.
 		const data: any = (item as any).data;
-		if (data && typeof data === 'object' && data.source === 'document') {
+		if (data && typeof data === 'object' && (data.source === 'document' || data.source === 'include')) {
 			if (data.kind === 'function' && typeof data.signature === 'string' && data.signature.length) {
 				item.documentation = {
 					kind: 'markdown',
