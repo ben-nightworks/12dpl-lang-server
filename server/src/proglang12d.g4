@@ -401,7 +401,7 @@ statement
 
 labeledStatement
     :   Identifier ':' statement
-    |   'case' constantExpression ':' compoundStatement
+    |   'case' constantExpression ':' statement
     |   'default' ':' compoundStatement
     ;
 
