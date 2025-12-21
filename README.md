@@ -777,4 +777,4 @@ MIT - See LICENSE file
 ## 👤 Author
 
 **Ben Olsen** - Original creator  
-**Kamal Jarada** - 2026 enhancements (auto-formatting, type documentation, Bun build system, production optimization)
+**Kamal Jarada** 
