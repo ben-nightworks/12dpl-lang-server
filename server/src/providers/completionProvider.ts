@@ -15,7 +15,7 @@ import { prototypesLoader } from '../prototypes.js';
 import { typeDocumentation } from '../documentation.js';
 import type { DocumentSymbolStore } from './documentSymbols.js';
 import { collectRecursiveIncludeFiles, fileUriToFsPath } from '../includes.js';
-import { buildFunctionCallSnippet } from './utils.js';
+import { buildFunctionCallSnippet, fuzzyScore, getWordAtPosition } from './utils.js';
 import { parseDefinesFromText } from './defines.js';
 
 type IncludeCompletionCacheEntry = { version: number; items: CompletionItem[] };
@@ -82,7 +82,10 @@ function listIncludePathCompletionItems(opts: {
 	const items: CompletionItem[] = [];
 	for (const entry of entries) {
 		const name = entry.name;
-		if (partial.length && !name.toLowerCase().startsWith(partial.toLowerCase())) continue;
+		if (partial.length) {
+			const score = fuzzyScore(partial, name);
+			if (score == null) continue;
+		}
 
 		// Keep suggestions tight: primarily headers and folders.
 		if (entry.isFile() && !name.toLowerCase().endsWith('.h')) continue;
@@ -272,6 +275,8 @@ export function registerCompletionProvider(opts: {
 			}
 		}
 
+		const query = doc ? (getWordAtPosition(doc, textDocumentPosition.position) ?? '') : '';
+
 		const symbolItems = documentSymbols.getCompletionItems(textDocumentPosition.textDocument.uri);
 		const defineItems = getDefineCompletionItems(textDocumentPosition.textDocument.uri);
 		const includeItems = getIncludeCompletionItems(textDocumentPosition.textDocument.uri);
@@ -338,12 +343,69 @@ export function registerCompletionProvider(opts: {
 		// De-dupe by label while preserving priority (document symbols first).
 		const seen = new Set<string>();
 		const out: CompletionItem[] = [];
-		for (const item of [...symbolItems, ...defineItems, ...includeItems, ...keywordItems, ...typeItems, ...prototypeItems]) {
-			const key = item.label;
+		for (const originalItem of [...symbolItems, ...defineItems, ...includeItems, ...keywordItems, ...typeItems, ...prototypeItems]) {
+			const key = originalItem.label;
 			if (seen.has(key)) continue;
 			seen.add(key);
-			out.push(item);
+			// Clone to avoid mutating cached/shared items (e.g. prototypes).
+			out.push({ ...originalItem });
 		}
+
+		// Fuzzy filter: allow non-prefix matches by subsequence scoring.
+		// Also set filterText=query for returned items so VS Code's client-side prefix filtering doesn't hide them.
+		const q = query.trim();
+		if (q.length >= 2) {
+			const groupPriority = (item: CompletionItem): number => {
+				const data: any = (item as any).data;
+				if (data && typeof data === 'object' && typeof data.source === 'string') {
+					// Highest priority: in-document and included-file functions/variables.
+					if (data.source === 'document') return 600;
+					if (data.source === 'include') return 590;
+					// Lower than symbols: preprocessor defines/directives.
+					if (data.source === 'define') return 350;
+					if (data.source === 'keyword') return 200;
+				}
+				// Heuristics for items without structured data.
+				if (item.kind === CompletionItemKind.Class) return 180; // types
+				if (item.kind === CompletionItemKind.Function) return 160; // prototypes (data is string)
+				return 100;
+			};
+
+			const qLower = q.toLowerCase();
+			const scored: Array<{ item: CompletionItem; score: number; group: number; label: string }> = [];
+			for (const item of out) {
+				const label = typeof item.label === 'string' ? item.label : String(item.label);
+				const candidate = (typeof item.filterText === 'string' && item.filterText.length) ? item.filterText : label;
+				let s = fuzzyScore(q, candidate) ?? fuzzyScore(q, label);
+				if (s == null) continue;
+
+				// Strong bonuses for exact/prefix matches to mimic common IntelliSense behavior.
+				const labelLower = label.toLowerCase();
+				if (labelLower === qLower) s += 5000;
+				else if (labelLower.startsWith(qLower)) s += 2000;
+				else if (labelLower.includes(qLower)) s += 200;
+
+				scored.push({ item, score: s, group: groupPriority(item), label });
+			}
+
+			scored.sort((a, b) => {
+				if (a.group !== b.group) return b.group - a.group;
+				if (a.score !== b.score) return b.score - a.score;
+				return a.label.localeCompare(b.label);
+			});
+
+			for (const s of scored) {
+				// Ensure VS Code keeps these items visible when query isn't a strict prefix.
+				s.item.filterText = q;
+				// Enforce ordering: lower sortText sorts first.
+				const groupRank = (999 - Math.max(0, Math.min(999, s.group))).toString().padStart(3, '0');
+				const scoreRank = (999999 - Math.max(0, Math.min(999999, s.score))).toString().padStart(6, '0');
+				s.item.sortText = `${groupRank}-${scoreRank}-${s.label}`;
+			}
+
+			return scored.map(x => x.item);
+		}
+
 		return out;
 	});
 
