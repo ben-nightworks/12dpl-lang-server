@@ -53,6 +53,7 @@ Real xval[],Real yval[],Real lengths[])
     if(hip_type == "IP") {
         //  case of HIP only with no curve or spiral
         Real xip,yip;  ret = Get_hip_geom(align,hip,0,xip,yip);
+
         xval[6] = xip; yval[6] = yip;
         type = 0;
         // fill in other array positions - set them all to the HIP

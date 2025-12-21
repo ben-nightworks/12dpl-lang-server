@@ -15,16 +15,27 @@ import {
 	TextDocumentPositionParams,
 	TextDocumentSyncKind,
 	InitializeResult,
-	TextEdit
+	TextEdit,
+	Location
 } from 'vscode-languageserver/node';
 
 import {
 	TextDocument
 } from 'vscode-languageserver-textdocument';
 
+import * as fs from 'fs';
+import * as path from 'path';
+
 import {
 	Validator
 } from './validator.js';
+
+import {
+	canonicalizeFsPath,
+	collectRecursiveIncludeFiles,
+	fileUriToFsPath,
+	fsPathToFileUri
+} from './includes.js';
 
 import {
 	prototypesLoader
@@ -38,6 +49,11 @@ import {
 	format12dplDocument
 } from './formatter.js';
 
+import {
+	collectDocumentSymbolIndex,
+	SymbolRange
+} from './symbols.js';
+
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all);
@@ -45,10 +61,46 @@ const connection = createConnection(ProposedFeatures.all);
 // Create a simple text document manager.
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
+function getOpenDocumentTextForFsPath(fsPath: string): string | null {
+	const target = canonicalizeFsPath(fsPath);
+	for (const d of documents.all()) {
+		const p = fileUriToFsPath(d.uri);
+		if (!p) continue;
+		if (canonicalizeFsPath(p) === target) return d.getText();
+	}
+	return null;
+}
+
+type DocumentSymbolCompletionCacheEntry = {
+	version: number;
+	items: CompletionItem[];
+	byName: Map<string, { kind: 'function' | 'variable'; signature?: string; type?: string; range?: SymbolRange }>;
+};
+
+const documentSymbolCompletions: Map<string, DocumentSymbolCompletionCacheEntry> = new Map();
+
 let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
 let hasDiagnosticRelatedInformationCapability = false;
 
+
+type DocumentSymbolIndexCacheEntry = { version: number; index: ReturnType<typeof collectDocumentSymbolIndex> };
+const documentSymbolIndexCache: Map<string, DocumentSymbolIndexCacheEntry> = new Map();
+
+function getIndexForOpenDocumentFsPath(fsPath: string): ReturnType<typeof collectDocumentSymbolIndex> | null {
+	const target = canonicalizeFsPath(fsPath);
+	for (const d of documents.all()) {
+		const p = fileUriToFsPath(d.uri);
+		if (!p) continue;
+		if (canonicalizeFsPath(p) !== target) continue;
+		const cached = documentSymbolIndexCache.get(d.uri);
+		if (cached && cached.version === d.version) return cached.index;
+		const idx = collectDocumentSymbolIndex(d.getText());
+		documentSymbolIndexCache.set(d.uri, { version: d.version, index: idx });
+		return idx;
+	}
+	return null;
+}
 connection.onInitialize((params: InitializeParams) => {
 	const capabilities = params.capabilities;
 
@@ -76,6 +128,7 @@ connection.onInitialize((params: InitializeParams) => {
 			},
 			// Tell the client that this server supports hover.
 			hoverProvider: true,
+			definitionProvider: true,
 			documentFormattingProvider: true
 		}
 	};
@@ -152,12 +205,154 @@ function getDocumentSettings(resource: string): Thenable<ServerSettings> {
 // Only keep settings for open documents
 documents.onDidClose(e => {
 	documentSettings.delete(e.document.uri);
+	documentSymbolCompletions.delete(e.document.uri);
+	documentSymbolIndexCache.delete(e.document.uri);
 });
 
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
 documents.onDidChangeContent(change => {
+	updateSymbolCompletions(change.document);
 	validateTextDocument(change.document);
+});
+
+function updateSymbolCompletions(textDocument: TextDocument): void {
+	try {
+		const index = collectDocumentSymbolIndex(textDocument.getText());
+		documentSymbolIndexCache.set(textDocument.uri, { version: textDocument.version, index });
+
+		const items: CompletionItem[] = [];
+		const byName = new Map<string, { kind: 'function' | 'variable'; signature?: string; type?: string; range?: SymbolRange }>();
+
+		for (const fn of Object.values(index.functions)) {
+			items.push({
+				label: fn.name,
+				kind: CompletionItemKind.Function,
+				detail: fn.signature,
+				data: { source: 'document', kind: 'function', signature: fn.signature }
+			});
+			byName.set(fn.name, { kind: 'function', signature: fn.signature, range: fn.range });
+		}
+		for (const v of Object.values(index.variables)) {
+			items.push({
+				label: v.name,
+				kind: CompletionItemKind.Variable,
+				detail: v.type ? `${v.type} ${v.name}` : 'Variable (document)',
+				data: { source: 'document', kind: 'variable', type: v.type }
+			});
+			byName.set(v.name, { kind: 'variable', type: v.type, range: v.range });
+		}
+
+		documentSymbolCompletions.set(textDocument.uri, {
+			version: textDocument.version,
+			items,
+			byName
+		});
+	} catch {
+		// Keep completions best-effort; don't break LSP on parse issues.
+	}
+}
+
+function getSymbolCompletionItems(uri: string): CompletionItem[] {
+	const doc = documents.get(uri);
+	if (!doc) return [];
+
+	const cached = documentSymbolCompletions.get(uri);
+	if (cached && cached.version === doc.version) {
+		return cached.items;
+	}
+
+	updateSymbolCompletions(doc);
+	return documentSymbolCompletions.get(uri)?.items ?? [];
+}
+
+function getDocumentSymbolInfo(uri: string, name: string): { kind: 'function' | 'variable'; signature?: string; type?: string; range?: SymbolRange } | null {
+	const doc = documents.get(uri);
+	if (!doc) return null;
+
+	const cached = documentSymbolCompletions.get(uri);
+	if (!cached || cached.version !== doc.version) {
+		updateSymbolCompletions(doc);
+	}
+
+	return documentSymbolCompletions.get(uri)?.byName.get(name) ?? null;
+}
+type HeaderIndexCacheEntry = {
+	mtimeMs: number;
+	index: ReturnType<typeof collectDocumentSymbolIndex>;
+};
+
+const headerIndexCache: Map<string, HeaderIndexCacheEntry> = new Map();
+
+function getHeaderIndexForFsPath(fsPath: string): ReturnType<typeof collectDocumentSymbolIndex> | null {
+	try {
+		const stat = fs.statSync(fsPath);
+		const key = canonicalizeFsPath(fsPath);
+		const cached = headerIndexCache.get(key);
+		if (cached && cached.mtimeMs === stat.mtimeMs) {
+			return cached.index;
+		}
+		const text = fs.readFileSync(fsPath, 'utf-8');
+		const index = collectDocumentSymbolIndex(text);
+		headerIndexCache.set(key, { mtimeMs: stat.mtimeMs, index });
+		return index;
+	} catch {
+		return null;
+	}
+}
+
+function getAnyIndexForFsPath(fsPath: string): ReturnType<typeof collectDocumentSymbolIndex> | null {
+	return getIndexForOpenDocumentFsPath(fsPath) ?? getHeaderIndexForFsPath(fsPath);
+}
+
+connection.onDefinition((params) => {
+	const doc = documents.get(params.textDocument.uri);
+	if (!doc) return null;
+
+	const word = getWordAtPosition(doc, params.position);
+	if (!word) return null;
+
+	// Prefer current document symbol (function or variable)
+	const local = getDocumentSymbolInfo(doc.uri, word);
+	if (local?.range) {
+		return Location.create(doc.uri, local.range as any);
+	}
+
+	const docPath = fileUriToFsPath(doc.uri);
+	if (!docPath) return null;
+
+	const readText = (fsPath: string): string | null => {
+		const openText = getOpenDocumentTextForFsPath(fsPath);
+		if (openText != null) return openText;
+		try {
+			return fs.readFileSync(fsPath, 'utf-8');
+		} catch {
+			return null;
+		}
+	};
+
+	const includeFiles = collectRecursiveIncludeFiles(docPath, readText, { maxFiles: 500 });
+	const results: Location[] = [];
+	const seen = new Set<string>();
+
+	const pushLocation = (candidateFsPath: string, range: SymbolRange) => {
+		const uri = fsPathToFileUri(candidateFsPath);
+		const key = `${uri}:${range.start.line}:${range.start.character}:${range.end.line}:${range.end.character}`;
+		if (seen.has(key)) return;
+		seen.add(key);
+		results.push(Location.create(uri, range as any));
+	};
+
+	for (const candidate of includeFiles) {
+		const idx = getAnyIndexForFsPath(candidate);
+		if (!idx) continue;
+		const fn = (idx.functions as any)[word];
+		if (fn?.range) pushLocation(candidate, fn.range);
+		const v = (idx.variables as any)[word];
+		if (v?.range) pushLocation(candidate, v.range);
+	}
+
+	return results.length ? results : null;
 });
 
 connection.onDocumentFormatting((params) => {
@@ -194,7 +389,9 @@ connection.onDidChangeWatchedFiles(_change => {
 
 // This handler provides the initial list of the completion items.
 connection.onCompletion(
-	(_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
+	(textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
+		const symbolItems = getSymbolCompletionItems(textDocumentPosition.textDocument.uri);
+
 		// Get completions from loaded prototypes first
 		const prototypeItems = prototypesLoader.getCompletionItems();
 		
@@ -258,7 +455,16 @@ connection.onCompletion(
 			data: type
 		}));
 		
-		return [...keywordItems, ...typeItems, ...prototypeItems];
+		// De-dupe by label while preserving priority (document symbols first).
+		const seen = new Set<string>();
+		const out: CompletionItem[] = [];
+		for (const item of [...symbolItems, ...keywordItems, ...typeItems, ...prototypeItems]) {
+			const key = item.label;
+			if (seen.has(key)) continue;
+			seen.add(key);
+			out.push(item);
+		}
+		return out;
 	}
 );
 
@@ -299,6 +505,28 @@ connection.onHover(
 						value: typeDocumentation[word]
 					}
 				};
+			}
+
+			// Check if it's a document symbol (variable/function)
+			const docSymbol = getDocumentSymbolInfo(textDocument.uri, word);
+			if (docSymbol) {
+				if (docSymbol.kind === 'function' && docSymbol.signature) {
+					return {
+						contents: {
+							kind: 'markdown',
+							value: `\n\n\`\`\`12dpl\n${docSymbol.signature}\n\`\`\`\n`
+						}
+					};
+				}
+				if (docSymbol.kind === 'variable') {
+					const line = docSymbol.type ? `${docSymbol.type} ${word}` : word;
+					return {
+						contents: {
+							kind: 'markdown',
+							value: `\n\n\`\`\`12dpl\n${line}\n\`\`\`\n`
+						}
+					};
+				}
 			}
 
 			// Check if it's a keyword
@@ -346,14 +574,49 @@ function getWordAtPosition(textDocument: TextDocument | undefined, position: any
 // the completion list.
 connection.onCompletionResolve(
 	(item: CompletionItem): CompletionItem => {
-		// Try to get documentation from prototypes
-		const prototype = prototypesLoader.getPrototype(item.label);
-		if (prototype) {
-			item.documentation = {
-				kind: 'markdown',
-				value: prototypesLoader.generateDocumentation(prototype)
-			};
-			return item;
+		// Document symbols (from ANTLR) carry their own signature/type.
+		const data: any = (item as any).data;
+		if (data && typeof data === 'object' && data.source === 'document') {
+			if (data.kind === 'function' && typeof data.signature === 'string' && data.signature.length) {
+				item.documentation = {
+					kind: 'markdown',
+					value: `\n\n\`\`\`12dpl\n${data.signature}\n\`\`\`\n`
+				};
+				return item;
+			}
+			if (data.kind === 'variable') {
+				const line = typeof data.type === 'string' && data.type.length ? `${data.type} ${item.label}` : `${item.label}`;
+				item.documentation = {
+					kind: 'markdown',
+					value: `\n\n\`\`\`12dpl\n${line}\n\`\`\`\n`
+				};
+				return item;
+			}
+		}
+
+		// Try to get documentation from prototypes (including overload selection).
+		if (data && typeof data === 'object' && data.source === 'prototype') {
+			const name = typeof data.name === 'string' ? data.name : item.label;
+			const id = typeof data.id === 'number' ? data.id : undefined;
+			const prototype = (typeof id === 'number')
+				? prototypesLoader.getPrototypeOverload(name, id)
+				: prototypesLoader.getPrototype(name);
+			if (prototype) {
+				item.documentation = {
+					kind: 'markdown',
+					value: prototypesLoader.generateDocumentation(prototype)
+				};
+				return item;
+			}
+		} else {
+			const prototype = prototypesLoader.getPrototype(item.label);
+			if (prototype) {
+				item.documentation = {
+					kind: 'markdown',
+					value: prototypesLoader.generateDocumentation(prototype)
+				};
+				return item;
+			}
 		}
 
 		// Check if it's a documented type
