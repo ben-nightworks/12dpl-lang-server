@@ -113,14 +113,22 @@ To compile with selectable flags, use the **Gear** button (`⚙ 12dPL`) in the s
 ## 🔧 Configuration
 There are a few available settings that are defined for the language server that can be used to customise the way the language server behaves. They are listed below with a description of their use.
 
-- 12dpl.compiler.availableFlags : List of cc4d compiler flags to show as checkboxes when compiling. Each entry may include arguments, e.g. '-log \"build.log\"' or '-codepage 1252'.
-- 12dpl.compiler.path : Path to the folder containing the cc4d.exe compiler. Example: C:\\Program Files\\12d\\12dmodel\\15.00\\nt.x64\\
-- 12dpl.compiler.includePaths : List of folders to prepend to the PATH environment variable before running the compiler (useful for include directories). Use platform paths; on Windows use semicolon-separated PATH semantics.
-- 12dpl.compiler.defaultFlags : Default cc4d flags to preselect in the compile checkbox picker. Last selection is remembered per-workspace.
-- 12dpl.formatOnSave : Auto-format 12dPL files when they are saved.
-- 12dpl.indentSize : Indent size (spaces) used by the 12dPL formatter.
-- langServer.maxNumberOfProblems : Controls the maximum number of problems produced by the server.
-- langServer.trace.server : Traces the communication between VS Code and the language server.
+- 12dpl.compiler.availableFlags 
+	- List of cc4d compiler flags to show as checkboxes when compiling. Each entry may include arguments, e.g. '-log \"build.log\"' or '-codepage 1252'.
+- 12dpl.compiler.path 
+	- Path to the folder containing the cc4d.exe compiler. Example: C:\\Program Files\\12d\\12dmodel\\15.00\\nt.x64\\
+- 12dpl.compiler.includePaths 
+	- List of folders to prepend to the PATH environment variable before running the compiler (useful for include directories). Use platform paths; on Windows use semicolon-separated PATH semantics.
+- 12dpl.compiler.defaultFlags 
+	- Default cc4d flags to preselect in the compile checkbox picker. Last selection is remembered per-workspace.
+- 12dpl.formatOnSave 
+	- Auto-format 12dPL files when they are saved.
+- 12dpl.indentSize 
+	- Indent size (spaces) used by the 12dPL formatter.
+- langServer.maxNumberOfProblems 
+	- Controls the maximum number of problems produced by the server.
+- langServer.trace.server 
+	- Traces the communication between VS Code and the language server.
 
 ---
 
@@ -147,4 +155,5 @@ Contributions welcome! Please submit pull requests or issues.
 ## 👤 Contributors 
 
 **Ben Olsen**
+
 **Kamal Jarada** 
