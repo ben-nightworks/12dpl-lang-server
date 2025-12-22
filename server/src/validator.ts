@@ -23,6 +23,11 @@ class DiagnosticErrorListener extends ErrorListener<any> {
 }
 
 export class Validator {
+	/**
+	 * Parses the given document text and returns diagnostics for any syntax errors.
+	 *
+	 * This is used for real-time validation (squiggles) in the editor.
+	 */
 	static Validate(documentText: string): Diagnostic[] {
 		const diagnostics: Diagnostic[] = [];
 

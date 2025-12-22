@@ -3,12 +3,18 @@ import { CharStream, CommonTokenStream } from 'antlr4';
 import proglang12dLexer from './antlr/proglang12dLexer';
 import proglang12dParser from './antlr/proglang12dParser';
 
+/** The lexer/parser pair used by validation and symbol extraction. */
 export interface LexerAndParser {
 	lexer: proglang12dLexer;
 	parser: proglang12dParser;
 	transformedText: string;
 }
 
+/**
+ * Removes conditional/preprocessor directive lines before parsing.
+ *
+ * Keeps line numbers stable by replacing stripped lines with empty lines.
+ */
 export function stripConditionalDirectives(documentText: string): string {
 	// The lexer has rules to skip some preprocessor directives, but real-world
 	// headers include macros containing '#'/'##' which can defeat simplistic lexer
@@ -36,6 +42,11 @@ export function stripConditionalDirectives(documentText: string): string {
 	return out.join('\n');
 }
 
+/**
+ * Wraps top-level blocks/statements in implicit functions so they parse under the compilationUnit grammar.
+ *
+ * Inserts tokens without adding newlines to preserve line mapping.
+ */
 export function wrapTopLevelScriptsPreservingLines(documentText: string): string {
 	// Wrap any top-level “script” segments (blocks/statements outside functions)
 	// in implicit functions so the compilationUnit grammar can parse them.
@@ -242,11 +253,18 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 	return out;
 }
 
+
+/**
+ * Normalizes raw source text into something the ANTLR grammar can parse reliably.
+ *
+ * This strips directive lines and wraps top-level script blocks.
+ */
 export function prepareDocumentTextForParser(documentText: string): string {
 	const cleanedText = stripConditionalDirectives(documentText);
 	return wrapTopLevelScriptsPreservingLines(cleanedText);
 }
 
+/** Creates and configures an ANTLR lexer/parser for a 12dPL document. */
 export function createLexerAndParser(documentText: string): LexerAndParser {
 	const transformedText = prepareDocumentTextForParser(documentText);
 	const chars = new CharStream(transformedText);

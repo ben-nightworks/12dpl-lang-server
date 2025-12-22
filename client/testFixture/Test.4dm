@@ -1,3 +1,6 @@
+#include "set_ups.h"
+
+
 // Programmer   Lee Gregory
 // Date
 // 30/9/94
@@ -13,6 +16,8 @@
 //----------------------------------------------------------
 void get_hip_info(Element align,Integer hip,Integer &type,
 Real xval[],Real yval[],Real lengths[])
+
+
 // -----------------------------------------------------------
 //
 

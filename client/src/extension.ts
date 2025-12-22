@@ -29,6 +29,10 @@ type CompilerInfo = {
 	versionLine?: string;
 };
 
+/**
+ * Executes `cc4d.exe ?` and extracts the version line (best-effort).
+ * Used to annotate the status bar tooltip/output.
+ */
 async function getCompilerInfo(compilerExe: string): Promise<CompilerInfo> {
 	return new Promise((resolve) => {
 		// Prepare environment with any configured includePaths added to PATH
@@ -74,6 +78,7 @@ async function getCompilerInfo(compilerExe: string): Promise<CompilerInfo> {
 	});
 }
 
+/** Splits a user-configured flags string into argv-style tokens (supports quotes). */
 function splitCommandLineArgs(value: string): string[] {
 	const args: string[] = [];
 	let current = '';
@@ -124,6 +129,7 @@ function splitCommandLineArgs(value: string): string[] {
 	return args;
 }
 
+/** VS Code extension activation entrypoint. Registers LSP client and compile commands. */
 export function activate(context: ExtensionContext) {
 	const outputChannel = window.createOutputChannel('12dPL Compiler');
 

@@ -36,6 +36,7 @@ class PrototypesLoader {
 	private completionItems: CompletionItem[] = [];
 	private loaded = false;
 
+	/** Loads prototype metadata and builds completion items (idempotent). */
 	async load(): Promise<void> {
 		if (this.loaded) {
 			return;
@@ -52,13 +53,24 @@ class PrototypesLoader {
 			if (fs.existsSync(enrichedPath)) {
 				const jsonContent = fs.readFileSync(enrichedPath, 'utf-8');
 				const functions: FunctionData[] = JSON.parse(jsonContent);
-				for (const func of functions) {
-					baseByName.set(func.name.toLowerCase(), func);
-					this.addPrototype(func);
-				}
-			} else {
-				console.error('Enriched functions JSON file not found:', enrichedPath);
-			}
+				
+				functions.forEach((func) => {
+					const key = func.name.toLowerCase();
+					this.prototypes.set(key, func);
+					const signature = this.generateSignature(func);
+					const callSig = signature.match(/\([^)]*\)\s*$/)?.[0] ?? '';
+					const displayLabel = callSig ? `${func.name} ${callSig}` : func.name;
+					
+					this.completionItems.push({
+						label: displayLabel,
+						kind: CompletionItemKind.Function,
+						detail: signature,
+						filterText: func.name,
+						insertText: this.generateSnippet(func),
+						insertTextFormat: InsertTextFormat.Snippet,
+						data: func.name
+					});
+				});
 
 			// Load compiler function list to pick up overload variants and missing functions.
 			if (fs.existsSync(compilerPath)) {
@@ -154,6 +166,7 @@ class PrototypesLoader {
 		return `${func.returnType} ${func.name}(${params})`;
 	}
 
+	/** Renders Markdown documentation for hover/completion details. */
 	public generateDocumentation(func: FunctionData): string {
 		const params = func.parameters.map(p => `${p.type} ${p.name}`).join(', ');
 		const signature = `${func.returnType} ${func.name}(${params})`;
@@ -171,10 +184,12 @@ class PrototypesLoader {
 		return doc;
 	}
 
+	/** Returns cached completion items for builtin prototypes. */
 	getCompletionItems(): CompletionItem[] {
 		return this.completionItems;
 	}
 
+	/** Looks up a prototype by name (case-insensitive). */
 	getPrototype(name: string): FunctionData | undefined {
 		return this.prototypes.get(name.toLowerCase())?.[0];
 	}
@@ -187,6 +202,7 @@ class PrototypesLoader {
 		return this.prototypes.get(name.toLowerCase())?.find(f => f.id === id);
 	}
 
+	/** Convenience helper for just the signature line. */
 	getPrototypeSignature(name: string): string | undefined {
 		const func = this.getPrototype(name);
 		if (!func) {

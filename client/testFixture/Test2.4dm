@@ -1,3 +1,7 @@
+
+#include "set_ups.h"
+#define PI 3.14159
+
 #if DEBUG
 Clear_console();
 #endif
@@ -13,7 +17,14 @@ Clear_console();
     Integer Shutdown_code = 424242;
 }
 
+
 void main(){
+
+    create_rgb(1, 2, 3);
+    Real TEST = PI * 2.0;
+    set_ups_included();
+
+
 
 
 
