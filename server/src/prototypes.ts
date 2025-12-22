@@ -53,24 +53,13 @@ class PrototypesLoader {
 			if (fs.existsSync(enrichedPath)) {
 				const jsonContent = fs.readFileSync(enrichedPath, 'utf-8');
 				const functions: FunctionData[] = JSON.parse(jsonContent);
-				
-				functions.forEach((func) => {
-					const key = func.name.toLowerCase();
-					this.prototypes.set(key, func);
-					const signature = this.generateSignature(func);
-					const callSig = signature.match(/\([^)]*\)\s*$/)?.[0] ?? '';
-					const displayLabel = callSig ? `${func.name} ${callSig}` : func.name;
-					
-					this.completionItems.push({
-						label: displayLabel,
-						kind: CompletionItemKind.Function,
-						detail: signature,
-						filterText: func.name,
-						insertText: this.generateSnippet(func),
-						insertTextFormat: InsertTextFormat.Snippet,
-						data: func.name
-					});
-				});
+				for (const func of functions) {
+					baseByName.set(func.name.toLowerCase(), func);
+					this.addPrototype(func);
+				}
+			} else {
+				console.error('Enriched functions JSON file not found:', enrichedPath);
+			}
 
 			// Load compiler function list to pick up overload variants and missing functions.
 			if (fs.existsSync(compilerPath)) {
