@@ -249,6 +249,7 @@ export function activate(context: ExtensionContext) {
 				}
 			}
 
+			const inputFileFolder = path.dirname(inputFile);
 			outputChannel.clear();
 			const flagArgs = (selectedFlags ?? []).flatMap((flag) => splitCommandLineArgs(flag));
 			const args = [...flagArgs, inputFile];
@@ -263,8 +264,8 @@ export function activate(context: ExtensionContext) {
 			const includePathsTop = (configTop.get<string[]>('compiler.includePaths') ?? []).map((p) => String(p).trim()).filter(Boolean);
 			const envTop = { ...process.env } as NodeJS.ProcessEnv;
 			if (includePathsTop.length > 0) {
-				const sep = process.platform === 'win32' ? ';' : ':';
-				envTop.PATH = `${includePathsTop.join(sep)}${sep}${envTop.PATH ?? ''}`;
+				const sep = ':';
+				envTop.CPLUS_INCLUDE_PATH = `${envTop.CPLUS_INCLUDE_PATH ?? ''}${sep}${includePathsTop.join(sep)}${sep}${inputFileFolder}`;
 			}
 
 			const child = cp.spawn(compilerExe, args, {
@@ -285,7 +286,7 @@ export function activate(context: ExtensionContext) {
 					if (fs.existsSync(expectedOutput)) {
 						void window.showInformationMessage(`Compiled: ${expectedOutput}`);
 					} else {
-						void window.showWarningMessage('Compilation succeeded, but .4do was not found next to the input file.');
+						void window.showWarningMessage('Compilation fauled, .4do was not found next to the input file.');
 					}
 				} else {
 					void window.showErrorMessage('Compilation failed. See Output: 12dPL Compiler.');
