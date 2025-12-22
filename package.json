@@ -129,8 +129,8 @@
 				"12dpl.compiler.path": {
 					"scope": "window",
 					"type": "string",
-					"default": "C:\\Program Files\\12d\\12dmodel\\14.00\\nt.x64\\",
-					"description": "Path to the folder containing the cc4d.exe compiler. Example: C:\\Program Files\\12d\\12dmodel\\14.00\\nt.x64\\"
+					"default": "C:\\Program Files\\12d\\12dmodel\\15.00\\nt.x64\\",
+					"description": "Path to the folder containing the cc4d.exe compiler. Example: C:\\Program Files\\12d\\12dmodel\\15.00\\nt.x64\\"
 				},
 				"12dpl.compiler.includePaths": {
 					"scope": "window",
