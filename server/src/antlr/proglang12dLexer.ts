@@ -1,4 +1,4 @@
-// Generated from server/src/proglang12d.g4 by ANTLR 4.13.1
+// Generated from src/proglang12d.g4 by ANTLR 4.13.1
 // noinspection ES6UnusedImports,JSUnusedGlobalSymbols,JSUnusedLocalSymbols
 import {
 	ATN,

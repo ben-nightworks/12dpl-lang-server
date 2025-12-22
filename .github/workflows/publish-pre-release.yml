@@ -3,7 +3,7 @@ name: Create Release and Build VSIX
 on:
   push:
     branches:
-      - main
+      - pre-release
     tags:
       - 'v*'
   workflow_dispatch:
@@ -56,7 +56,7 @@ jobs:
             # 12dPL Language Server v${{ steps.version.outputs.version }}
             
             Production-ready 12dPL language server with:
-            - ▶️ Bundled compiler: compile `.4dm` → `.4do` (Play button)
+            - ▶️ Compile `.4dm` → `.4do` (Play button)
             - ✅ Auto-formatting on save (C++ style)
             - ✅ 90+ type documentation with hover support
             - ✅ 2,714+ auto-completions
@@ -71,14 +71,14 @@ jobs:
             4. Select the downloaded file
             
             ## Contributors
-            - Ben Olsen (Original)
-            - Kamal Jarada (2026 Enhancements)
+            - Ben Olsen
+            - Kamal Jarada
             
             See [README.md](https://github.com/${{ github.repository }}/blob/main/README.md) for full details.
           files: |
             *.vsix
           draft: false
-          prerelease: false
+          prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       

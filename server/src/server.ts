@@ -2,20 +2,23 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
+
+/**
+ * 12dPL language server entrypoint.
+ *
+ * Keeps LSP wiring here and delegates feature logic (completion/hover/formatting) to providers
+ * in `server/src/providers`.
+ */
 import {
 	createConnection,
 	TextDocuments,
 	Diagnostic,
-	DiagnosticSeverity,
 	ProposedFeatures,
 	InitializeParams,
 	DidChangeConfigurationNotification,
-	CompletionItem,
-	CompletionItemKind,
-	TextDocumentPositionParams,
 	TextDocumentSyncKind,
 	InitializeResult,
-	TextEdit
+	Location
 } from 'vscode-languageserver/node';
 
 import {
@@ -27,16 +30,25 @@ import {
 } from './validator.js';
 
 import {
+	collectRecursiveIncludeFiles,
+	fileUriToFsPath,
+	fsPathToFileUri
+} from './includes.js';
+
+import {
 	prototypesLoader
 } from './prototypes.js';
 
 import {
-	typeDocumentation
-} from './documentation.js';
+	SymbolRange
+} from './symbols.js';
 
-import {
-	format12dplDocument
-} from './formatter.js';
+import { DocumentSymbolStore } from './providers/documentSymbols.js';
+import { registerCompletionProvider } from './providers/completionProvider.js';
+import { registerHoverProvider } from './providers/hoverProvider.js';
+import { registerFormattingProvider } from './providers/formattingProvider.js';
+import { getWordAtPosition } from './providers/utils.js';
+import { parseDefinesFromText } from './providers/defines.js';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -45,10 +57,11 @@ const connection = createConnection(ProposedFeatures.all);
 // Create a simple text document manager.
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
+const documentSymbols = new DocumentSymbolStore(documents);
+
 let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
 let hasDiagnosticRelatedInformationCapability = false;
-
 connection.onInitialize((params: InitializeParams) => {
 	const capabilities = params.capabilities;
 
@@ -76,6 +89,7 @@ connection.onInitialize((params: InitializeParams) => {
 			},
 			// Tell the client that this server supports hover.
 			hoverProvider: true,
+			definitionProvider: true,
 			documentFormattingProvider: true
 		}
 	};
@@ -152,27 +166,73 @@ function getDocumentSettings(resource: string): Thenable<ServerSettings> {
 // Only keep settings for open documents
 documents.onDidClose(e => {
 	documentSettings.delete(e.document.uri);
+	documentSymbols.clearForUri(e.document.uri);
 });
 
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
 documents.onDidChangeContent(change => {
+	documentSymbols.updateForDocument(change.document);
 	validateTextDocument(change.document);
 });
 
-connection.onDocumentFormatting((params) => {
-	const document = documents.get(params.textDocument.uri);
-	if (!document) {
-		return [];
+connection.onDefinition((params) => {
+	const doc = documents.get(params.textDocument.uri);
+	if (!doc) return null;
+
+	const word = getWordAtPosition(doc, params.position);
+	if (!word) return null;
+
+	// Prefer current document symbol (function or variable)
+	const local = documentSymbols.getSymbolInfo(doc.uri, word);
+	if (local?.range) {
+		return Location.create(doc.uri, local.range as any);
 	}
 
-	const formatted = format12dplDocument(document.getText(), params.options);
-	const fullRange = {
-		start: document.positionAt(0),
-		end: document.positionAt(document.getText().length)
+	// Prefer local #define
+	const docPath = fileUriToFsPath(doc.uri);
+	if (!docPath) return null;
+	for (const d of parseDefinesFromText(doc.getText(), docPath)) {
+		if (d.name === word && d.range) {
+			return Location.create(doc.uri, d.range as any);
+		}
+	}
+
+	const readText = (fsPath: string): string | null => documentSymbols.getTextForFsPath(fsPath);
+
+	const includeFiles = collectRecursiveIncludeFiles(docPath, readText, { maxFiles: 500 });
+	const results: Location[] = [];
+	const seen = new Set<string>();
+
+	const pushLocation = (candidateFsPath: string, range: SymbolRange) => {
+		const uri = fsPathToFileUri(candidateFsPath);
+		const key = `${uri}:${range.start.line}:${range.start.character}:${range.end.line}:${range.end.character}`;
+		if (seen.has(key)) return;
+		seen.add(key);
+		results.push(Location.create(uri, range as any));
 	};
 
-	return [TextEdit.replace(fullRange, formatted)];
+	for (const candidate of includeFiles) {
+		const idx = documentSymbols.getIndexForFsPath(candidate);
+		if (!idx) continue;
+		const fn = (idx.functions as any)[word];
+		if (fn?.range) pushLocation(candidate, fn.range);
+		const v = (idx.variables as any)[word];
+		if (v?.range) pushLocation(candidate, v.range);
+
+		// Also resolve #define macros in included files
+		const text = readText(candidate);
+		if (text != null) {
+			for (const d of parseDefinesFromText(text, candidate)) {
+				if (d.name === word && d.range) {
+					pushLocation(candidate, d.range);
+					break;
+				}
+			}
+		}
+	}
+
+	return results.length ? results : null;
 });
 
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
@@ -192,202 +252,9 @@ connection.onDidChangeWatchedFiles(_change => {
 	connection.console.log('We received an file change event');
 });
 
-// This handler provides the initial list of the completion items.
-connection.onCompletion(
-	(_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
-		// Get completions from loaded prototypes first
-		const prototypeItems = prototypesLoader.getCompletionItems();
-		
-		// Combine with keyword completions
-		const keywordItems: CompletionItem[] = [
-			{
-				label: 'if',
-				kind: CompletionItemKind.Keyword,
-				detail: 'Conditional statement',
-				data: 1
-			},
-			{
-				label: 'else',
-				kind: CompletionItemKind.Keyword,
-				detail: 'Else clause',
-				data: 2
-			},
-			{
-				label: 'while',
-				kind: CompletionItemKind.Keyword,
-				detail: 'While loop',
-				data: 3
-			},
-			{
-				label: 'for',
-				kind: CompletionItemKind.Keyword,
-				detail: 'For loop',
-				data: 4
-			},
-			{
-				label: 'return',
-				kind: CompletionItemKind.Keyword,
-				detail: 'Return statement',
-				data: 5
-			},
-			{
-				label: 'void',
-				kind: CompletionItemKind.Keyword,
-				detail: 'Void return type',
-				data: 6
-			},
-			{
-				label: 'int',
-				kind: CompletionItemKind.Keyword,
-				detail: 'Integer type',
-				data: 7
-			},
-			{
-				label: 'double',
-				kind: CompletionItemKind.Keyword,
-				detail: 'Double type',
-				data: 8
-			}
-		];
-
-		// Add type completions
-		const typeItems: CompletionItem[] = Object.keys(typeDocumentation).map(type => ({
-			label: type,
-			kind: CompletionItemKind.Class,
-			detail: '12dPL Type',
-			data: type
-		}));
-		
-		return [...keywordItems, ...typeItems, ...prototypeItems];
-	}
-);
-
-// This handler provides hover information for symbols.
-connection.onHover(
-	(textDocumentPositionParams) => {
-		try {
-			const textDocument = documents.get(textDocumentPositionParams.textDocument.uri);
-			if (!textDocument) {
-				return null;
-			}
-
-			const word = getWordAtPosition(textDocument, textDocumentPositionParams.position);
-			if (!word) {
-				return null;
-			}
-
-			// Check if it's a prototype
-			const prototype = prototypesLoader.getPrototype(word);
-			if (prototype) {
-				const signature = prototypesLoader.getPrototypeSignature(word);
-				return {
-					contents: [
-						{
-							language: '12dpl',
-							value: signature || word
-						},
-						prototype.description || 'No description available'
-					]
-				};
-			}
-
-			// Check if it's a documented type
-			if (typeDocumentation[word]) {
-				return {
-					contents: {
-						kind: 'markdown',
-						value: typeDocumentation[word]
-					}
-				};
-			}
-
-			// Check if it's a keyword
-			const keywords = ['if', 'else', 'while', 'for', 'return', 'void', 'int', 'double'];
-			if (keywords.includes(word.toLowerCase())) {
-				return {
-					contents: `**Keyword:** ${word}`
-				};
-			}
-
-			return null;
-		} catch (e) {
-			connection.console.error(`Hover error: ${e}`);
-			return null;
-		}
-	}
-);
-
-// Helper function to get word at position
-function getWordAtPosition(textDocument: TextDocument | undefined, position: any): string | null {
-	if (!textDocument) {
-		return null;
-	}
-
-	const line = textDocument.getText().split('\n')[position.line];
-	if (!line) {
-		return null;
-	}
-
-	let start = position.character;
-	let end = position.character;
-
-	while (start > 0 && /[a-zA-Z0-9_]/.test(line[start - 1])) {
-		start--;
-	}
-
-	while (end < line.length && /[a-zA-Z0-9_]/.test(line[end])) {
-		end++;
-	}
-
-	return line.substring(start, end);
-}
-
-// This handler resolves additional information for the item selected in
-// the completion list.
-connection.onCompletionResolve(
-	(item: CompletionItem): CompletionItem => {
-		// Try to get documentation from prototypes
-		const prototype = prototypesLoader.getPrototype(item.label);
-		if (prototype) {
-			item.documentation = {
-				kind: 'markdown',
-				value: prototypesLoader.generateDocumentation(prototype)
-			};
-			return item;
-		}
-
-		// Check if it's a documented type
-		if (typeDocumentation[item.label]) {
-			item.documentation = {
-				kind: 'markdown',
-				value: typeDocumentation[item.label]
-			};
-			return item;
-		}
-
-		// Fallback for keywords
-		const keywordDocs: Record<string, string> = {
-			'if': '**Conditional Statement**\n\nExecute code block if condition is true.\n\n```12dpl\nif (condition) { ... }\n```',
-			'else': '**Else Clause**\n\nExecute code block if if condition is false.\n\n```12dpl\nelse { ... }\n```',
-			'while': '**While Loop**\n\nRepeatedly execute code while condition is true.\n\n```12dpl\nwhile (condition) { ... }\n```',
-			'for': '**For Loop**\n\nLoop with init, condition, and increment.\n\n```12dpl\nfor (init; condition; increment) { ... }\n```',
-			'return': '**Return Statement**\n\nReturn a value from function.\n\n```12dpl\nreturn value;\n```',
-			'void': '**Void Type**\n\nNo return value',
-			'int': '**Integer Type**\n\nWhole number',
-			'double': '**Double Type**\n\nFloating-point number'
-		};
-
-		const keywordDoc = keywordDocs[item.label.toLowerCase()];
-		if (keywordDoc) {
-			item.documentation = {
-				kind: 'markdown',
-				value: keywordDoc
-			};
-		}
-
-		return item;
-	}
-);
+registerCompletionProvider({ connection, documents, documentSymbols });
+registerHoverProvider({ connection, documents, documentSymbols });
+registerFormattingProvider({ connection, documents });
 
 // Make the text document manager listen on the connection
 // for open, change and close text document events

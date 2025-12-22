@@ -1,3 +1,6 @@
+#include "set_ups.h"
+
+
 // Programmer   Lee Gregory
 // Date
 // 30/9/94
@@ -13,6 +16,8 @@
 //----------------------------------------------------------
 void get_hip_info(Element align,Integer hip,Integer &type,
 Real xval[],Real yval[],Real lengths[])
+
+
 // -----------------------------------------------------------
 //
 
@@ -35,10 +40,25 @@ Real xval[],Real yval[],Real lengths[])
     Text hip_type;
     Integer ret;
     ret = Get_hip_type(align,hip,hip_type);
+    switch(hip_type)
+    {
+    case "Test 1":
+    case "Test 2":
+        {
+            break;
+        }
+    case "Test 3":
+    default:
+        {
+
+        }
+    }
+
     // Get the co-ordinates of the special points for the HIP
     if(hip_type == "IP") {
         //  case of HIP only with no curve or spiral
         Real xip,yip;  ret = Get_hip_geom(align,hip,0,xip,yip);
+
         xval[6] = xip; yval[6] = yip;
         type = 0;
         // fill in other array positions - set them all to the HIP
