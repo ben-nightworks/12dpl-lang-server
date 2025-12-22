@@ -126,6 +126,19 @@
 					],
 					"description": "List of cc4d compiler flags to show as checkboxes when compiling. Each entry may include arguments, e.g. '-log \"build.log\"' or '-codepage 1252'."
 				},
+				"12dpl.compiler.path": {
+					"scope": "window",
+					"type": "string",
+					"default": "C:\\Program Files\\12d\\12dmodel\\15.00\\nt.x64\\",
+					"description": "Path to the folder containing the cc4d.exe compiler. Example: C:\\Program Files\\12d\\12dmodel\\15.00\\nt.x64\\"
+				},
+				"12dpl.compiler.includePaths": {
+					"scope": "window",
+					"type": "array",
+					"items": { "type": "string" },
+					"default": [],
+					"description": "List of folders to prepend to the PATH environment variable before running the compiler (useful for include directories). Use platform paths; on Windows use semicolon-separated PATH semantics."
+				},
 				"12dpl.compiler.defaultFlags": {
 					"scope": "resource",
 					"type": "array",
