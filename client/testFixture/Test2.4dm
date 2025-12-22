@@ -5,6 +5,10 @@
 #if DEBUG
 Clear_console();
 #endif
+#include "set_ups.h"
+
+
+
 
 {
     Text	program_name	= "12dF Check Exporter";
@@ -19,6 +23,8 @@ void main(){
     create_rgb(1, 2, 3);
     Real TEST = PI * 2.0;
     set_ups_included();
+
+
 
 
 

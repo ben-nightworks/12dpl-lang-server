@@ -126,6 +126,19 @@
 					],
 					"description": "List of cc4d compiler flags to show as checkboxes when compiling. Each entry may include arguments, e.g. '-log \"build.log\"' or '-codepage 1252'."
 				},
+				"12dpl.compiler.path": {
+					"scope": "window",
+					"type": "string",
+					"default": "C:\\Program Files\\12d\\12dmodel\\15.00\\nt.x64\\",
+					"description": "Path to the folder containing the cc4d.exe compiler. Example: C:\\Program Files\\12d\\12dmodel\\15.00\\nt.x64\\"
+				},
+				"12dpl.compiler.includePaths": {
+					"scope": "window",
+					"type": "array",
+					"items": { "type": "string" },
+					"default": [],
+					"description": "List of folders to prepend to the PATH environment variable before running the compiler (useful for include directories). Use platform paths; on Windows use semicolon-separated PATH semantics."
+				},
 				"12dpl.compiler.defaultFlags": {
 					"scope": "resource",
 					"type": "array",
@@ -187,6 +200,7 @@
 	},
 	"scripts": {
 		"vscode:prepublish": "bun run compile && bun server/copy-resources.js",
+		"generate-antlr": "cd server && bun run generate-antlr",
 		"build": "bun run compile",
 		"compile": "bun x tsc -b && bun server/copy-resources.js",
 		"watch": "bun x tsc -b -w",
@@ -199,13 +213,11 @@
 		"test:e2e": "sh ./scripts/e2e.sh"
 	},
 	"devDependencies": {
-		"@types/mocha": "^9.1.0",
 		"@types/node": "^16.11.7",
 		"@typescript-eslint/eslint-plugin": "^5.42.0",
 		"@typescript-eslint/parser": "^5.42.0",
 		"@vscode/vsce": "^3.7.1",
 		"eslint": "^8.26.0",
-		"mocha": "^11.7.5",
 		"typescript": "^4.9.5"
 	}
 }

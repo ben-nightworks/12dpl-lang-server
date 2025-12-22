@@ -14,5 +14,13 @@ describe("prototypesLoader", () => {
 
 		const items = prototypesLoader.getCompletionItems();
 		expect(items.length).toBeGreaterThan(1000);
+
+		// Overloads: ensure at least one well-known overloaded function yields >1 signatures.
+		const overloads = prototypesLoader.getPrototypes("Set_data");
+		expect(overloads.length).toBeGreaterThan(1);
+
+		// And ensure completion returns distinct items for those overloads.
+		const overloadItems = items.filter(i => (i as any).filterText === "Set_data");
+		expect(overloadItems.length).toBeGreaterThan(1);
 	});
 });
