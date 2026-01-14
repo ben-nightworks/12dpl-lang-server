@@ -1,0 +1,172 @@
+{
+	"information_for_contributors": [
+		"This file has been converted from the Notepad++ MTF Snippet language syntax file originally created by Matt Monk",
+		"If you want to provide a fix or improvement, please create a pull request"
+	],
+	"version": "0.1.0",
+	"name": "mtfsnippet",
+	"scopeName": "source.mtfsnippet",
+	"patterns": [
+		{ "include": "#param-line" },
+		{ "include": "#param-block" },
+		{ "include": "#region" },
+		{ "include": "#comment" },
+		{ "include": "#at-directive" },
+		{ "include": "#variable" },
+		{ "include": "#string" },
+		{ "include": "#number" },
+		{ "include": "#types" },
+		{ "include": "#directive" },
+		{ "include": "#keyword" },
+		{ "include": "#command" }
+	],
+	"repository": {
+		"def_tok": {
+			"patterns": [
+				{
+					"name": "entity.name.identifier.mtfsnippet",
+					"match": "[A-Za-z_][A-Za-z0-9_]*"
+				},
+				{
+					"name": "constant.numeric.mtfsnippet",
+					"match": "\\b-?\\d+(?:\\.\\d+)?\\b"
+				},
+				{
+					"name": "string.quoted.double.mtfsnippet",
+					"match": "\"[^\"\\n]*\""
+				}
+			]
+		},
+		"comment": {
+			"patterns": [
+				{
+					"name": "comment.line.double-slash.mtfsnippet",
+					"match": "//.*$"
+				},
+				{
+					"name": "comment.block.mtfsnippet",
+					"begin": "/\\*",
+					"end": "\\*/"
+				}
+			]
+		},
+		"param-line": {
+			"patterns": [
+				{
+					"name": "meta.parameter.line.mtfsnippet",
+					"match": "^\\s*//\\s*(PARAMETER)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+([A-Z0-9_]+)\\s+(\"[^\"]*\"|\\S+)?\\s*(\\S+)?",
+					"captures": {
+						"1": { "name": "keyword.other.parameter.mtfsnippet" },
+						"2": { "name": "variable.parameter.name.mtfsnippet" },
+						"3": { "name": "storage.type.parameter.mtfsnippet" },
+						"4": { "name": "string.description.parameter.mtfsnippet" },
+						"5": { "name": "constant.default.parameter.mtfsnippet" }
+					}
+				}
+			]
+		},
+		"param-block": {
+			"name": "meta.parameter.block.mtfsnippet",
+			"begin": "^\\s*//\\s*START_PARAMETER\\b",
+			"beginCaptures": {
+				"0": { "name": "keyword.other.parameter.start.mtfsnippet" }
+			},
+			"end": "^\\s*//\\s*END_PARAMETER\\b",
+			"endCaptures": {
+				"0": { "name": "keyword.other.parameter.end.mtfsnippet" }
+			},
+			"patterns": [
+				{ "include": "#def_tok" },
+				{ "include": "#string" }
+			]
+		},
+		"region": {
+			"patterns": [
+				{
+					"name": "meta.region.mtfsnippet",
+					"match": "^\\s*//\\s*(START_PARAMETER_REGION|END_PARAMETER_REGION)\\b.*$"
+				}
+			]
+		},
+		"named-position": {
+			"patterns": [
+				{
+					"name": "meta.named-position.mtfsnippet",
+					"match": "\\bnamed_position\\b\\s+(\"MODIFIER_START\"|\"MODIFIER_END\"|MODIFIER_START|MODIFIER_END)\\s+(-?\\d+(?:\\.\\d+)?|-)\\b?",
+					"captures": {
+						"1": { "name": "keyword.other.modifier-token.mtfsnippet" },
+						"2": { "name": "constant.numeric.offset.mtfsnippet" }
+					}
+				}
+			]
+		},
+		"at-directive": {
+			"patterns": [
+				{
+					"name": "keyword.other.directive.at.mtfsnippet",
+					"match": "\\b@?(?:if|def)[A-Za-z0-9_]*\\b"
+				}
+			]
+		},
+		"types": {
+			"patterns": [
+				{
+					"name": "storage.type.parameter.mtfsnippet",
+					"match": "\\b(REAL|ANGLE|BEARING|INTEGER|TEXT|SELECT|CHOICE|CHOICE2|TICK|COLOUR|NAME|NAME_WC|MODEL|TIN|LAYER|NAMED_GRADE)\\b"
+				}
+			]
+		},
+		"directive": {
+			"patterns": [
+				{
+					"name": "keyword.other.directive.mtfsnippet",
+					"match": "\\b(named_position|absolute|extra_start|extra_end|unknown|START_MODE|END_MODE)\\b"
+				}
+			]
+		},
+		"variable": {
+			"patterns": [
+				{
+					"name": "variable.other.parameter.mtfsnippet",
+					"match": "\\$\\([A-Za-z_][A-Za-z0-9_]*\\)"
+				},
+				{
+					"name": "variable.other.attribute.mtfsnippet",
+					"match": "\\$\\(_[A-Z0-9_]+\\[[^\\]]+\\]\\)"
+				}
+			]
+		},
+		"string": {
+			"patterns": [
+				{
+					"name": "string.quoted.double.mtfsnippet",
+					"match": "\"[^\"\\n]*\""
+				}
+			]
+		},
+		"number": {
+			"patterns": [
+				{
+					"name": "constant.numeric.mtfsnippet",
+					"match": "\\b-?\\d+(?:\\.\\d+)?\\b"
+				}
+			]
+		},
+		"keyword": {
+			"patterns": [
+				{
+					"name": "keyword.control.mtfsnippet",
+					"match": "\\b(MODIFIER_START|MODIFIER_END)\\b"
+				}
+			]
+		},
+		"command": {
+			"patterns": [
+				{
+					"name": "support.function.mtfsnippet",
+					"match": "\\b(insert|width|height|INFO|INFO_SIZING|DISPLAY|DISPLAY_TYPE|INCREMENT|END_DATE|OUTPUT_PARSING_STAGES|NO_REPEAT_DIRECTIVES|width|height|insert|height|width)\\b"
+				}
+			]
+		}
+	}
+}
