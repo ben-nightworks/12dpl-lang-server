@@ -10,7 +10,7 @@
 	],
 	"license": "MIT",
 	"displayName": "12dPL Language Server",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ben-nightworks/12dpl-lang-server"
@@ -96,6 +96,16 @@
 					".h"
 				],
 				"configuration": "./language-configuration.json"
+			},
+			{
+				"id": "mtfsnippet",
+				"aliases": [
+					"12d MTF Snippet"
+				],
+				"extensions": [
+					".mtfsnippet"
+				],
+				"configuration": "./language-configuration.json"
 			}
 		],
 		"grammars": [
@@ -103,6 +113,11 @@
 				"language": "12dpl",
 				"scopeName": "source.12dpl",
 				"path": "./syntax/12dpl.tmLanguage.json"
+			},
+			{
+				"language": "mtfsnippet",
+				"scopeName": "source.mtfsnippet",
+				"path": "./syntax/mtfsnippet.tmLanguage.json"
 			}
 		],
 		"configuration": {
