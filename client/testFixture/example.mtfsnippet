@@ -2,7 +2,9 @@
 // PARAMETER DEPTH REAL "Layback depth" -0.04
 // PARAMETER STYLE_TYPE CHOICE2 "Style" $(_PROJECT_ATTRIBUTE[Pavement/Value])
 
-@def_tok WIDTH 0.5
+@ def_tok WIDTH 0.5
+
+@ if_tok_eq_val $(TEST) 
 
 // drop into DW
 insert "SAL" "grey" 0.001 0 unknown named_position "MODIFIER_START" 0 named_position "MODIFIER_START" 0.5 absolute extra_start extra_end
