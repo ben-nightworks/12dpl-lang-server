@@ -7,166 +7,119 @@
 	"name": "mtfsnippet",
 	"scopeName": "source.mtfsnippet",
 	"patterns": [
-		{ "include": "#param-line" },
-		{ "include": "#param-block" },
-		{ "include": "#region" },
-		{ "include": "#comment" },
-		{ "include": "#at-directive" },
-		{ "include": "#variable" },
-		{ "include": "#string" },
-		{ "include": "#number" },
-		{ "include": "#types" },
-		{ "include": "#directive" },
-		{ "include": "#keyword" },
-		{ "include": "#command" }
-	],
-	"repository": {
-		"def_tok": {
-			"patterns": [
-				{
-					"name": "entity.name.identifier.mtfsnippet",
-					"match": "[A-Za-z_][A-Za-z0-9_]*"
-				},
-				{
-					"name": "constant.numeric.mtfsnippet",
-					"match": "\\b-?\\d+(?:\\.\\d+)?\\b"
-				},
-				{
-					"name": "string.quoted.double.mtfsnippet",
-					"match": "\"[^\"\\n]*\""
-				}
-			]
-		},
-		"comment": {
-			"patterns": [
-				{
-					"name": "comment.line.double-slash.mtfsnippet",
-					"match": "//.*$"
-				},
-				{
-					"name": "comment.block.mtfsnippet",
-					"begin": "/\\*",
-					"end": "\\*/"
-				}
-			]
-		},
-		"param-line": {
-			"patterns": [
-				{
-					"name": "meta.parameter.line.mtfsnippet",
-					"match": "^\\s*//\\s*(PARAMETER)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+([A-Z0-9_]+)\\s+(\"[^\"]*\"|\\S+)?\\s*(\\S+)?",
-					"captures": {
-						"1": { "name": "keyword.other.parameter.mtfsnippet" },
-						"2": { "name": "variable.parameter.name.mtfsnippet" },
-						"3": { "name": "storage.type.parameter.mtfsnippet" },
-						"4": { "name": "string.description.parameter.mtfsnippet" },
-						"5": { "name": "constant.default.parameter.mtfsnippet" }
-					}
-				}
-			]
-		},
-		"param-block": {
-			"name": "meta.parameter.block.mtfsnippet",
-			"begin": "^\\s*//\\s*START_PARAMETER\\b",
-			"beginCaptures": {
-				"0": { "name": "keyword.other.parameter.start.mtfsnippet" }
-			},
-			"end": "^\\s*//\\s*END_PARAMETER\\b",
-			"endCaptures": {
-				"0": { "name": "keyword.other.parameter.end.mtfsnippet" }
-			},
-			"patterns": [
-				{ "include": "#def_tok" },
-				{ "include": "#string" }
-			]
-		},
-		"region": {
-			"patterns": [
-				{
-					"name": "meta.region.mtfsnippet",
-					"match": "^\\s*//\\s*(START_PARAMETER_REGION|END_PARAMETER_REGION)\\b.*$"
-				}
-			]
-		},
-		"named-position": {
-			"patterns": [
-				{
-					"name": "meta.named-position.mtfsnippet",
-					"match": "\\bnamed_position\\b\\s+(\"MODIFIER_START\"|\"MODIFIER_END\"|MODIFIER_START|MODIFIER_END)\\s+(-?\\d+(?:\\.\\d+)?|-)\\b?",
-					"captures": {
-						"1": { "name": "keyword.other.modifier-token.mtfsnippet" },
-						"2": { "name": "constant.numeric.offset.mtfsnippet" }
-					}
-				}
-			]
-		},
-		"at-directive": {
-			"patterns": [
-				{
-					"name": "keyword.other.directive.at.mtfsnippet",
-					"match": "\\b@?(?:if|def)[A-Za-z0-9_]*\\b"
-				}
-			]
-		},
-		"types": {
-			"patterns": [
-				{
-					"name": "storage.type.parameter.mtfsnippet",
-					"match": "\\b(REAL|ANGLE|BEARING|INTEGER|TEXT|SELECT|CHOICE|CHOICE2|TICK|COLOUR|NAME|NAME_WC|MODEL|TIN|LAYER|NAMED_GRADE)\\b"
-				}
-			]
-		},
-		"directive": {
-			"patterns": [
-				{
-					"name": "keyword.other.directive.mtfsnippet",
-					"match": "\\b(named_position|absolute|extra_start|extra_end|unknown|START_MODE|END_MODE)\\b"
-				}
-			]
-		},
-		"variable": {
-			"patterns": [
-				{
-					"name": "variable.other.parameter.mtfsnippet",
-					"match": "\\$\\([A-Za-z_][A-Za-z0-9_]*\\)"
-				},
-				{
-					"name": "variable.other.attribute.mtfsnippet",
-					"match": "\\$\\(_[A-Z0-9_]+\\[[^\\]]+\\]\\)"
-				}
-			]
-		},
-		"string": {
-			"patterns": [
-				{
-					"name": "string.quoted.double.mtfsnippet",
-					"match": "\"[^\"\\n]*\""
-				}
-			]
-		},
-		"number": {
-			"patterns": [
-				{
-					"name": "constant.numeric.mtfsnippet",
-					"match": "\\b-?\\d+(?:\\.\\d+)?\\b"
-				}
-			]
-		},
-		"keyword": {
-			"patterns": [
-				{
-					"name": "keyword.control.mtfsnippet",
-					"match": "\\b(MODIFIER_START|MODIFIER_END)\\b"
-				}
-			]
-		},
-		"command": {
-			"patterns": [
-				{
-					"name": "support.function.mtfsnippet",
-					"match": "\\b(insert|width|height|INFO|INFO_SIZING|DISPLAY|DISPLAY_TYPE|INCREMENT|END_DATE|OUTPUT_PARSING_STAGES|NO_REPEAT_DIRECTIVES|width|height|insert|height|width)\\b"
-				}
-			]
-		}
-	}
+    { "include": "#strings" },
+    { "include": "#commands" },
+    { "include": "#comments" },
+    { "include": "#numbers" },
+    { "include": "#operators" },
+    { "include": "#directives" },
+    { "include": "#variables" },
+    { "include": "#parameter-types" },
+    { "include": "#parameter-modifiers" },
+    { "include": "#functions" },
+    { "include": "#modifiers" },
+    { "include": "#modifier-args" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        { "name": "comment.line.double-slash.12d", "match": "//.*$" },
+        { "name": "comment.block.12d", "begin": "/\\*", "end": "\\*/" }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.12d",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            { "name": "constant.character.escape.12d", "match": "\\\\\"" }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        { "name": "constant.numeric.float.12d", "match": "(?<![\\w])(?:[-+]?)(?:\\d*\\.\\d+|\\d+\\.\\d*)(?:[eE][-+]?\\d+)?(?![\\w])" },
+        { "name": "constant.numeric.integer.12d", "match": "(?<![\\w])[-+]?\\d+(?![\\w])" }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        { "name": "keyword.operator.arithmetic.12d", "match": "[+\\-*/]" },
+        { "name": "punctuation.parenthesis.12d", "match": "[()]" }
+      ]
+    },
+    "directives": {
+      "patterns": [
+        {
+          "name": "meta.directive.line.12d",
+          "begin": "^\\s*[@#]\\s*(?=\\w|if|ifdef|ifndef)",
+          "end": "$",
+          "patterns": [
+            { "name": "keyword.control.directive.12d", "match": "#\\s*(?:if|else|end_?if|label|goto|define|undef|ifn?def|elif|endif)\\b" },
+            { "name": "keyword.control.directive.at.12d", "match": "(@\\s*?:word|else|if_[a-z_]*|def_[a-z_]*|end_if|repeat|end_repeat|label|goto)\\b" }
+          ]
+        }
+      ]
+    },
+    "variables": {
+      "patterns": [
+        { "name": "support.function.variable.12d", "match": "\\b(?:variable|link_variable)\\b" },
+        { "name": "support.function.link.variable.12d", "match": "\\$\\([A-Za-z_][A-Za-z0-9_]*\\)" }
+      ]
+    },
+    "commands": {
+      "patterns": [
+        {
+          "name": "meta.parameter.line.12d",
+          "begin": "^\\s*(//\\s*PARAMETER)(?:\\s+([A-Za-z0-9_]+))?\\b",
+          "beginCaptures": { 
+            "1": { "name": "keyword.control.command.parameter.12d" },
+            "2": { "name": "entity.name.parameter.12d" }
+           },
+          "end": "$",
+          "patterns": [
+            { "include": "#parameter-types" },
+            { "include": "#parameter-modifiers" },
+            { "include": "#strings" },
+            { "include": "#numbers" }
+          ]
+        },
+        { "name": "keyword.control.command.12d", "match": "^\\s*//\\s*(?:START_PARAMETER_REGION|END_PARAMETER_REGION|INFO|INFO_SIZING|DISPLAY|DISPLAY_TYPE|INCREMENT|END_DATE|OUTPUT_PARSING_STAGES|NO_REPEAT_DIRECTIVES)\\b" }
+      ]
+    },
+    
+    "parameter-types": {
+      "patterns": [
+        { "name": "storage.type.parameter.12d", "match": "\\b(?:CHOICE2?|REAL|INTEGER|TEXT|NAME|COLOUR|TICK|NAMED_GRADE|LAYER|SELECT|MODEL_CREATE|MODEL_MUST_EXIST|MODEL_MUST_NOT_EXIST|TIN_CREATE|TIN_MUST_EXIST|TIN_MUST_NOT_EXIST)\\b" }
+      ]
+    },
+    "parameter-modifiers": {
+      "patterns": [
+        { "name": "keyword.other.parameter.modifier.12d", "match": "\\bOPTIONAL\\b" }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        { "name": "support.function.geometric.12d", "match": "\\b(?:rel_offset|abs_offset|abs_height|abs_level|link_width|link_height|link_grade|x_coord|y_coord|apply_tin_height|other_tin_height|named_grade|named_grade_hdsd_fact|named_grade_sdhd_fact|named_grade_zdsd_fact|named_grade_sdzd_fact|named_grade_hdzd_fact|named_grade_zdhd_fact)\\b" },
+        { "name": "support.function.debug.12d", "match": "\\b(?:user_message|user_message_print|user_message_log|user_message_log_eval_tok|user_message_print_eval_tok)\\b" },
+        { "name": "support.function.math.12d", "match": "\\b(?:sin|cos|tan|asin|acos|atan|atan2|square|sqrt|pi|halfpi|twopi|fabs|ceil|floor|log|exp|fmod|pow|cube|sign|lfwx|lfws|wflx|wfls|hfwx|hfws|hflx|hfls|wfhx|wfhs|lfhx|lfhs)\\b" }
+      ]
+    },
+    "modifiers": {
+      "patterns": [
+        {
+          "name": "support.function.modifier.12d",
+          "match": "^\\b(?:insert|insert_cut|insert_fill|remove|remove_cut|remove_fill|remove_layer|remove_abs|copy_layer|insert_absolute|insert_absolute_cut|insert_absolute_fill|insert_intersect|insert_xfall_point|shape|create_strings|create_tin|insert_at_string|link_order|link_must_exist|link_must_not_exist|all_to_string_fixed|all_to_string_cut|all_to_string_fill|all_to_string_final|all_to_2_strings_fixed|all_to_2_strings_cut|all_to_2_strings_fill|only_fixed|only_fixed_named|only_fixed_from_name|insert_template|insert_template_cut|insert_template_fill|insert_full_template|width|height|xfall|link_fixed|link_cut|link_fill|link_final|xfall_crc|copy_fixed|copy_cut|copy_fill|copy_width|copy_height|copy_xfall|decision|rl_xfall|rl_width|rl_height|rl_cut_slope|rl_cut_width|rl_fill_slope|rl_fill_width|rl_final_cut_slope|rl_final_fill_slope|table_drain|named_grade|named_grade_triple|cut_final_slope|fill_final_slope|grade_all_pt_pt|grade_all_pt_pt_cut|grade_all_pt_pt_fill|grade_pt_pt_xfall|grade_pt_pt_width|grade_pt_pt_height|grade_pt_pt_cut_slope|grade_pt_pt_cut_width|grade_pt_pt_cut_height|grade_pt_pt_fill_slope|grade_pt_pt_fill_width|grade_pt_pt_fill_height|tin_xfall|tin_height|tin_width|cut_width|cut_height|cut_slope|copy_cut_width|copy_cut_height|copy_cut_slope|tin_cut_height|tin_cut_slope|tin_cut_width|tin_all_fixed|tin_all_cut|tin_all_fill|link_intersect_tin|link_trim_string|link_trim_strings|link_intersect_string|rl_all_fixed|rl_all_cut|rl_all_fill|fill_width|fill_height|fill_slope|copy_fill_width|copy_fill_height|copy_fill_slope|tin_fill_height|tin_fill_slope|tin_fill_width|final_width|final_cut_slope|final_fill_slope|tin_final_cut_slope|tin_final_fill_slope|final_no_cut_slope|final_no_fill_slope|final_no_cut_fill_slope|all_absolute|width_absolute|height_absolute|slope_absolute|snippet|decision_label|decision_else|decision_end|decision_goto|decision_tin|decision_batter|decision_batter_test|decision_polygon|decision_string_exists|decision_link_exists|decision_string_height|decision_link_height|trim_links_tin|interval_string_tps|trim_sections_string|trim_overlapping_sections|analyse_subgrade|interface_tin|modify_rename|change_final_tin|fixed_parallel|fixed_parallel_link|final_rename|region|chainage_alias|change_interval|change_interval_abs|layers_debug|toggle_process|switch_side)\\b"
+        }
+      ]
+    },
+    "modifier-args": {
+      "patterns": [
+        { "name": "constant.language.modifier.arg.12d", "match": "\\b(?:unknown|null|absolute|relative|extra_start|extra_end|interval|no_colour|linear|cubic|rotate|inactive|suppress_msgs)\\b" }
+      ]
+    }
+  }
 }
