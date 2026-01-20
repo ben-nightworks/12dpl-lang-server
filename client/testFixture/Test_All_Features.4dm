@@ -89,4 +89,6 @@ void main()
 
     Integer test_value = int_array[1];
 
+    Test_Indirect();
+
 }

@@ -53,8 +53,29 @@ export function resolveIncludeToFsPath(includingFileFsPath: string, includePath:
 	const baseDir = path.dirname(includingFileFsPath);
 	let candidate = path.isAbsolute(includePath) ? includePath : path.join(baseDir, includePath);
 	if (fs.existsSync(candidate)) return candidate;
+	return null;
+}
 
-	console.warn(`Included file not found: ${candidate}`);
+/** Extended resolver which also considers configured include directories. */
+export function resolveIncludeToFsPathWithDirs(
+	includingFileFsPath: string,
+	includePath: string,
+	includeDirs?: string[]
+): string | null {
+	// First try the normal resolution (relative to including file).
+	const direct = resolveIncludeToFsPath(includingFileFsPath, includePath);
+	if (direct) return direct;
+
+	if (!includeDirs || !includeDirs.length) return null;
+
+	const baseDir = path.dirname(includingFileFsPath);
+	for (const raw of includeDirs) {
+		if (!raw) continue;
+		const dir = path.isAbsolute(raw) ? raw : path.resolve(baseDir, raw);
+		const candidate = path.join(dir, includePath);
+		if (fs.existsSync(candidate)) return candidate;
+	}
+
 	return null;
 }
 
@@ -72,7 +93,7 @@ export interface IncludeTraversalOptions {
 export function collectRecursiveIncludeFiles(
 	entryFileFsPath: string,
 	readText: (fsPath: string) => string | null,
-	options: IncludeTraversalOptions = {}
+	options: IncludeTraversalOptions & { includeDirectories?: string[] } = {}
 ): string[] {
 	const maxFiles = options.maxFiles ?? 500;
 	const visited = new Set<string>();
@@ -99,8 +120,11 @@ export function collectRecursiveIncludeFiles(
 		const includes = extractIncludePaths(text);
 		for (const inc of includes) {
 			if (results.length >= maxFiles) break;
-			const resolved = resolveIncludeToFsPath(cur, inc);
-			if (!resolved) continue;
+			const resolved = resolveIncludeToFsPathWithDirs(cur, inc, options.includeDirectories);
+			if (!resolved) {
+				console.warn(`Could not resolve include "${inc}" in file "${cur}"`);
+				continue;
+			}
 			if (!pushIfNew(resolved)) continue;
 			stack.push(resolved);
 		}

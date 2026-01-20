@@ -17,8 +17,7 @@ import {
 	InitializeParams,
 	DidChangeConfigurationNotification,
 	TextDocumentSyncKind,
-	InitializeResult,
-	Location
+	InitializeResult
 } from 'vscode-languageserver/node';
 
 import {
@@ -39,16 +38,12 @@ import {
 	prototypesLoader
 } from './util/prototypes.js';
 
-import {
-	SymbolRange
-} from './antlr/symbols.js';
 
 import { DocumentSymbolStore } from './providers/documentSymbols.js';
 import { registerCompletionProvider } from './providers/completionProvider.js';
+import { registerDefinitionProvider } from './providers/definitionProvider.js';
 import { registerHoverProvider } from './providers/hoverProvider.js';
 import { registerFormattingProvider } from './providers/formattingProvider.js';
-import { getWordAtPosition } from './util/utils.js';
-import { parseDefinesFromText } from './util/defines.js';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -178,69 +173,9 @@ documents.onDidChangeContent(change => {
 	validateTextDocument(change.document);
 });
 
-connection.onDefinition((params) => {
-	const doc = documents.get(params.textDocument.uri);
-	if (!doc) return null;
-
-	const word = getWordAtPosition(doc, params.position);
-	if (!word) return null;
-
-	// Prefer current document symbol (function or variable)
-	const local = documentSymbols.getSymbolInfo(doc.uri, word);
-	if (local?.range) {
-		return Location.create(doc.uri, local.range as any);
-	}
-
-	// Prefer local #define
-	const docPath = fileUriToFsPath(doc.uri);
-	if (!docPath) return null;
-	for (const d of parseDefinesFromText(doc.getText(), docPath)) {
-		if (d.name === word && d.range) {
-			return Location.create(doc.uri, d.range as any);
-		}
-	}
-
-	const readText = (fsPath: string): string | null => documentSymbols.getTextForFsPath(fsPath);
-
-	const includeFiles = collectRecursiveIncludeFiles(docPath, readText, { maxFiles: 500 });
-	console.log(`Looking for definition of "${word}" in ${includeFiles.length} included files`);
-	const results: Location[] = [];
-	const seen = new Set<string>();
-
-	const pushLocation = (candidateFsPath: string, range: SymbolRange) => {
-		const uri = fsPathToFileUri(candidateFsPath);
-		const key = `${uri}:${range.start.line}:${range.start.character}:${range.end.line}:${range.end.character}`;
-		if (seen.has(key)) return;
-		seen.add(key);
-		results.push(Location.create(uri, range as any));
-	};
-
-	for (const candidate of includeFiles) {
-		const idx = documentSymbols.getIndexForFsPath(candidate);
-		if (!idx) continue;
-		const fn = (idx.functions as any)[word];
-		if (fn?.range) pushLocation(candidate, fn.range);
-		const v = (idx.variables as any)[word];
-		if (v?.range) pushLocation(candidate, v.range);
-
-		// Also resolve #define macros in included files
-		const text = readText(candidate);
-		if (text != null) {
-			for (const d of parseDefinesFromText(text, candidate)) {
-				if (d.name === word && d.range) {
-					pushLocation(candidate, d.range);
-					break;
-				}
-			}
-		}
-	}
-
-	return results.length ? results : null;
-});
-
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	// In this simple example we get the settings for every validate run.
-	const settings = await getDocumentSettings(textDocument.uri);
+	// const settings = await getDocumentSettings(textDocument.uri);
 	
 	const text = textDocument.getText();
 
@@ -250,12 +185,8 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
 
-connection.onDidChangeWatchedFiles(_change => {
-	// Monitored files have change in VSCode
-	connection.console.log('We received an file change event');
-});
-
 registerCompletionProvider({ connection, documents, documentSymbols });
+registerDefinitionProvider({ connection, documents, documentSymbols });
 registerHoverProvider({ connection, documents, documentSymbols });
 registerFormattingProvider({ connection, documents });
 

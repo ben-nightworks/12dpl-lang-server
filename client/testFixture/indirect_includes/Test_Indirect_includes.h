@@ -1,6 +1,6 @@
 
 
-void Test_Indeirect()
+void Test_Indirect()
 {
     Print("Indirect Includes Working!");
 }

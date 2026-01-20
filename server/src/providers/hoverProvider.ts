@@ -33,10 +33,13 @@ export function registerHoverProvider(opts: {
 	documentSymbols: DocumentSymbolStore;
 }): void {
 	const { connection, documents, documentSymbols } = opts;
+
+	// Include paths will be fetched per-document (using `scopeUri`) to ensure
+	// we receive resource-scoped settings (workspace + folder + user).
 	const includeHoverCache: Map<string, IncludeHoverCacheEntry> = new Map();
 	const defineHoverCache: Map<string, DefineHoverCacheEntry> = new Map();
 
-	const getIncludeSymbolHoverInfo = (uri: string, name: string): IncludeSymbolHoverInfo | null => {
+	const getIncludeSymbolHoverInfo = async (uri: string, name: string): Promise<IncludeSymbolHoverInfo | null> => {
 		const doc = documents.get(uri);
 		if (!doc) return null;
 
@@ -48,10 +51,21 @@ export function registerHoverProvider(opts: {
 		const docFsPath = fileUriToFsPath(uri);
 		if (!docFsPath) return null;
 
+		// Fetch include paths for this document (use scopeUri so client returns
+		// the effective settings for the resource, including user/workspace/folder).
+		let includeDirs: string[] = [];
+		try {
+			const cfg: any = await connection.workspace.getConfiguration({ scopeUri: uri, section: '12dpl' });
+			includeDirs = (cfg?.compiler?.includePaths ?? []) as string[];
+			includeDirs = includeDirs.map((p: string) => String(p).trim()).filter(Boolean);
+		} catch {
+			includeDirs = [];
+		}
+
 		const includeFiles = collectRecursiveIncludeFiles(
 			docFsPath,
 			(fsPath) => documentSymbols.getTextForFsPath(fsPath),
-			{ maxFiles: 500 }
+			{ maxFiles: 500, includeDirectories: includeDirs }
 		);
 
 		const byName = new Map<string, IncludeSymbolHoverInfo>();
@@ -82,7 +96,7 @@ export function registerHoverProvider(opts: {
 		return byName.get(name) ?? null;
 	};
 
-	const getDefineHoverInfo = (uri: string, name: string): DefineSymbolInfo | null => {
+		const getDefineHoverInfo = async (uri: string, name: string): Promise<DefineSymbolInfo | null> => {
 		const doc = documents.get(uri);
 		if (!doc) return null;
 
@@ -102,10 +116,19 @@ export function registerHoverProvider(opts: {
 		}
 
 		// Included defines
+		let includeDirs: string[] = [];
+		try {
+			const cfg: any = await connection.workspace.getConfiguration({ scopeUri: uri, section: '12dpl' });
+			includeDirs = (cfg?.compiler?.includePaths ?? []) as string[];
+			includeDirs = includeDirs.map((p: string) => String(p).trim()).filter(Boolean);
+		} catch {
+			includeDirs = [];
+		}
+
 		const includeFiles = collectRecursiveIncludeFiles(
 			docFsPath,
 			(fsPath) => documentSymbols.getTextForFsPath(fsPath),
-			{ maxFiles: 500 }
+			{ maxFiles: 500, includeDirectories: includeDirs }
 		);
 		for (const includeFsPath of includeFiles) {
 			const text = documentSymbols.getTextForFsPath(includeFsPath);
@@ -119,7 +142,7 @@ export function registerHoverProvider(opts: {
 		return byName.get(name) ?? null;
 	};
 
-	connection.onHover((textDocumentPositionParams: HoverParams) => {
+	connection.onHover(async (textDocumentPositionParams: HoverParams) => {
 		try {
 			const textDocument = documents.get(textDocumentPositionParams.textDocument.uri);
 			if (!textDocument) return null;
@@ -172,7 +195,7 @@ export function registerHoverProvider(opts: {
 			}
 
 			// Check if it's a #define macro (local or from includes)
-			const def = getDefineHoverInfo(textDocument.uri, word);
+			const def = await getDefineHoverInfo(textDocument.uri, word);
 			if (def) {
 				const sig = def.params && def.params.length
 					? `#define ${def.name}(${def.params.join(', ')})${def.value ? ` ${def.value}` : ''}`
@@ -186,7 +209,7 @@ export function registerHoverProvider(opts: {
 			}
 
 			// Check included files for symbols
-			const includeSymbol = getIncludeSymbolHoverInfo(textDocument.uri, word);
+			const includeSymbol = await getIncludeSymbolHoverInfo(textDocument.uri, word);
 			if (includeSymbol) {
 				if (includeSymbol.kind === 'function') {
 					return {
