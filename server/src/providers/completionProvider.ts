@@ -14,7 +14,8 @@ import * as path from 'path';
 import { prototypesLoader } from '../util/prototypes.js';
 import { typeDocumentation } from '../util/typeDocumentation.js';
 import type { DocumentSymbolStore } from './documentSymbols.js';
-import { collectRecursiveIncludeFiles, fileUriToFsPath } from '../util/includes.js';
+import { fileUriToFsPath } from '../util/includes.js';
+import { registerIncludesProvider } from './includesProvider.js';
 import { buildFunctionCallSnippet, fuzzyScore, getWordAtPosition } from '../util/utils.js';
 import { parseDefinesFromText } from '../util/defines.js';
 import type { FunctionSymbolInfo, VariableSymbolInfo } from '../antlr/symbols.js';
@@ -122,6 +123,7 @@ export function registerCompletionProvider(opts: {
 	connection: Connection;
 	documents: TextDocuments<TextDocument>;
 	documentSymbols: DocumentSymbolStore;
+	includesProvider: { getIncludeFilesForUri(uri: string): Promise<string[]> };
 }): void {
 	// Include paths will be fetched per-document using `scopeUri` so resource-scoped
 	// settings (user/workspace/folder) are respected.
@@ -139,34 +141,11 @@ export function registerCompletionProvider(opts: {
 		return (typeof item.filterText === 'string' && item.filterText.length) ? item.filterText : getLabelText(item);
 	};
 	const includeCompletionsCache: Map<string, IncludeCompletionCacheEntry> = new Map();
-	const includeFileListCache: Map<string, IncludeFileListCacheEntry> = new Map();
 	const defineCompletionsCache: Map<string, IncludeCompletionCacheEntry> = new Map();
+	const includesProvider = opts.includesProvider;
 
 	const getIncludeFilesForUri = async (uri: string): Promise<string[]> => {
-		const doc = documents.get(uri);
-		if (!doc) return [];
-
-		const cached = includeFileListCache.get(uri);
-		if (cached && cached.version === doc.version) return cached.files;
-
-		const docPath = fileUriToFsPath(uri);
-		if (!docPath) return [];
-		let includeDirs: string[] = [];
-		try {
-			const cfg: any = await opts.connection.workspace.getConfiguration({ scopeUri: uri, section: '12dpl' });
-			includeDirs = (cfg?.compiler?.includePaths ?? []) as string[];
-			includeDirs = includeDirs.map((p: string) => String(p).trim()).filter(Boolean);
-		} catch {
-			includeDirs = [];
-		}
-
-		const includeFiles = collectRecursiveIncludeFiles(
-			docPath,
-			(fsPath) => documentSymbols.getTextForFsPath(fsPath),
-			{ maxFiles: 500, includeDirectories: includeDirs }
-		);
-		includeFileListCache.set(uri, { version: doc.version, files: includeFiles });
-		return includeFiles;
+		return includesProvider.getIncludeFilesForUri(uri);
 	};
 
 	const getIncludeCompletionItems = async (uri: string): Promise<CompletionItem[]> => {

@@ -2,7 +2,7 @@ import type { Connection } from 'vscode-languageserver/node';
 import type { TextDocuments } from 'vscode-languageserver/node';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 
-import { collectRecursiveIncludeFiles, fileUriToFsPath, fsPathToFileUri } from '../util/includes.js';
+import { fileUriToFsPath, fsPathToFileUri } from '../util/includes.js';
 import { getWordAtPosition } from '../util/utils.js';
 import { parseDefinesFromText } from '../util/defines.js';
 import type { DocumentSymbolStore } from './documentSymbols.js';
@@ -14,8 +14,9 @@ export function registerDefinitionProvider(opts: {
     connection: Connection;
     documents: TextDocuments<TextDocument>;
     documentSymbols: DocumentSymbolStore;
+    includesProvider: { getIncludeFilesForUri(uri: string): Promise<string[]> };
 }): void {
-    const { connection, documents, documentSymbols } = opts;
+    const { connection, documents, documentSymbols, includesProvider } = opts;
 
     connection.onDefinition(async (params) => {
         const doc = documents.get(params.textDocument.uri);
@@ -41,17 +42,8 @@ export function registerDefinitionProvider(opts: {
 
         const readText = (fsPath: string): string | null => documentSymbols.getTextForFsPath(fsPath);
 
-        // Fetch include paths from workspace settings for this document (if configured).
-        let includeDirs: string[] = [];
-        try {
-            const cfg: any = await connection.workspace.getConfiguration({ scopeUri: doc.uri, section: '12dpl' });
-            includeDirs = (cfg?.compiler?.includePaths ?? []) as string[];
-            includeDirs = includeDirs.map((p: string) => String(p).trim()).filter(Boolean);
-        } catch {
-            includeDirs = [];
-        }
-
-        const includeFiles = collectRecursiveIncludeFiles(docPath, readText, { maxFiles: 500, includeDirectories: includeDirs });
+        // Get included files via shared includesProvider
+        const includeFiles = await includesProvider.getIncludeFilesForUri(doc.uri);
         const results: Location[] = [];
         const seen = new Set<string>();
 

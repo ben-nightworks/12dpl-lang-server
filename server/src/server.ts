@@ -37,6 +37,7 @@ import { registerCompletionProvider } from './providers/completionProvider';
 import { registerDefinitionProvider } from './providers/definitionProvider';
 import { registerHoverProvider } from './providers/hoverProvider';
 import { registerFormattingProvider } from './providers/formattingProvider';
+import { registerIncludesProvider } from './providers/includesProvider';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -161,9 +162,12 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 }
 
 // Register providers
-registerCompletionProvider({ connection, documents, documentSymbols });
-registerDefinitionProvider({ connection, documents, documentSymbols });
-registerHoverProvider({ connection, documents, documentSymbols });
+// Register a single shared includes provider and pass it to other providers.
+const includesProvider = registerIncludesProvider({ connection, documents, documentSymbols });
+
+registerCompletionProvider({ connection, documents, documentSymbols, includesProvider });
+registerDefinitionProvider({ connection, documents, documentSymbols, includesProvider });
+registerHoverProvider({ connection, documents, documentSymbols, includesProvider });
 registerFormattingProvider({ connection, documents });
 
 // Make the text document manager listen on the connection

@@ -3,7 +3,7 @@ import type { Connection, HoverParams } from 'vscode-languageserver/node';
 import type { TextDocuments } from 'vscode-languageserver/node';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 
-import { collectRecursiveIncludeFiles, fileUriToFsPath } from '../util/includes.js';
+import { fileUriToFsPath } from '../util/includes.js';
 
 import { prototypesLoader } from '../util/prototypes.js';
 import { typeDocumentation } from '../util/typeDocumentation.js';
@@ -31,8 +31,9 @@ export function registerHoverProvider(opts: {
 	connection: Connection;
 	documents: TextDocuments<TextDocument>;
 	documentSymbols: DocumentSymbolStore;
+	includesProvider: { getIncludeFilesForUri(uri: string): Promise<string[]> };
 }): void {
-	const { connection, documents, documentSymbols } = opts;
+	const { connection, documents, documentSymbols, includesProvider } = opts;
 
 	// Include paths will be fetched per-document (using `scopeUri`) to ensure
 	// we receive resource-scoped settings (workspace + folder + user).
@@ -51,22 +52,7 @@ export function registerHoverProvider(opts: {
 		const docFsPath = fileUriToFsPath(uri);
 		if (!docFsPath) return null;
 
-		// Fetch include paths for this document (use scopeUri so client returns
-		// the effective settings for the resource, including user/workspace/folder).
-		let includeDirs: string[] = [];
-		try {
-			const cfg: any = await connection.workspace.getConfiguration({ scopeUri: uri, section: '12dpl' });
-			includeDirs = (cfg?.compiler?.includePaths ?? []) as string[];
-			includeDirs = includeDirs.map((p: string) => String(p).trim()).filter(Boolean);
-		} catch {
-			includeDirs = [];
-		}
-
-		const includeFiles = collectRecursiveIncludeFiles(
-			docFsPath,
-			(fsPath) => documentSymbols.getTextForFsPath(fsPath),
-			{ maxFiles: 500, includeDirectories: includeDirs }
-		);
+		const includeFiles = await includesProvider.getIncludeFilesForUri(uri);
 
 		const byName = new Map<string, IncludeSymbolHoverInfo>();
 		for (const includeFsPath of includeFiles) {
@@ -115,21 +101,8 @@ export function registerHoverProvider(opts: {
 			if (!byName.has(d.name)) byName.set(d.name, d);
 		}
 
-		// Included defines
-		let includeDirs: string[] = [];
-		try {
-			const cfg: any = await connection.workspace.getConfiguration({ scopeUri: uri, section: '12dpl' });
-			includeDirs = (cfg?.compiler?.includePaths ?? []) as string[];
-			includeDirs = includeDirs.map((p: string) => String(p).trim()).filter(Boolean);
-		} catch {
-			includeDirs = [];
-		}
-
-		const includeFiles = collectRecursiveIncludeFiles(
-			docFsPath,
-			(fsPath) => documentSymbols.getTextForFsPath(fsPath),
-			{ maxFiles: 500, includeDirectories: includeDirs }
-		);
+		// Included defines (use includesProvider to get cached list)
+		const includeFiles = await includesProvider.getIncludeFilesForUri(uri);
 		for (const includeFsPath of includeFiles) {
 			const text = documentSymbols.getTextForFsPath(includeFsPath);
 			if (text == null) continue;
