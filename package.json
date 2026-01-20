@@ -120,6 +120,12 @@
 				"path": "./syntax/mtfsnippet.tmLanguage.json"
 			}
 		],
+		"snippets": [
+			{
+				"language": "12dpl",
+				"path": "./snippets/12dpl.tmSnippets.json"
+			}
+		],
 		"configuration": {
 			"type": "object",
 			"title": "12dPL",
