@@ -24,8 +24,6 @@ types/
 *.d.ts
 
 ### VS Code extension / testing
-.vscode/
-.vscode-test/
 *.vsix
 
 ### Editor and OS files
