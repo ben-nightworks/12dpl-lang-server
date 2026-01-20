@@ -1,7 +1,7 @@
 import { CharStream, CommonTokenStream } from 'antlr4';
 
-import proglang12dLexer from './antlr/proglang12dLexer';
-import proglang12dParser from './antlr/proglang12dParser';
+import proglang12dLexer from './src/proglang12dLexer';
+import proglang12dParser from './src/proglang12dParser';
 
 /** The lexer/parser pair used by validation and symbol extraction. */
 export interface LexerAndParser {

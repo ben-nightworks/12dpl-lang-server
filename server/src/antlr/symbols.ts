@@ -1,7 +1,7 @@
 import proglang12dParser, {
 	DeclaratorContext,
 	DirectDeclaratorContext
-} from './antlr/proglang12dParser.js';
+} from './src/proglang12dParser.js';
 
 import { createLexerAndParser } from './parsePipeline.js';
 

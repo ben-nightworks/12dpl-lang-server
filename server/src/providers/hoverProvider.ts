@@ -3,14 +3,14 @@ import type { Connection, HoverParams } from 'vscode-languageserver/node';
 import type { TextDocuments } from 'vscode-languageserver/node';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 
-import { collectRecursiveIncludeFiles, fileUriToFsPath } from '../includes.js';
+import { collectRecursiveIncludeFiles, fileUriToFsPath } from '../util/includes.js';
 
-import { prototypesLoader } from '../prototypes.js';
-import { typeDocumentation } from '../documentation.js';
+import { prototypesLoader } from '../util/prototypes.js';
+import { typeDocumentation } from '../util/typeDocumentation.js';
 import type { DocumentSymbolStore } from './documentSymbols.js';
-import { getWordAtPosition } from './utils.js';
-import { parseDefinesFromText, type DefineSymbolInfo } from './defines.js';
-import type { FunctionSymbolInfo, VariableSymbolInfo } from '../symbols.js';
+import { getWordAtPosition } from '../util/utils.js';
+import { parseDefinesFromText, type DefineSymbolInfo } from '../util/defines.js';
+import type { FunctionSymbolInfo, VariableSymbolInfo } from '../antlr/symbols.js';
 
 type IncludeSymbolHoverInfo =
 	| { kind: 'function'; signature: string; definedInFsPath: string }

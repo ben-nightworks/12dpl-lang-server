@@ -22,7 +22,10 @@ export function fileUriToFsPath(uri: string): string | null {
 	// Handles Windows URIs like file:///d%3A/path or file:///d:/path
 	let p = uri.replace(/^file:\/\//, '');
 	// Remove one leading slash for windows drive paths.
-	if (p.startsWith('/')) p = p.slice(1);
+	if (process.platform === 'win32') {
+		if (p.startsWith('/')) 
+			p = p.slice(1);    
+	}
 	p = decodeURIComponent(p);
 	return path.normalize(p);
 }
@@ -48,8 +51,10 @@ export function extractIncludePaths(text: string): string[] {
 /** Resolves an include path relative to the including file (local includes only). */
 export function resolveIncludeToFsPath(includingFileFsPath: string, includePath: string): string | null {
 	const baseDir = path.dirname(includingFileFsPath);
-	const candidate = path.isAbsolute(includePath) ? includePath : path.join(baseDir, includePath);
+	let candidate = path.isAbsolute(includePath) ? includePath : path.join(baseDir, includePath);
 	if (fs.existsSync(candidate)) return candidate;
+
+	console.warn(`Included file not found: ${candidate}`);
 	return null;
 }
 

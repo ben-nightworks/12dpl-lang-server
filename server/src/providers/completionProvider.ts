@@ -11,13 +11,13 @@ import type { TextDocument } from 'vscode-languageserver-textdocument';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { prototypesLoader } from '../prototypes.js';
-import { typeDocumentation } from '../documentation.js';
+import { prototypesLoader } from '../util/prototypes.js';
+import { typeDocumentation } from '../util/typeDocumentation.js';
 import type { DocumentSymbolStore } from './documentSymbols.js';
-import { collectRecursiveIncludeFiles, fileUriToFsPath } from '../includes.js';
-import { buildFunctionCallSnippet, fuzzyScore, getWordAtPosition } from './utils.js';
-import { parseDefinesFromText } from './defines.js';
-import type { FunctionSymbolInfo, VariableSymbolInfo } from '../symbols.js';
+import { collectRecursiveIncludeFiles, fileUriToFsPath } from '../util/includes.js';
+import { buildFunctionCallSnippet, fuzzyScore, getWordAtPosition } from '../util/utils.js';
+import { parseDefinesFromText } from '../util/defines.js';
+import type { FunctionSymbolInfo, VariableSymbolInfo } from '../antlr/symbols.js';
 
 type IncludeCompletionCacheEntry = { version: number; items: CompletionItem[] };
 type IncludeFileListCacheEntry = { version: number; files: string[] };

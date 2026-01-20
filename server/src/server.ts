@@ -27,28 +27,28 @@ import {
 
 import {
 	Validator
-} from './validator.js';
+} from './antlr/validator.js';
 
 import {
 	collectRecursiveIncludeFiles,
 	fileUriToFsPath,
 	fsPathToFileUri
-} from './includes.js';
+} from './util/includes.js';
 
 import {
 	prototypesLoader
-} from './prototypes.js';
+} from './util/prototypes.js';
 
 import {
 	SymbolRange
-} from './symbols.js';
+} from './antlr/symbols.js';
 
 import { DocumentSymbolStore } from './providers/documentSymbols.js';
 import { registerCompletionProvider } from './providers/completionProvider.js';
 import { registerHoverProvider } from './providers/hoverProvider.js';
 import { registerFormattingProvider } from './providers/formattingProvider.js';
-import { getWordAtPosition } from './providers/utils.js';
-import { parseDefinesFromText } from './providers/defines.js';
+import { getWordAtPosition } from './util/utils.js';
+import { parseDefinesFromText } from './util/defines.js';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -59,9 +59,11 @@ const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
 const documentSymbols = new DocumentSymbolStore(documents);
 
+// Set defaults for capabilities as a starting point
 let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
 let hasDiagnosticRelatedInformationCapability = false;
+
 connection.onInitialize((params: InitializeParams) => {
 	const capabilities = params.capabilities;
 
@@ -201,6 +203,7 @@ connection.onDefinition((params) => {
 	const readText = (fsPath: string): string | null => documentSymbols.getTextForFsPath(fsPath);
 
 	const includeFiles = collectRecursiveIncludeFiles(docPath, readText, { maxFiles: 500 });
+	console.log(`Looking for definition of "${word}" in ${includeFiles.length} included files`);
 	const results: Location[] = [];
 	const seen = new Set<string>();
 

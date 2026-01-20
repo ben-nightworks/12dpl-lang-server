@@ -4,7 +4,7 @@ import { TextEdit } from 'vscode-languageserver/node';
 import type { TextDocuments } from 'vscode-languageserver/node';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 
-import { format12dplDocument } from '../formatter.js';
+import { format12dplDocument } from '../util/formatter.js';
 
 /** Registers document formatting support with the LSP connection. */
 export function registerFormattingProvider(opts: {
