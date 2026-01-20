@@ -26,24 +26,17 @@ import {
 
 import {
 	Validator
-} from './antlr/validator.js';
-
-import {
-	collectRecursiveIncludeFiles,
-	fileUriToFsPath,
-	fsPathToFileUri
-} from './util/includes.js';
+} from './antlr/validator';
 
 import {
 	prototypesLoader
-} from './util/prototypes.js';
+} from './util/prototypes';
 
-
-import { DocumentSymbolStore } from './providers/documentSymbols.js';
-import { registerCompletionProvider } from './providers/completionProvider.js';
-import { registerDefinitionProvider } from './providers/definitionProvider.js';
-import { registerHoverProvider } from './providers/hoverProvider.js';
-import { registerFormattingProvider } from './providers/formattingProvider.js';
+import { DocumentSymbolStore } from './providers/documentSymbols';
+import { registerCompletionProvider } from './providers/completionProvider';
+import { registerDefinitionProvider } from './providers/definitionProvider';
+import { registerHoverProvider } from './providers/hoverProvider';
+import { registerFormattingProvider } from './providers/formattingProvider';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -81,8 +74,7 @@ connection.onInitialize((params: InitializeParams) => {
 			textDocumentSync: TextDocumentSyncKind.Full,
 			// Tell the client that this server supports code completion.
 			completionProvider: {
-				resolveProvider: true,
-				triggerCharacters: ['.', '#']
+				resolveProvider: true
 			},
 			// Tell the client that this server supports hover.
 			hoverProvider: true,
@@ -145,21 +137,6 @@ connection.onDidChangeConfiguration(change => {
 	documents.all().forEach(validateTextDocument);
 });
 
-function getDocumentSettings(resource: string): Thenable<ServerSettings> {
-	if (!hasConfigurationCapability) {
-		return Promise.resolve(globalSettings);
-	}
-	let result = documentSettings.get(resource);
-	if (!result) {
-		result = connection.workspace.getConfiguration({
-			scopeUri: resource,
-			section: 'langServer'
-		});
-		documentSettings.set(resource, result);
-	}
-	return result;
-}
-
 // Only keep settings for open documents
 documents.onDidClose(e => {
 	documentSettings.delete(e.document.uri);
@@ -174,9 +151,7 @@ documents.onDidChangeContent(change => {
 });
 
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
-	// In this simple example we get the settings for every validate run.
-	// const settings = await getDocumentSettings(textDocument.uri);
-	
+
 	const text = textDocument.getText();
 
 	const diagnostics: Diagnostic[] = Validator.Validate(text);
@@ -185,6 +160,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
 
+// Register providers
 registerCompletionProvider({ connection, documents, documentSymbols });
 registerDefinitionProvider({ connection, documents, documentSymbols });
 registerHoverProvider({ connection, documents, documentSymbols });
