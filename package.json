@@ -166,7 +166,7 @@
 				"12dpl.formatOnSave": {
 					"scope": "resource",
 					"type": "boolean",
-					"default": true,
+					"default": false,
 					"description": "Auto-format 12dPL files when they are saved."
 				},
 				"12dpl.indentSize": {
