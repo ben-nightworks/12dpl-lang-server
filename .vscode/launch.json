@@ -8,8 +8,8 @@
 			"name": "Launch Client",
 			"runtimeExecutable": "${execPath}",
 			"args": [
+				"${workspaceRoot}/client/testFixture",
 				"--extensionDevelopmentPath=${workspaceRoot}",
-				"${workspaceRoot}/client/testFixture/Test.4dm"
 			],
 			"outFiles": ["${workspaceRoot}/client/out/**/*.js"],
 			"autoAttachChildProcesses": true,
