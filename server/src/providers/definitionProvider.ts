@@ -6,7 +6,6 @@ import { fileUriToFsPath, fsPathToFileUri } from '../util/includes.js';
 import { getWordAtPosition } from '../util/utils.js';
 import { parseDefinesFromText } from '../util/defines.js';
 import type { DocumentSymbolStore } from './documentSymbols.js';
-import type { SymbolRange } from '../antlr/symbols.js';
 import { Location } from 'vscode-languageserver/node';
 
 /** Registers definition provider (moved from server.ts) */
@@ -44,37 +43,33 @@ export function registerDefinitionProvider(opts: {
 
         // Get included files via shared includesProvider
         const includeFiles = await includesProvider.getIncludeFilesForUri(doc.uri);
-        const results: Location[] = [];
-        const seen = new Set<string>();
-
-        const pushLocation = (candidateFsPath: string, range: SymbolRange) => {
-            const uri = fsPathToFileUri(candidateFsPath);
-            const key = `${uri}:${range.start.line}:${range.start.character}:${range.end.line}:${range.end.character}`;
-            if (seen.has(key)) return;
-            seen.add(key);
-            results.push(Location.create(uri, range as any));
-        };
 
         for (const candidate of includeFiles) {
             const idx = documentSymbols.getIndexForFsPath(candidate);
-            if (!idx) continue;
+            if (!idx) {
+				continue
+			};
             const fn = (idx.functions as any)[word];
-            if (fn?.range) pushLocation(candidate, fn.range);
+            if (fn?.range) {
+				return Location.create(candidate, fn.range as any);
+			}
             const v = (idx.variables as any)[word];
-            if (v?.range) pushLocation(candidate, v.range);
+            if (v?.range) {
+				return Location.create(candidate, v.range as any);
+			}
 
             // Also resolve #define macros in included files
             const text = readText(candidate);
             if (text != null) {
                 for (const d of parseDefinesFromText(text, candidate)) {
                     if (d.name === word && d.range) {
-                        pushLocation(candidate, d.range);
+                        return Location.create(candidate, d.range as any);
                         break;
                     }
                 }
             }
         }
 
-        return results.length ? results : null;
+		return null;
     });
 }
