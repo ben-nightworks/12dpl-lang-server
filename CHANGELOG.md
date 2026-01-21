@@ -14,7 +14,7 @@ Changelog notes in [v1.1.0]
 
 ---
 
-## [v1.1.0] - (Pending Release)
+## [v1.1.0]
 
 ### Added
 - **Advanced Grammar Support**:
@@ -249,6 +249,46 @@ bun run test         # Run e2e tests
 - README.md - Full feature documentation
 - CHANGELOG.md - (This file) Full feature changelog
 - CONTIBUTING.md - File with description of the development of this tool
+
+---
+
+## [v1.1.1] - (15/01/2026)
+
+### New Features
+- MTF Snippet Syntax Highlighting
+
+---
+
+## [v1.1.2] - (14/01/2026)
+
+### Bug Fixes
+- MTF Snippet Syntax Highlighting Improvements
+
+---
+
+## [v1.2.0] - (Date)
+
+### New Features
+- Full clean up and re-structure of code
+	- Moved compile and formatting from extension.ts to feature modules to improve readability
+	- 
+- Include files are now cached to reduce queries to file system (includesProvider)
+- Added ability to use some VSCode variables in "inculudePaths" setting
+
+### Bug Fixes
+- Include paths now parse symbols from included header files using "includePaths" setting
+- Updated defaults for autoformatting
+- Updated text fixture launch path
+- Cleaned up files in the repo that should not have been tracked and updated gitignore
+- Time changed to built in type and removed function syntax highlighting. 
+- Fixed goto definition for include files
+- Fixed left over C style grammar in ANTLR file to remove syntax errors for valid 12dPL
+
+
+### Overview
+General cleanup of all code, complete restructure and small bug fixes.
+
+---
 
 # Template
 

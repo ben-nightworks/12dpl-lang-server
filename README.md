@@ -88,7 +88,7 @@ The language server provides intelligent auto-completion for all 12dPL library f
 
 This extension provides a basic C/C++-style formatter (brace-based indentation) for `.4dm` files.
 
-Format-on-save is enabled by default, if you don't wish to use this feature it can be disabled in the extensions settings.
+Format-on-save is disabled by default, if you wish to use this feature it can be enabled in the extensions settings.
 
 ![Formatting](./docs/gif/Formatting.gif)
 
