@@ -2,7 +2,7 @@ import type { Connection } from 'vscode-languageserver/node';
 import type { TextDocuments } from 'vscode-languageserver/node';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 
-import { collectRecursiveIncludeFiles, fileUriToFsPath } from '../util/includes.js';
+import { collectRecursiveIncludeFiles, fileUriToFsPath, resolvePathVariables } from '../util/includes.js';
 import type { DocumentSymbolStore } from './documentSymbols.js';
 
 /**
@@ -45,6 +45,39 @@ export function registerIncludesProvider(opts: {
             const cfg: any = await connection.workspace.getConfiguration({ scopeUri: uri, section: '12dpl' });
             includeDirs = (cfg?.compiler?.includePaths ?? []) as string[];
             includeDirs = includeDirs.map((p: string) => String(p).trim()).filter(Boolean);
+
+            // Get workspace folders to resolve ${workspaceFolder} variables
+            const workspaceFolders = await connection.workspace.getWorkspaceFolders();
+            let workspaceFolderPath: string | undefined;
+
+            if (workspaceFolders && workspaceFolders.length > 0) {
+                // Try to find the workspace folder that contains the current document
+                const docUri = uri;
+                const matchingFolder = workspaceFolders.find(wf => docUri.startsWith(wf.uri));
+                if (matchingFolder) {
+                    // Convert file:// URI to filesystem path
+                    const folderUri = matchingFolder.uri;
+                    workspaceFolderPath = folderUri.startsWith('file://')
+                        ? fileUriToFsPath(folderUri) ?? undefined
+                        : folderUri;
+                }
+                // Fall back to the first workspace folder if no specific match
+                if (!workspaceFolderPath && workspaceFolders.length > 0) {
+                    const folderUri = workspaceFolders[0].uri;
+                    workspaceFolderPath = folderUri.startsWith('file://')
+                        ? fileUriToFsPath(folderUri) ?? undefined
+                        : folderUri;
+                }
+            }
+
+            // Resolve VS Code variables in the include paths
+            includeDirs = includeDirs.map((p: string) => resolvePathVariables(p, {
+                workspaceFolderPath,
+                fileFsPath: docFsPath,
+                cwd: process.cwd()
+            }));
+
+            // console.log(`Using include paths for ${uri}: ${includeDirs.join(', ')}`);
         } catch {
             includeDirs = [];
         }
