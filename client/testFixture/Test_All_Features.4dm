@@ -92,4 +92,6 @@ void main()
     Test_Indirect();
     Test_Indirect();
 
+    Integer new = 0;
+
 }
