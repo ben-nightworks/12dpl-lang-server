@@ -15,13 +15,11 @@ import { prototypesLoader } from '../util/prototypes.js';
 import { typeDocumentation } from '../util/typeDocumentation.js';
 import type { DocumentSymbolStore } from './documentSymbols.js';
 import { fileUriToFsPath } from '../util/includes.js';
-import { registerIncludesProvider } from './includesProvider.js';
 import { buildFunctionCallSnippet, fuzzyScore, getWordAtPosition } from '../util/utils.js';
 import { parseDefinesFromText } from '../util/defines.js';
 import type { FunctionSymbolInfo, VariableSymbolInfo } from '../antlr/symbols.js';
 
 type IncludeCompletionCacheEntry = { version: number; items: CompletionItem[] };
-type IncludeFileListCacheEntry = { version: number; files: string[] };
 
 type IncludePathContext = {
 	startCharacter: number;

@@ -178,91 +178,59 @@ export default class proglang12dParser extends Parser {
 	public static readonly Switch = 157;
 	public static readonly Void = 158;
 	public static readonly While = 159;
-	public static readonly Auto = 160;
-	public static readonly Class = 161;
-	public static readonly Const = 162;
-	public static readonly Delete = 163;
-	public static readonly Enum = 164;
-	public static readonly Extern = 165;
-	public static readonly Friend = 166;
-	public static readonly Inline = 167;
-	public static readonly New = 168;
-	public static readonly Operator = 169;
-	public static readonly Private = 170;
-	public static readonly Protected = 171;
-	public static readonly Public = 172;
-	public static readonly Register = 173;
-	public static readonly Signed = 174;
-	public static readonly Sizeof = 175;
-	public static readonly Static = 176;
-	public static readonly Struct = 177;
-	public static readonly Template = 178;
-	public static readonly This = 179;
-	public static readonly Throw = 180;
-	public static readonly Try = 181;
-	public static readonly Typedef = 182;
-	public static readonly Union = 183;
-	public static readonly Unsigned = 184;
-	public static readonly Virtual = 185;
-	public static readonly Volatile = 186;
-	public static readonly LeftParen = 187;
-	public static readonly RightParen = 188;
-	public static readonly LeftBracket = 189;
-	public static readonly RightBracket = 190;
-	public static readonly LeftBrace = 191;
-	public static readonly RightBrace = 192;
-	public static readonly Less = 193;
-	public static readonly LessEqual = 194;
-	public static readonly Greater = 195;
-	public static readonly GreaterEqual = 196;
-	public static readonly LeftShift = 197;
-	public static readonly RightShift = 198;
-	public static readonly Plus = 199;
-	public static readonly PlusPlus = 200;
-	public static readonly Minus = 201;
-	public static readonly MinusMinus = 202;
-	public static readonly Star = 203;
-	public static readonly Div = 204;
-	public static readonly Mod = 205;
-	public static readonly And = 206;
-	public static readonly Or = 207;
-	public static readonly AndAnd = 208;
-	public static readonly OrOr = 209;
-	public static readonly Caret = 210;
-	public static readonly Not = 211;
-	public static readonly Question = 212;
-	public static readonly Colon = 213;
-	public static readonly Semi = 214;
-	public static readonly Comma = 215;
-	public static readonly Assign = 216;
-	public static readonly StarAssign = 217;
-	public static readonly DivAssign = 218;
-	public static readonly ModAssign = 219;
-	public static readonly PlusAssign = 220;
-	public static readonly MinusAssign = 221;
-	public static readonly LeftShiftAssign = 222;
-	public static readonly RightShiftAssign = 223;
-	public static readonly AndAssign = 224;
-	public static readonly XorAssign = 225;
-	public static readonly OrAssign = 226;
-	public static readonly Equal = 227;
-	public static readonly NotEqual = 228;
-	public static readonly Dot = 229;
-	public static readonly Ellipsis = 230;
-	public static readonly Identifier = 231;
-	public static readonly Constant = 232;
-	public static readonly DigitSequence = 233;
-	public static readonly StringLiteral = 234;
-	public static readonly ComplexDefine = 235;
-	public static readonly IncludeDirective = 236;
-	public static readonly AsmBlock = 237;
-	public static readonly LineAfterPreprocessing = 238;
-	public static readonly LineDirective = 239;
-	public static readonly PragmaDirective = 240;
-	public static readonly Whitespace = 241;
-	public static readonly Newline = 242;
-	public static readonly BlockComment = 243;
-	public static readonly LineComment = 244;
+	public static readonly LeftParen = 160;
+	public static readonly RightParen = 161;
+	public static readonly LeftBracket = 162;
+	public static readonly RightBracket = 163;
+	public static readonly LeftBrace = 164;
+	public static readonly RightBrace = 165;
+	public static readonly Less = 166;
+	public static readonly LessEqual = 167;
+	public static readonly Greater = 168;
+	public static readonly GreaterEqual = 169;
+	public static readonly LeftShift = 170;
+	public static readonly RightShift = 171;
+	public static readonly Plus = 172;
+	public static readonly PlusPlus = 173;
+	public static readonly Minus = 174;
+	public static readonly MinusMinus = 175;
+	public static readonly Star = 176;
+	public static readonly Div = 177;
+	public static readonly Mod = 178;
+	public static readonly And = 179;
+	public static readonly Or = 180;
+	public static readonly AndAnd = 181;
+	public static readonly OrOr = 182;
+	public static readonly Caret = 183;
+	public static readonly Not = 184;
+	public static readonly Question = 185;
+	public static readonly Colon = 186;
+	public static readonly Semi = 187;
+	public static readonly Comma = 188;
+	public static readonly Assign = 189;
+	public static readonly StarAssign = 190;
+	public static readonly DivAssign = 191;
+	public static readonly ModAssign = 192;
+	public static readonly PlusAssign = 193;
+	public static readonly MinusAssign = 194;
+	public static readonly LeftShiftAssign = 195;
+	public static readonly RightShiftAssign = 196;
+	public static readonly AndAssign = 197;
+	public static readonly XorAssign = 198;
+	public static readonly OrAssign = 199;
+	public static readonly Equal = 200;
+	public static readonly NotEqual = 201;
+	public static readonly Dot = 202;
+	public static readonly Identifier = 203;
+	public static readonly Constant = 204;
+	public static readonly DigitSequence = 205;
+	public static readonly StringLiteral = 206;
+	public static readonly ComplexDefine = 207;
+	public static readonly IncludeDirective = 208;
+	public static readonly Whitespace = 209;
+	public static readonly Newline = 210;
+	public static readonly BlockComment = 211;
+	public static readonly LineComment = 212;
 	public static readonly EOF = Token.EOF;
 	public static readonly RULE_primaryExpression = 0;
 	public static readonly RULE_genericAssocList = 1;
@@ -291,45 +259,43 @@ export default class proglang12dParser extends Parser {
 	public static readonly RULE_initDeclaratorList = 24;
 	public static readonly RULE_initDeclarator = 25;
 	public static readonly RULE_declarationSpecifiers = 26;
-	public static readonly RULE_declarationSpecifiers2 = 27;
-	public static readonly RULE_declarationSpecifier = 28;
-	public static readonly RULE_typeSpecifier = 29;
-	public static readonly RULE_builtInTypeSpecifier = 30;
-	public static readonly RULE_specifierQualifierList = 31;
-	public static readonly RULE_declarator = 32;
-	public static readonly RULE_directDeclarator = 33;
-	public static readonly RULE_nestedParenthesesBlock = 34;
-	public static readonly RULE_parameterTypeList = 35;
-	public static readonly RULE_parameterList = 36;
-	public static readonly RULE_parameterDeclaration = 37;
-	public static readonly RULE_identifierList = 38;
-	public static readonly RULE_typeName = 39;
-	public static readonly RULE_directAbstractDeclarator = 40;
-	public static readonly RULE_typedefName = 41;
-	public static readonly RULE_initializer = 42;
-	public static readonly RULE_initializerList = 43;
-	public static readonly RULE_designation = 44;
-	public static readonly RULE_designatorList = 45;
-	public static readonly RULE_designator = 46;
-	public static readonly RULE_statement = 47;
-	public static readonly RULE_labeledStatement = 48;
-	public static readonly RULE_compoundStatement = 49;
-	public static readonly RULE_blockItemList = 50;
-	public static readonly RULE_blockItem = 51;
-	public static readonly RULE_expressionStatement = 52;
-	public static readonly RULE_selectionStatement = 53;
-	public static readonly RULE_iterationStatement = 54;
-	public static readonly RULE_forCondition = 55;
-	public static readonly RULE_forDeclaration = 56;
-	public static readonly RULE_forExpression = 57;
-	public static readonly RULE_jumpStatement = 58;
-	public static readonly RULE_compilationUnit = 59;
-	public static readonly RULE_translationUnit = 60;
-	public static readonly RULE_externalDeclaration = 61;
-	public static readonly RULE_functionDefinition = 62;
-	public static readonly RULE_declarationList = 63;
-	public static readonly literalNames: (string | null)[] = [ null, "'->'", 
-                                                            "'~'", "'Element'", 
+	public static readonly RULE_declarationSpecifier = 27;
+	public static readonly RULE_typeSpecifier = 28;
+	public static readonly RULE_builtInTypeSpecifier = 29;
+	public static readonly RULE_specifierQualifierList = 30;
+	public static readonly RULE_declarator = 31;
+	public static readonly RULE_directDeclarator = 32;
+	public static readonly RULE_nestedParenthesesBlock = 33;
+	public static readonly RULE_parameterTypeList = 34;
+	public static readonly RULE_parameterList = 35;
+	public static readonly RULE_parameterDeclaration = 36;
+	public static readonly RULE_identifierList = 37;
+	public static readonly RULE_typeName = 38;
+	public static readonly RULE_directAbstractDeclarator = 39;
+	public static readonly RULE_typedefName = 40;
+	public static readonly RULE_initializer = 41;
+	public static readonly RULE_initializerList = 42;
+	public static readonly RULE_designation = 43;
+	public static readonly RULE_designatorList = 44;
+	public static readonly RULE_designator = 45;
+	public static readonly RULE_statement = 46;
+	public static readonly RULE_labeledStatement = 47;
+	public static readonly RULE_compoundStatement = 48;
+	public static readonly RULE_blockItemList = 49;
+	public static readonly RULE_blockItem = 50;
+	public static readonly RULE_expressionStatement = 51;
+	public static readonly RULE_selectionStatement = 52;
+	public static readonly RULE_iterationStatement = 53;
+	public static readonly RULE_forCondition = 54;
+	public static readonly RULE_forDeclaration = 55;
+	public static readonly RULE_forExpression = 56;
+	public static readonly RULE_jumpStatement = 57;
+	public static readonly RULE_compilationUnit = 58;
+	public static readonly RULE_translationUnit = 59;
+	public static readonly RULE_externalDeclaration = 60;
+	public static readonly RULE_functionDefinition = 61;
+	public static readonly RULE_declarationList = 62;
+	public static readonly literalNames: (string | null)[] = [ null, "'Element'", 
                                                             "'Model'", "'Dynamic_Element'", 
                                                             "'Tin'", "'Menu'", 
                                                             "'Dynamic_Text'", 
@@ -455,7 +421,9 @@ export default class proglang12dParser extends Parser {
                                                             "'Text_Set'", 
                                                             "'Time_Zone_Box'", 
                                                             "'Time_Zone_Box_Box'", 
-                                                            "'__asm'", "'__asm__'", 
+                                                            "'...'", "'__asm'", 
+                                                            "'__asm__'", 
+                                                            "'volatile'", 
                                                             "'__volatile__'", 
                                                             "'break'", "'case'", 
                                                             "'Text'", "'continue'", 
@@ -467,26 +435,6 @@ export default class proglang12dParser extends Parser {
                                                             "'return'", 
                                                             "'switch'", 
                                                             "'void'", "'while'", 
-                                                            "'auto'", "'class'", 
-                                                            "'const'", "'delete'", 
-                                                            "'enum'", "'extern'", 
-                                                            "'friend'", 
-                                                            "'inline'", 
-                                                            "'new'", "'operator'", 
-                                                            "'private'", 
-                                                            "'protected'", 
-                                                            "'public'", 
-                                                            "'register'", 
-                                                            "'signed'", 
-                                                            "'sizeof'", 
-                                                            "'static'", 
-                                                            "'struct'", 
-                                                            "'template'", 
-                                                            "'this'", "'throw'", 
-                                                            "'try'", "'typedef'", 
-                                                            "'union'", "'unsigned'", 
-                                                            "'virtual'", 
-                                                            "'volatile'", 
                                                             "'('", "')'", 
                                                             "'['", "']'", 
                                                             "'{'", "'}'", 
@@ -508,7 +456,7 @@ export default class proglang12dParser extends Parser {
                                                             "'>>='", "'&='", 
                                                             "'^='", "'|='", 
                                                             "'=='", "'!='", 
-                                                            "'.'", "'...'" ];
+                                                            "'.'" ];
 	public static readonly symbolicNames: (string | null)[] = [ null, null, 
                                                              null, null, 
                                                              null, null, 
@@ -589,24 +537,7 @@ export default class proglang12dParser extends Parser {
                                                              "Goto", "If", 
                                                              "Int", "Return", 
                                                              "Switch", "Void", 
-                                                             "While", "Auto", 
-                                                             "Class", "Const", 
-                                                             "Delete", "Enum", 
-                                                             "Extern", "Friend", 
-                                                             "Inline", "New", 
-                                                             "Operator", 
-                                                             "Private", 
-                                                             "Protected", 
-                                                             "Public", "Register", 
-                                                             "Signed", "Sizeof", 
-                                                             "Static", "Struct", 
-                                                             "Template", 
-                                                             "This", "Throw", 
-                                                             "Try", "Typedef", 
-                                                             "Union", "Unsigned", 
-                                                             "Virtual", 
-                                                             "Volatile", 
-                                                             "LeftParen", 
+                                                             "While", "LeftParen", 
                                                              "RightParen", 
                                                              "LeftBracket", 
                                                              "RightBracket", 
@@ -637,17 +568,12 @@ export default class proglang12dParser extends Parser {
                                                              "XorAssign", 
                                                              "OrAssign", 
                                                              "Equal", "NotEqual", 
-                                                             "Dot", "Ellipsis", 
-                                                             "Identifier", 
+                                                             "Dot", "Identifier", 
                                                              "Constant", 
                                                              "DigitSequence", 
                                                              "StringLiteral", 
                                                              "ComplexDefine", 
                                                              "IncludeDirective", 
-                                                             "AsmBlock", 
-                                                             "LineAfterPreprocessing", 
-                                                             "LineDirective", 
-                                                             "PragmaDirective", 
                                                              "Whitespace", 
                                                              "Newline", 
                                                              "BlockComment", 
@@ -661,15 +587,15 @@ export default class proglang12dParser extends Parser {
 		"logicalAndExpression", "logicalOrExpression", "conditionalExpression", 
 		"assignmentExpression", "assignmentOperator", "expression", "constantExpression", 
 		"declaration", "initDeclaratorList", "initDeclarator", "declarationSpecifiers", 
-		"declarationSpecifiers2", "declarationSpecifier", "typeSpecifier", "builtInTypeSpecifier", 
-		"specifierQualifierList", "declarator", "directDeclarator", "nestedParenthesesBlock", 
-		"parameterTypeList", "parameterList", "parameterDeclaration", "identifierList", 
-		"typeName", "directAbstractDeclarator", "typedefName", "initializer", 
-		"initializerList", "designation", "designatorList", "designator", "statement", 
-		"labeledStatement", "compoundStatement", "blockItemList", "blockItem", 
-		"expressionStatement", "selectionStatement", "iterationStatement", "forCondition", 
-		"forDeclaration", "forExpression", "jumpStatement", "compilationUnit", 
-		"translationUnit", "externalDeclaration", "functionDefinition", "declarationList",
+		"declarationSpecifier", "typeSpecifier", "builtInTypeSpecifier", "specifierQualifierList", 
+		"declarator", "directDeclarator", "nestedParenthesesBlock", "parameterTypeList", 
+		"parameterList", "parameterDeclaration", "identifierList", "typeName", 
+		"directAbstractDeclarator", "typedefName", "initializer", "initializerList", 
+		"designation", "designatorList", "designator", "statement", "labeledStatement", 
+		"compoundStatement", "blockItemList", "blockItem", "expressionStatement", 
+		"selectionStatement", "iterationStatement", "forCondition", "forDeclaration", 
+		"forExpression", "jumpStatement", "compilationUnit", "translationUnit", 
+		"externalDeclaration", "functionDefinition", "declarationList",
 	];
 	public get grammarFileName(): string { return "proglang12d.g4"; }
 	public get literalNames(): (string | null)[] { return proglang12dParser.literalNames; }
@@ -691,50 +617,50 @@ export default class proglang12dParser extends Parser {
 		this.enterRule(localctx, 0, proglang12dParser.RULE_primaryExpression);
 		let _la: number;
 		try {
-			this.state = 139;
+			this.state = 137;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case 231:
+			case 203:
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 128;
+				this.state = 126;
 				this.match(proglang12dParser.Identifier);
 				}
 				break;
-			case 232:
+			case 204:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 129;
+				this.state = 127;
 				this.match(proglang12dParser.Constant);
 				}
 				break;
-			case 234:
+			case 206:
 				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 131;
+				this.state = 129;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 				do {
 					{
 					{
-					this.state = 130;
+					this.state = 128;
 					this.match(proglang12dParser.StringLiteral);
 					}
 					}
-					this.state = 133;
+					this.state = 131;
 					this._errHandler.sync(this);
 					_la = this._input.LA(1);
-				} while (_la===234);
+				} while (_la===206);
 				}
 				break;
-			case 187:
+			case 160:
 				this.enterOuterAlt(localctx, 4);
 				{
-				this.state = 135;
+				this.state = 133;
 				this.match(proglang12dParser.LeftParen);
-				this.state = 136;
+				this.state = 134;
 				this.expression();
-				this.state = 137;
+				this.state = 135;
 				this.match(proglang12dParser.RightParen);
 				}
 				break;
@@ -764,21 +690,21 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 141;
+			this.state = 139;
 			this.genericAssociation();
-			this.state = 146;
+			this.state = 144;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la===215) {
+			while (_la===188) {
 				{
 				{
-				this.state = 142;
+				this.state = 140;
 				this.match(proglang12dParser.Comma);
-				this.state = 143;
+				this.state = 141;
 				this.genericAssociation();
 				}
 				}
-				this.state = 148;
+				this.state = 146;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -805,7 +731,7 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 151;
+			this.state = 149;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
 			case 146:
@@ -813,22 +739,22 @@ export default class proglang12dParser extends Parser {
 			case 155:
 			case 158:
 				{
-				this.state = 149;
+				this.state = 147;
 				this.typeName();
 				}
 				break;
 			case 148:
 				{
-				this.state = 150;
+				this.state = 148;
 				this.match(proglang12dParser.Default);
 				}
 				break;
 			default:
 				throw new NoViableAltException(this);
 			}
-			this.state = 153;
+			this.state = 151;
 			this.match(proglang12dParser.Colon);
-			this.state = 154;
+			this.state = 152;
 			this.assignmentExpression();
 			}
 		}
@@ -854,69 +780,53 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 156;
+			this.state = 154;
 			this.primaryExpression();
-			this.state = 172;
+			this.state = 168;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la===1 || ((((_la - 187)) & ~0x1F) === 0 && ((1 << (_la - 187)) & 40965) !== 0) || _la===229) {
+			while (((((_la - 160)) & ~0x1F) === 0 && ((1 << (_la - 160)) & 40965) !== 0)) {
 				{
-				this.state = 170;
+				this.state = 166;
 				this._errHandler.sync(this);
 				switch (this._input.LA(1)) {
-				case 189:
+				case 162:
 					{
-					this.state = 157;
+					this.state = 155;
 					this.match(proglang12dParser.LeftBracket);
-					this.state = 158;
+					this.state = 156;
 					this.expression();
-					this.state = 159;
+					this.state = 157;
 					this.match(proglang12dParser.RightBracket);
 					}
 					break;
-				case 187:
+				case 160:
 					{
-					this.state = 161;
+					this.state = 159;
 					this.match(proglang12dParser.LeftParen);
-					this.state = 163;
+					this.state = 161;
 					this._errHandler.sync(this);
 					_la = this._input.LA(1);
-					if (_la===2 || ((((_la - 187)) & ~0x1F) === 0 && ((1 << (_la - 187)) & 19525633) !== 0) || ((((_la - 231)) & ~0x1F) === 0 && ((1 << (_la - 231)) & 15) !== 0)) {
+					if (((((_la - 160)) & ~0x1F) === 0 && ((1 << (_la - 160)) & 16838657) !== 0) || ((((_la - 203)) & ~0x1F) === 0 && ((1 << (_la - 203)) & 11) !== 0)) {
 						{
-						this.state = 162;
+						this.state = 160;
 						this.argumentExpressionList();
 						}
 					}
 
-					this.state = 165;
+					this.state = 163;
 					this.match(proglang12dParser.RightParen);
 					}
 					break;
-				case 1:
-				case 229:
+				case 173:
 					{
-					this.state = 166;
-					_la = this._input.LA(1);
-					if(!(_la===1 || _la===229)) {
-					this._errHandler.recoverInline(this);
-					}
-					else {
-						this._errHandler.reportMatch(this);
-					    this.consume();
-					}
-					this.state = 167;
-					this.match(proglang12dParser.Identifier);
-					}
-					break;
-				case 200:
-					{
-					this.state = 168;
+					this.state = 164;
 					this.match(proglang12dParser.PlusPlus);
 					}
 					break;
-				case 202:
+				case 175:
 					{
-					this.state = 169;
+					this.state = 165;
 					this.match(proglang12dParser.MinusMinus);
 					}
 					break;
@@ -924,7 +834,7 @@ export default class proglang12dParser extends Parser {
 					throw new NoViableAltException(this);
 				}
 				}
-				this.state = 174;
+				this.state = 170;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -952,21 +862,21 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 175;
+			this.state = 171;
 			this.assignmentExpression();
-			this.state = 180;
+			this.state = 176;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la===215) {
+			while (_la===188) {
 				{
 				{
-				this.state = 176;
+				this.state = 172;
 				this.match(proglang12dParser.Comma);
-				this.state = 177;
+				this.state = 173;
 				this.assignmentExpression();
 				}
 				}
-				this.state = 182;
+				this.state = 178;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -994,15 +904,15 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 186;
+			this.state = 182;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la===200 || _la===202) {
+			while (_la===173 || _la===175) {
 				{
 				{
-				this.state = 183;
+				this.state = 179;
 				_la = this._input.LA(1);
-				if(!(_la===200 || _la===202)) {
+				if(!(_la===173 || _la===175)) {
 				this._errHandler.recoverInline(this);
 				}
 				else {
@@ -1011,41 +921,30 @@ export default class proglang12dParser extends Parser {
 				}
 				}
 				}
-				this.state = 188;
+				this.state = 184;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 195;
+			this.state = 189;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case 187:
-			case 231:
-			case 232:
-			case 234:
+			case 160:
+			case 203:
+			case 204:
+			case 206:
 				{
-				this.state = 189;
+				this.state = 185;
 				this.postfixExpression();
 				}
 				break;
-			case 2:
-			case 199:
-			case 201:
-			case 203:
-			case 206:
-			case 211:
+			case 172:
+			case 174:
+			case 184:
 				{
-				this.state = 190;
+				this.state = 186;
 				this.unaryOperator();
-				this.state = 191;
+				this.state = 187;
 				this.castExpression();
-				}
-				break;
-			case 208:
-				{
-				this.state = 193;
-				this.match(proglang12dParser.AndAnd);
-				this.state = 194;
-				this.match(proglang12dParser.Identifier);
 				}
 				break;
 			default:
@@ -1075,9 +974,9 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 197;
+			this.state = 191;
 			_la = this._input.LA(1);
-			if(!(_la===2 || ((((_la - 199)) & ~0x1F) === 0 && ((1 << (_la - 199)) & 4245) !== 0))) {
+			if(!(((((_la - 172)) & ~0x1F) === 0 && ((1 << (_la - 172)) & 4101) !== 0))) {
 			this._errHandler.recoverInline(this);
 			}
 			else {
@@ -1105,37 +1004,10 @@ export default class proglang12dParser extends Parser {
 		let localctx: CastExpressionContext = new CastExpressionContext(this, this._ctx, this.state);
 		this.enterRule(localctx, 14, proglang12dParser.RULE_castExpression);
 		try {
-			this.state = 201;
-			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
-			case 2:
-			case 187:
-			case 199:
-			case 200:
-			case 201:
-			case 202:
-			case 203:
-			case 206:
-			case 208:
-			case 211:
-			case 231:
-			case 232:
-			case 234:
-				this.enterOuterAlt(localctx, 1);
-				{
-				this.state = 199;
-				this.unaryExpression();
-				}
-				break;
-			case 233:
-				this.enterOuterAlt(localctx, 2);
-				{
-				this.state = 200;
-				this.match(proglang12dParser.DigitSequence);
-				}
-				break;
-			default:
-				throw new NoViableAltException(this);
+			this.enterOuterAlt(localctx, 1);
+			{
+			this.state = 193;
+			this.unaryExpression();
 			}
 		}
 		catch (re) {
@@ -1160,28 +1032,28 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 203;
+			this.state = 195;
 			this.castExpression();
-			this.state = 208;
+			this.state = 200;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (((((_la - 203)) & ~0x1F) === 0 && ((1 << (_la - 203)) & 7) !== 0)) {
+			while (((((_la - 176)) & ~0x1F) === 0 && ((1 << (_la - 176)) & 7) !== 0)) {
 				{
 				{
-				this.state = 204;
+				this.state = 196;
 				_la = this._input.LA(1);
-				if(!(((((_la - 203)) & ~0x1F) === 0 && ((1 << (_la - 203)) & 7) !== 0))) {
+				if(!(((((_la - 176)) & ~0x1F) === 0 && ((1 << (_la - 176)) & 7) !== 0))) {
 				this._errHandler.recoverInline(this);
 				}
 				else {
 					this._errHandler.reportMatch(this);
 				    this.consume();
 				}
-				this.state = 205;
+				this.state = 197;
 				this.castExpression();
 				}
 				}
-				this.state = 210;
+				this.state = 202;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -1209,28 +1081,28 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 211;
+			this.state = 203;
 			this.multiplicativeExpression();
-			this.state = 216;
+			this.state = 208;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la===199 || _la===201) {
+			while (_la===172 || _la===174) {
 				{
 				{
-				this.state = 212;
+				this.state = 204;
 				_la = this._input.LA(1);
-				if(!(_la===199 || _la===201)) {
+				if(!(_la===172 || _la===174)) {
 				this._errHandler.recoverInline(this);
 				}
 				else {
 					this._errHandler.reportMatch(this);
 				    this.consume();
 				}
-				this.state = 213;
+				this.state = 205;
 				this.multiplicativeExpression();
 				}
 				}
-				this.state = 218;
+				this.state = 210;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -1258,28 +1130,28 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 219;
+			this.state = 211;
 			this.additiveExpression();
-			this.state = 224;
+			this.state = 216;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la===197 || _la===198) {
+			while (_la===170 || _la===171) {
 				{
 				{
-				this.state = 220;
+				this.state = 212;
 				_la = this._input.LA(1);
-				if(!(_la===197 || _la===198)) {
+				if(!(_la===170 || _la===171)) {
 				this._errHandler.recoverInline(this);
 				}
 				else {
 					this._errHandler.reportMatch(this);
 				    this.consume();
 				}
-				this.state = 221;
+				this.state = 213;
 				this.additiveExpression();
 				}
 				}
-				this.state = 226;
+				this.state = 218;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -1307,28 +1179,28 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 227;
+			this.state = 219;
 			this.shiftExpression();
-			this.state = 232;
+			this.state = 224;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (((((_la - 193)) & ~0x1F) === 0 && ((1 << (_la - 193)) & 15) !== 0)) {
+			while (((((_la - 166)) & ~0x1F) === 0 && ((1 << (_la - 166)) & 15) !== 0)) {
 				{
 				{
-				this.state = 228;
+				this.state = 220;
 				_la = this._input.LA(1);
-				if(!(((((_la - 193)) & ~0x1F) === 0 && ((1 << (_la - 193)) & 15) !== 0))) {
+				if(!(((((_la - 166)) & ~0x1F) === 0 && ((1 << (_la - 166)) & 15) !== 0))) {
 				this._errHandler.recoverInline(this);
 				}
 				else {
 					this._errHandler.reportMatch(this);
 				    this.consume();
 				}
-				this.state = 229;
+				this.state = 221;
 				this.shiftExpression();
 				}
 				}
-				this.state = 234;
+				this.state = 226;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -1356,28 +1228,28 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 235;
+			this.state = 227;
 			this.relationalExpression();
-			this.state = 240;
+			this.state = 232;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la===227 || _la===228) {
+			while (_la===200 || _la===201) {
 				{
 				{
-				this.state = 236;
+				this.state = 228;
 				_la = this._input.LA(1);
-				if(!(_la===227 || _la===228)) {
+				if(!(_la===200 || _la===201)) {
 				this._errHandler.recoverInline(this);
 				}
 				else {
 					this._errHandler.reportMatch(this);
 				    this.consume();
 				}
-				this.state = 237;
+				this.state = 229;
 				this.relationalExpression();
 				}
 				}
-				this.state = 242;
+				this.state = 234;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -1405,21 +1277,21 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 243;
+			this.state = 235;
 			this.equalityExpression();
-			this.state = 248;
+			this.state = 240;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la===206) {
+			while (_la===179) {
 				{
 				{
-				this.state = 244;
+				this.state = 236;
 				this.match(proglang12dParser.And);
-				this.state = 245;
+				this.state = 237;
 				this.equalityExpression();
 				}
 				}
-				this.state = 250;
+				this.state = 242;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -1447,21 +1319,21 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 251;
+			this.state = 243;
 			this.andExpression();
-			this.state = 256;
+			this.state = 248;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la===210) {
+			while (_la===183) {
 				{
 				{
-				this.state = 252;
+				this.state = 244;
 				this.match(proglang12dParser.Caret);
-				this.state = 253;
+				this.state = 245;
 				this.andExpression();
 				}
 				}
-				this.state = 258;
+				this.state = 250;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -1489,21 +1361,21 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 259;
+			this.state = 251;
 			this.exclusiveOrExpression();
-			this.state = 264;
+			this.state = 256;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la===207) {
+			while (_la===180) {
 				{
 				{
-				this.state = 260;
+				this.state = 252;
 				this.match(proglang12dParser.Or);
-				this.state = 261;
+				this.state = 253;
 				this.exclusiveOrExpression();
 				}
 				}
-				this.state = 266;
+				this.state = 258;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -1531,21 +1403,21 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 267;
+			this.state = 259;
 			this.inclusiveOrExpression();
-			this.state = 272;
+			this.state = 264;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la===208) {
+			while (_la===181) {
 				{
 				{
-				this.state = 268;
+				this.state = 260;
 				this.match(proglang12dParser.AndAnd);
-				this.state = 269;
+				this.state = 261;
 				this.inclusiveOrExpression();
 				}
 				}
-				this.state = 274;
+				this.state = 266;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -1573,21 +1445,21 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 275;
+			this.state = 267;
 			this.logicalAndExpression();
-			this.state = 280;
+			this.state = 272;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la===209) {
+			while (_la===182) {
 				{
 				{
-				this.state = 276;
+				this.state = 268;
 				this.match(proglang12dParser.OrOr);
-				this.state = 277;
+				this.state = 269;
 				this.logicalAndExpression();
 				}
 				}
-				this.state = 282;
+				this.state = 274;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -1615,20 +1487,20 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 283;
+			this.state = 275;
 			this.logicalOrExpression();
-			this.state = 289;
+			this.state = 281;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la===212) {
+			if (_la===185) {
 				{
-				this.state = 284;
+				this.state = 276;
 				this.match(proglang12dParser.Question);
-				this.state = 285;
+				this.state = 277;
 				this.expression();
-				this.state = 286;
+				this.state = 278;
 				this.match(proglang12dParser.Colon);
-				this.state = 287;
+				this.state = 279;
 				this.conditionalExpression();
 				}
 			}
@@ -1654,32 +1526,25 @@ export default class proglang12dParser extends Parser {
 		let localctx: AssignmentExpressionContext = new AssignmentExpressionContext(this, this._ctx, this.state);
 		this.enterRule(localctx, 38, proglang12dParser.RULE_assignmentExpression);
 		try {
-			this.state = 297;
+			this.state = 288;
 			this._errHandler.sync(this);
-			switch ( this._interp.adaptivePredict(this._input, 22, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 21, this._ctx) ) {
 			case 1:
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 291;
+				this.state = 283;
 				this.conditionalExpression();
 				}
 				break;
 			case 2:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 292;
+				this.state = 284;
 				this.unaryExpression();
-				this.state = 293;
+				this.state = 285;
 				this.assignmentOperator();
-				this.state = 294;
+				this.state = 286;
 				this.assignmentExpression();
-				}
-				break;
-			case 3:
-				this.enterOuterAlt(localctx, 3);
-				{
-				this.state = 296;
-				this.match(proglang12dParser.DigitSequence);
 				}
 				break;
 			}
@@ -1706,9 +1571,9 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 299;
+			this.state = 290;
 			_la = this._input.LA(1);
-			if(!(((((_la - 216)) & ~0x1F) === 0 && ((1 << (_la - 216)) & 2047) !== 0))) {
+			if(!(((((_la - 189)) & ~0x1F) === 0 && ((1 << (_la - 189)) & 63) !== 0))) {
 			this._errHandler.recoverInline(this);
 			}
 			else {
@@ -1739,21 +1604,21 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 301;
+			this.state = 292;
 			this.assignmentExpression();
-			this.state = 306;
+			this.state = 297;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la===215) {
+			while (_la===188) {
 				{
 				{
-				this.state = 302;
+				this.state = 293;
 				this.match(proglang12dParser.Comma);
-				this.state = 303;
+				this.state = 294;
 				this.assignmentExpression();
 				}
 				}
-				this.state = 308;
+				this.state = 299;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -1780,7 +1645,7 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 309;
+			this.state = 300;
 			this.conditionalExpression();
 			}
 		}
@@ -1805,11 +1670,11 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 311;
+			this.state = 302;
 			this.declarationSpecifiers();
-			this.state = 312;
+			this.state = 303;
 			this.initDeclaratorList();
-			this.state = 313;
+			this.state = 304;
 			this.match(proglang12dParser.Semi);
 			}
 		}
@@ -1835,21 +1700,21 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 315;
+			this.state = 306;
 			this.initDeclarator();
-			this.state = 320;
+			this.state = 311;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la===215) {
+			while (_la===188) {
 				{
 				{
-				this.state = 316;
+				this.state = 307;
 				this.match(proglang12dParser.Comma);
-				this.state = 317;
+				this.state = 308;
 				this.initDeclarator();
 				}
 				}
-				this.state = 322;
+				this.state = 313;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -1877,16 +1742,16 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 323;
+			this.state = 314;
 			this.declarator();
-			this.state = 326;
+			this.state = 317;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la===216) {
+			if (_la===189) {
 				{
-				this.state = 324;
+				this.state = 315;
 				this.match(proglang12dParser.Assign);
-				this.state = 325;
+				this.state = 316;
 				this.initializer();
 				}
 			}
@@ -1915,58 +1780,20 @@ export default class proglang12dParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 329;
+			this.state = 320;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			do {
 				{
 				{
-				this.state = 328;
+				this.state = 319;
 				this.declarationSpecifier();
 				}
 				}
-				this.state = 331;
+				this.state = 322;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-			} while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967288) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 1216618495) !== 0));
-			}
-		}
-		catch (re) {
-			if (re instanceof RecognitionException) {
-				localctx.exception = re;
-				this._errHandler.reportError(this, re);
-				this._errHandler.recover(this, re);
-			} else {
-				throw re;
-			}
-		}
-		finally {
-			this.exitRule();
-		}
-		return localctx;
-	}
-	// @RuleVersion(0)
-	public declarationSpecifiers2(): DeclarationSpecifiers2Context {
-		let localctx: DeclarationSpecifiers2Context = new DeclarationSpecifiers2Context(this, this._ctx, this.state);
-		this.enterRule(localctx, 54, proglang12dParser.RULE_declarationSpecifiers2);
-		let _la: number;
-		try {
-			this.enterOuterAlt(localctx, 1);
-			{
-			this.state = 334;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			do {
-				{
-				{
-				this.state = 333;
-				this.declarationSpecifier();
-				}
-				}
-				this.state = 336;
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
-			} while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967288) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 1216618495) !== 0));
+			} while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967294) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 1216612351) !== 0));
 			}
 		}
 		catch (re) {
@@ -1986,9 +1813,9 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public declarationSpecifier(): DeclarationSpecifierContext {
 		let localctx: DeclarationSpecifierContext = new DeclarationSpecifierContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 56, proglang12dParser.RULE_declarationSpecifier);
+		this.enterRule(localctx, 54, proglang12dParser.RULE_declarationSpecifier);
 		try {
-			this.state = 340;
+			this.state = 326;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
 			case 146:
@@ -1997,10 +1824,12 @@ export default class proglang12dParser extends Parser {
 			case 158:
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 338;
+				this.state = 324;
 				this.typeSpecifier();
 				}
 				break;
+			case 1:
+			case 2:
 			case 3:
 			case 4:
 			case 5:
@@ -2137,11 +1966,9 @@ export default class proglang12dParser extends Parser {
 			case 136:
 			case 137:
 			case 138:
-			case 139:
-			case 140:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 339;
+				this.state = 325;
 				this.builtInTypeSpecifier();
 				}
 				break;
@@ -2166,12 +1993,12 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public typeSpecifier(): TypeSpecifierContext {
 		let localctx: TypeSpecifierContext = new TypeSpecifierContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 58, proglang12dParser.RULE_typeSpecifier);
+		this.enterRule(localctx, 56, proglang12dParser.RULE_typeSpecifier);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 342;
+			this.state = 328;
 			_la = this._input.LA(1);
 			if(!(((((_la - 146)) & ~0x1F) === 0 && ((1 << (_la - 146)) & 4641) !== 0))) {
 			this._errHandler.recoverInline(this);
@@ -2199,14 +2026,14 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public builtInTypeSpecifier(): BuiltInTypeSpecifierContext {
 		let localctx: BuiltInTypeSpecifierContext = new BuiltInTypeSpecifierContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 60, proglang12dParser.RULE_builtInTypeSpecifier);
+		this.enterRule(localctx, 58, proglang12dParser.RULE_builtInTypeSpecifier);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 344;
+			this.state = 330;
 			_la = this._input.LA(1);
-			if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967288) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 8191) !== 0))) {
+			if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967294) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 2047) !== 0))) {
 			this._errHandler.recoverInline(this);
 			}
 			else {
@@ -2232,19 +2059,19 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public specifierQualifierList(): SpecifierQualifierListContext {
 		let localctx: SpecifierQualifierListContext = new SpecifierQualifierListContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 62, proglang12dParser.RULE_specifierQualifierList);
+		this.enterRule(localctx, 60, proglang12dParser.RULE_specifierQualifierList);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 346;
+			this.state = 332;
 			this.typeSpecifier();
-			this.state = 348;
+			this.state = 334;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			if (((((_la - 146)) & ~0x1F) === 0 && ((1 << (_la - 146)) & 4641) !== 0)) {
 				{
-				this.state = 347;
+				this.state = 333;
 				this.specifierQualifierList();
 				}
 			}
@@ -2268,11 +2095,11 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public declarator(): DeclaratorContext {
 		let localctx: DeclaratorContext = new DeclaratorContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 64, proglang12dParser.RULE_declarator);
+		this.enterRule(localctx, 62, proglang12dParser.RULE_declarator);
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 350;
+			this.state = 336;
 			this.directDeclarator(0);
 			}
 		}
@@ -2303,21 +2130,21 @@ export default class proglang12dParser extends Parser {
 		let _parentState: number = this.state;
 		let localctx: DirectDeclaratorContext = new DirectDeclaratorContext(this, this._ctx, _parentState);
 		let _prevctx: DirectDeclaratorContext = localctx;
-		let _startState: number = 66;
-		this.enterRecursionRule(localctx, 66, proglang12dParser.RULE_directDeclarator, _p);
+		let _startState: number = 64;
+		this.enterRecursionRule(localctx, 64, proglang12dParser.RULE_directDeclarator, _p);
 		let _la: number;
 		try {
 			let _alt: number;
 			this.enterOuterAlt(localctx, 1);
 			{
 			{
-			this.state = 353;
+			this.state = 339;
 			this.match(proglang12dParser.Identifier);
 			}
 			this._ctx.stop = this._input.LT(-1);
-			this.state = 374;
+			this.state = 360;
 			this._errHandler.sync(this);
-			_alt = this._interp.adaptivePredict(this._input, 33, this._ctx);
+			_alt = this._interp.adaptivePredict(this._input, 31, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					if (this._parseListeners != null) {
@@ -2325,30 +2152,30 @@ export default class proglang12dParser extends Parser {
 					}
 					_prevctx = localctx;
 					{
-					this.state = 372;
+					this.state = 358;
 					this._errHandler.sync(this);
-					switch ( this._interp.adaptivePredict(this._input, 32, this._ctx) ) {
+					switch ( this._interp.adaptivePredict(this._input, 30, this._ctx) ) {
 					case 1:
 						{
 						localctx = new DirectDeclaratorContext(this, _parentctx, _parentState);
 						this.pushNewRecursionContext(localctx, _startState, proglang12dParser.RULE_directDeclarator);
-						this.state = 355;
+						this.state = 341;
 						if (!(this.precpred(this._ctx, 3))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 3)");
 						}
-						this.state = 356;
+						this.state = 342;
 						this.match(proglang12dParser.LeftBracket);
-						this.state = 358;
+						this.state = 344;
 						this._errHandler.sync(this);
 						_la = this._input.LA(1);
-						if (_la===2 || ((((_la - 187)) & ~0x1F) === 0 && ((1 << (_la - 187)) & 19525633) !== 0) || ((((_la - 231)) & ~0x1F) === 0 && ((1 << (_la - 231)) & 15) !== 0)) {
+						if (((((_la - 160)) & ~0x1F) === 0 && ((1 << (_la - 160)) & 16838657) !== 0) || ((((_la - 203)) & ~0x1F) === 0 && ((1 << (_la - 203)) & 11) !== 0)) {
 							{
-							this.state = 357;
+							this.state = 343;
 							this.constantExpression();
 							}
 						}
 
-						this.state = 360;
+						this.state = 346;
 						this.match(proglang12dParser.RightBracket);
 						}
 						break;
@@ -2356,15 +2183,15 @@ export default class proglang12dParser extends Parser {
 						{
 						localctx = new DirectDeclaratorContext(this, _parentctx, _parentState);
 						this.pushNewRecursionContext(localctx, _startState, proglang12dParser.RULE_directDeclarator);
-						this.state = 361;
+						this.state = 347;
 						if (!(this.precpred(this._ctx, 2))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 2)");
 						}
-						this.state = 362;
+						this.state = 348;
 						this.match(proglang12dParser.LeftParen);
-						this.state = 363;
+						this.state = 349;
 						this.parameterTypeList();
-						this.state = 364;
+						this.state = 350;
 						this.match(proglang12dParser.RightParen);
 						}
 						break;
@@ -2372,32 +2199,32 @@ export default class proglang12dParser extends Parser {
 						{
 						localctx = new DirectDeclaratorContext(this, _parentctx, _parentState);
 						this.pushNewRecursionContext(localctx, _startState, proglang12dParser.RULE_directDeclarator);
-						this.state = 366;
+						this.state = 352;
 						if (!(this.precpred(this._ctx, 1))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 1)");
 						}
-						this.state = 367;
+						this.state = 353;
 						this.match(proglang12dParser.LeftParen);
-						this.state = 369;
+						this.state = 355;
 						this._errHandler.sync(this);
 						_la = this._input.LA(1);
-						if (_la===231) {
+						if (_la===203) {
 							{
-							this.state = 368;
+							this.state = 354;
 							this.identifierList();
 							}
 						}
 
-						this.state = 371;
+						this.state = 357;
 						this.match(proglang12dParser.RightParen);
 						}
 						break;
 					}
 					}
 				}
-				this.state = 376;
+				this.state = 362;
 				this._errHandler.sync(this);
-				_alt = this._interp.adaptivePredict(this._input, 33, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 31, this._ctx);
 			}
 			}
 		}
@@ -2418,17 +2245,17 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public nestedParenthesesBlock(): NestedParenthesesBlockContext {
 		let localctx: NestedParenthesesBlockContext = new NestedParenthesesBlockContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 68, proglang12dParser.RULE_nestedParenthesesBlock);
+		this.enterRule(localctx, 66, proglang12dParser.RULE_nestedParenthesesBlock);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 384;
+			this.state = 370;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967294) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 4294967295) !== 0) || ((((_la - 160)) & ~0x1F) === 0 && ((1 << (_la - 160)) & 4026531839) !== 0) || ((((_la - 192)) & ~0x1F) === 0 && ((1 << (_la - 192)) & 4294967295) !== 0) || ((((_la - 224)) & ~0x1F) === 0 && ((1 << (_la - 224)) & 2097151) !== 0)) {
+			while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967294) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 4294967295) !== 0) || ((((_la - 160)) & ~0x1F) === 0 && ((1 << (_la - 160)) & 4294967293) !== 0) || ((((_la - 192)) & ~0x1F) === 0 && ((1 << (_la - 192)) & 2097151) !== 0)) {
 				{
-				this.state = 382;
+				this.state = 368;
 				this._errHandler.sync(this);
 				switch (this._input.LA(1)) {
 				case 1:
@@ -2590,8 +2417,6 @@ export default class proglang12dParser extends Parser {
 				case 157:
 				case 158:
 				case 159:
-				case 160:
-				case 161:
 				case 162:
 				case 163:
 				case 164:
@@ -2617,6 +2442,8 @@ export default class proglang12dParser extends Parser {
 				case 184:
 				case 185:
 				case 186:
+				case 187:
+				case 188:
 				case 189:
 				case 190:
 				case 191:
@@ -2641,42 +2468,10 @@ export default class proglang12dParser extends Parser {
 				case 210:
 				case 211:
 				case 212:
-				case 213:
-				case 214:
-				case 215:
-				case 216:
-				case 217:
-				case 218:
-				case 219:
-				case 220:
-				case 221:
-				case 222:
-				case 223:
-				case 224:
-				case 225:
-				case 226:
-				case 227:
-				case 228:
-				case 229:
-				case 230:
-				case 231:
-				case 232:
-				case 233:
-				case 234:
-				case 235:
-				case 236:
-				case 237:
-				case 238:
-				case 239:
-				case 240:
-				case 241:
-				case 242:
-				case 243:
-				case 244:
 					{
-					this.state = 377;
+					this.state = 363;
 					_la = this._input.LA(1);
-					if(_la<=0 || _la===187 || _la===188) {
+					if(_la<=0 || _la===160 || _la===161) {
 					this._errHandler.recoverInline(this);
 					}
 					else {
@@ -2685,13 +2480,13 @@ export default class proglang12dParser extends Parser {
 					}
 					}
 					break;
-				case 187:
+				case 160:
 					{
-					this.state = 378;
+					this.state = 364;
 					this.match(proglang12dParser.LeftParen);
-					this.state = 379;
+					this.state = 365;
 					this.nestedParenthesesBlock();
-					this.state = 380;
+					this.state = 366;
 					this.match(proglang12dParser.RightParen);
 					}
 					break;
@@ -2699,7 +2494,7 @@ export default class proglang12dParser extends Parser {
 					throw new NoViableAltException(this);
 				}
 				}
-				this.state = 386;
+				this.state = 372;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -2722,22 +2517,22 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public parameterTypeList(): ParameterTypeListContext {
 		let localctx: ParameterTypeListContext = new ParameterTypeListContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 70, proglang12dParser.RULE_parameterTypeList);
+		this.enterRule(localctx, 68, proglang12dParser.RULE_parameterTypeList);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 387;
+			this.state = 373;
 			this.parameterList();
-			this.state = 390;
+			this.state = 376;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la===215) {
+			if (_la===188) {
 				{
-				this.state = 388;
+				this.state = 374;
 				this.match(proglang12dParser.Comma);
-				this.state = 389;
-				this.match(proglang12dParser.Ellipsis);
+				this.state = 375;
+				this.match(proglang12dParser.T__138);
 				}
 			}
 
@@ -2760,30 +2555,30 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public parameterList(): ParameterListContext {
 		let localctx: ParameterListContext = new ParameterListContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 72, proglang12dParser.RULE_parameterList);
+		this.enterRule(localctx, 70, proglang12dParser.RULE_parameterList);
 		try {
 			let _alt: number;
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 392;
+			this.state = 378;
 			this.parameterDeclaration();
-			this.state = 397;
+			this.state = 383;
 			this._errHandler.sync(this);
-			_alt = this._interp.adaptivePredict(this._input, 37, this._ctx);
+			_alt = this._interp.adaptivePredict(this._input, 35, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					{
 					{
-					this.state = 393;
+					this.state = 379;
 					this.match(proglang12dParser.Comma);
-					this.state = 394;
+					this.state = 380;
 					this.parameterDeclaration();
 					}
 					}
 				}
-				this.state = 399;
+				this.state = 385;
 				this._errHandler.sync(this);
-				_alt = this._interp.adaptivePredict(this._input, 37, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 35, this._ctx);
 			}
 			}
 		}
@@ -2804,23 +2599,23 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public parameterDeclaration(): ParameterDeclarationContext {
 		let localctx: ParameterDeclarationContext = new ParameterDeclarationContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 74, proglang12dParser.RULE_parameterDeclaration);
+		this.enterRule(localctx, 72, proglang12dParser.RULE_parameterDeclaration);
 		let _la: number;
 		try {
-			this.state = 413;
+			this.state = 399;
 			this._errHandler.sync(this);
-			switch ( this._interp.adaptivePredict(this._input, 39, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 37, this._ctx) ) {
 			case 1:
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 400;
-				this.declarationSpecifiers2();
-				this.state = 402;
+				this.state = 386;
+				this.declarationSpecifiers();
+				this.state = 388;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la===231) {
+				if (_la===203) {
 					{
-					this.state = 401;
+					this.state = 387;
 					this.match(proglang12dParser.Identifier);
 					}
 				}
@@ -2830,24 +2625,24 @@ export default class proglang12dParser extends Parser {
 			case 2:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 404;
-				this.declarationSpecifiers2();
-				this.state = 405;
+				this.state = 390;
+				this.declarationSpecifiers();
+				this.state = 391;
 				this.match(proglang12dParser.And);
-				this.state = 406;
+				this.state = 392;
 				this.match(proglang12dParser.Identifier);
 				}
 				break;
 			case 3:
 				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 408;
-				this.declarationSpecifiers2();
-				this.state = 409;
+				this.state = 394;
+				this.declarationSpecifiers();
+				this.state = 395;
 				this.match(proglang12dParser.Identifier);
-				this.state = 410;
+				this.state = 396;
 				this.match(proglang12dParser.LeftBracket);
-				this.state = 411;
+				this.state = 397;
 				this.match(proglang12dParser.RightBracket);
 				}
 				break;
@@ -2870,26 +2665,26 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public identifierList(): IdentifierListContext {
 		let localctx: IdentifierListContext = new IdentifierListContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 76, proglang12dParser.RULE_identifierList);
+		this.enterRule(localctx, 74, proglang12dParser.RULE_identifierList);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 415;
+			this.state = 401;
 			this.match(proglang12dParser.Identifier);
-			this.state = 420;
+			this.state = 406;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la===215) {
+			while (_la===188) {
 				{
 				{
-				this.state = 416;
+				this.state = 402;
 				this.match(proglang12dParser.Comma);
-				this.state = 417;
+				this.state = 403;
 				this.match(proglang12dParser.Identifier);
 				}
 				}
-				this.state = 422;
+				this.state = 408;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -2912,11 +2707,11 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public typeName(): TypeNameContext {
 		let localctx: TypeNameContext = new TypeNameContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 78, proglang12dParser.RULE_typeName);
+		this.enterRule(localctx, 76, proglang12dParser.RULE_typeName);
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 423;
+			this.state = 409;
 			this.specifierQualifierList();
 			}
 		}
@@ -2947,25 +2742,25 @@ export default class proglang12dParser extends Parser {
 		let _parentState: number = this.state;
 		let localctx: DirectAbstractDeclaratorContext = new DirectAbstractDeclaratorContext(this, this._ctx, _parentState);
 		let _prevctx: DirectAbstractDeclaratorContext = localctx;
-		let _startState: number = 80;
-		this.enterRecursionRule(localctx, 80, proglang12dParser.RULE_directAbstractDeclarator, _p);
+		let _startState: number = 78;
+		this.enterRecursionRule(localctx, 78, proglang12dParser.RULE_directAbstractDeclarator, _p);
 		let _la: number;
 		try {
 			let _alt: number;
 			this.enterOuterAlt(localctx, 1);
 			{
 			{
-			this.state = 426;
+			this.state = 412;
 			this.match(proglang12dParser.LeftBracket);
-			this.state = 427;
+			this.state = 413;
 			this.match(proglang12dParser.Star);
-			this.state = 428;
+			this.state = 414;
 			this.match(proglang12dParser.RightBracket);
 			}
 			this._ctx.stop = this._input.LT(-1);
-			this.state = 442;
+			this.state = 428;
 			this._errHandler.sync(this);
-			_alt = this._interp.adaptivePredict(this._input, 43, this._ctx);
+			_alt = this._interp.adaptivePredict(this._input, 41, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					if (this._parseListeners != null) {
@@ -2973,30 +2768,30 @@ export default class proglang12dParser extends Parser {
 					}
 					_prevctx = localctx;
 					{
-					this.state = 440;
+					this.state = 426;
 					this._errHandler.sync(this);
-					switch ( this._interp.adaptivePredict(this._input, 42, this._ctx) ) {
+					switch ( this._interp.adaptivePredict(this._input, 40, this._ctx) ) {
 					case 1:
 						{
 						localctx = new DirectAbstractDeclaratorContext(this, _parentctx, _parentState);
 						this.pushNewRecursionContext(localctx, _startState, proglang12dParser.RULE_directAbstractDeclarator);
-						this.state = 430;
+						this.state = 416;
 						if (!(this.precpred(this._ctx, 2))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 2)");
 						}
-						this.state = 431;
+						this.state = 417;
 						this.match(proglang12dParser.LeftBracket);
-						this.state = 433;
+						this.state = 419;
 						this._errHandler.sync(this);
 						_la = this._input.LA(1);
-						if (_la===2 || ((((_la - 187)) & ~0x1F) === 0 && ((1 << (_la - 187)) & 19525633) !== 0) || ((((_la - 231)) & ~0x1F) === 0 && ((1 << (_la - 231)) & 15) !== 0)) {
+						if (((((_la - 160)) & ~0x1F) === 0 && ((1 << (_la - 160)) & 16838657) !== 0) || ((((_la - 203)) & ~0x1F) === 0 && ((1 << (_la - 203)) & 11) !== 0)) {
 							{
-							this.state = 432;
+							this.state = 418;
 							this.assignmentExpression();
 							}
 						}
 
-						this.state = 435;
+						this.state = 421;
 						this.match(proglang12dParser.RightBracket);
 						}
 						break;
@@ -3004,24 +2799,24 @@ export default class proglang12dParser extends Parser {
 						{
 						localctx = new DirectAbstractDeclaratorContext(this, _parentctx, _parentState);
 						this.pushNewRecursionContext(localctx, _startState, proglang12dParser.RULE_directAbstractDeclarator);
-						this.state = 436;
+						this.state = 422;
 						if (!(this.precpred(this._ctx, 1))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 1)");
 						}
-						this.state = 437;
+						this.state = 423;
 						this.match(proglang12dParser.LeftBracket);
-						this.state = 438;
+						this.state = 424;
 						this.match(proglang12dParser.Star);
-						this.state = 439;
+						this.state = 425;
 						this.match(proglang12dParser.RightBracket);
 						}
 						break;
 					}
 					}
 				}
-				this.state = 444;
+				this.state = 430;
 				this._errHandler.sync(this);
-				_alt = this._interp.adaptivePredict(this._input, 43, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 41, this._ctx);
 			}
 			}
 		}
@@ -3042,11 +2837,11 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public typedefName(): TypedefNameContext {
 		let localctx: TypedefNameContext = new TypedefNameContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 82, proglang12dParser.RULE_typedefName);
+		this.enterRule(localctx, 80, proglang12dParser.RULE_typedefName);
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 445;
+			this.state = 431;
 			this.match(proglang12dParser.Identifier);
 			}
 		}
@@ -3067,50 +2862,45 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public initializer(): InitializerContext {
 		let localctx: InitializerContext = new InitializerContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 84, proglang12dParser.RULE_initializer);
+		this.enterRule(localctx, 82, proglang12dParser.RULE_initializer);
 		let _la: number;
 		try {
-			this.state = 455;
+			this.state = 441;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case 2:
-			case 187:
-			case 199:
-			case 200:
-			case 201:
-			case 202:
+			case 160:
+			case 172:
+			case 173:
+			case 174:
+			case 175:
+			case 184:
 			case 203:
+			case 204:
 			case 206:
-			case 208:
-			case 211:
-			case 231:
-			case 232:
-			case 233:
-			case 234:
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 447;
+				this.state = 433;
 				this.assignmentExpression();
 				}
 				break;
-			case 191:
+			case 164:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 448;
+				this.state = 434;
 				this.match(proglang12dParser.LeftBrace);
-				this.state = 449;
+				this.state = 435;
 				this.initializerList();
-				this.state = 451;
+				this.state = 437;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la===215) {
+				if (_la===188) {
 					{
-					this.state = 450;
+					this.state = 436;
 					this.match(proglang12dParser.Comma);
 					}
 				}
 
-				this.state = 453;
+				this.state = 439;
 				this.match(proglang12dParser.RightBrace);
 				}
 				break;
@@ -3135,51 +2925,51 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public initializerList(): InitializerListContext {
 		let localctx: InitializerListContext = new InitializerListContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 86, proglang12dParser.RULE_initializerList);
+		this.enterRule(localctx, 84, proglang12dParser.RULE_initializerList);
 		let _la: number;
 		try {
 			let _alt: number;
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 458;
+			this.state = 444;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la===189 || _la===229) {
+			if (_la===162 || _la===202) {
 				{
-				this.state = 457;
+				this.state = 443;
 				this.designation();
 				}
 			}
 
-			this.state = 460;
+			this.state = 446;
 			this.initializer();
-			this.state = 468;
+			this.state = 454;
 			this._errHandler.sync(this);
-			_alt = this._interp.adaptivePredict(this._input, 48, this._ctx);
+			_alt = this._interp.adaptivePredict(this._input, 46, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					{
 					{
-					this.state = 461;
+					this.state = 447;
 					this.match(proglang12dParser.Comma);
-					this.state = 463;
+					this.state = 449;
 					this._errHandler.sync(this);
 					_la = this._input.LA(1);
-					if (_la===189 || _la===229) {
+					if (_la===162 || _la===202) {
 						{
-						this.state = 462;
+						this.state = 448;
 						this.designation();
 						}
 					}
 
-					this.state = 465;
+					this.state = 451;
 					this.initializer();
 					}
 					}
 				}
-				this.state = 470;
+				this.state = 456;
 				this._errHandler.sync(this);
-				_alt = this._interp.adaptivePredict(this._input, 48, this._ctx);
+				_alt = this._interp.adaptivePredict(this._input, 46, this._ctx);
 			}
 			}
 		}
@@ -3200,13 +2990,13 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public designation(): DesignationContext {
 		let localctx: DesignationContext = new DesignationContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 88, proglang12dParser.RULE_designation);
+		this.enterRule(localctx, 86, proglang12dParser.RULE_designation);
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 471;
+			this.state = 457;
 			this.designatorList();
-			this.state = 472;
+			this.state = 458;
 			this.match(proglang12dParser.Assign);
 			}
 		}
@@ -3227,25 +3017,25 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public designatorList(): DesignatorListContext {
 		let localctx: DesignatorListContext = new DesignatorListContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 90, proglang12dParser.RULE_designatorList);
+		this.enterRule(localctx, 88, proglang12dParser.RULE_designatorList);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 475;
+			this.state = 461;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			do {
 				{
 				{
-				this.state = 474;
+				this.state = 460;
 				this.designator();
 				}
 				}
-				this.state = 477;
+				this.state = 463;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-			} while (_la===189 || _la===229);
+			} while (_la===162 || _la===202);
 			}
 		}
 		catch (re) {
@@ -3265,28 +3055,28 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public designator(): DesignatorContext {
 		let localctx: DesignatorContext = new DesignatorContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 92, proglang12dParser.RULE_designator);
+		this.enterRule(localctx, 90, proglang12dParser.RULE_designator);
 		try {
-			this.state = 485;
+			this.state = 471;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case 189:
+			case 162:
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 479;
+				this.state = 465;
 				this.match(proglang12dParser.LeftBracket);
-				this.state = 480;
+				this.state = 466;
 				this.constantExpression();
-				this.state = 481;
+				this.state = 467;
 				this.match(proglang12dParser.RightBracket);
 				}
 				break;
-			case 229:
+			case 202:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 483;
+				this.state = 469;
 				this.match(proglang12dParser.Dot);
-				this.state = 484;
+				this.state = 470;
 				this.match(proglang12dParser.Identifier);
 				}
 				break;
@@ -3311,131 +3101,131 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public statement(): StatementContext {
 		let localctx: StatementContext = new StatementContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 94, proglang12dParser.RULE_statement);
+		this.enterRule(localctx, 92, proglang12dParser.RULE_statement);
 		let _la: number;
 		try {
-			this.state = 524;
+			this.state = 510;
 			this._errHandler.sync(this);
-			switch ( this._interp.adaptivePredict(this._input, 56, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 54, this._ctx) ) {
 			case 1:
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 487;
+				this.state = 473;
 				this.labeledStatement();
 				}
 				break;
 			case 2:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 488;
+				this.state = 474;
 				this.compoundStatement();
 				}
 				break;
 			case 3:
 				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 489;
+				this.state = 475;
 				this.expressionStatement();
 				}
 				break;
 			case 4:
 				this.enterOuterAlt(localctx, 4);
 				{
-				this.state = 490;
+				this.state = 476;
 				this.selectionStatement();
 				}
 				break;
 			case 5:
 				this.enterOuterAlt(localctx, 5);
 				{
-				this.state = 491;
+				this.state = 477;
 				this.iterationStatement();
 				}
 				break;
 			case 6:
 				this.enterOuterAlt(localctx, 6);
 				{
-				this.state = 492;
+				this.state = 478;
 				this.jumpStatement();
 				}
 				break;
 			case 7:
 				this.enterOuterAlt(localctx, 7);
 				{
-				this.state = 493;
+				this.state = 479;
 				_la = this._input.LA(1);
-				if(!(_la===141 || _la===142)) {
+				if(!(_la===140 || _la===141)) {
 				this._errHandler.recoverInline(this);
 				}
 				else {
 					this._errHandler.reportMatch(this);
 				    this.consume();
 				}
-				this.state = 494;
+				this.state = 480;
 				_la = this._input.LA(1);
-				if(!(_la===143 || _la===186)) {
+				if(!(_la===142 || _la===143)) {
 				this._errHandler.recoverInline(this);
 				}
 				else {
 					this._errHandler.reportMatch(this);
 				    this.consume();
 				}
-				this.state = 495;
+				this.state = 481;
 				this.match(proglang12dParser.LeftParen);
-				this.state = 504;
+				this.state = 490;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la===2 || ((((_la - 187)) & ~0x1F) === 0 && ((1 << (_la - 187)) & 19525633) !== 0) || ((((_la - 231)) & ~0x1F) === 0 && ((1 << (_la - 231)) & 15) !== 0)) {
+				if (((((_la - 160)) & ~0x1F) === 0 && ((1 << (_la - 160)) & 16838657) !== 0) || ((((_la - 203)) & ~0x1F) === 0 && ((1 << (_la - 203)) & 11) !== 0)) {
 					{
-					this.state = 496;
+					this.state = 482;
 					this.logicalOrExpression();
-					this.state = 501;
+					this.state = 487;
 					this._errHandler.sync(this);
 					_la = this._input.LA(1);
-					while (_la===215) {
+					while (_la===188) {
 						{
 						{
-						this.state = 497;
+						this.state = 483;
 						this.match(proglang12dParser.Comma);
-						this.state = 498;
+						this.state = 484;
 						this.logicalOrExpression();
 						}
 						}
-						this.state = 503;
+						this.state = 489;
 						this._errHandler.sync(this);
 						_la = this._input.LA(1);
 					}
 					}
 				}
 
-				this.state = 519;
+				this.state = 505;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				while (_la===213) {
+				while (_la===186) {
 					{
 					{
-					this.state = 506;
+					this.state = 492;
 					this.match(proglang12dParser.Colon);
-					this.state = 515;
+					this.state = 501;
 					this._errHandler.sync(this);
 					_la = this._input.LA(1);
-					if (_la===2 || ((((_la - 187)) & ~0x1F) === 0 && ((1 << (_la - 187)) & 19525633) !== 0) || ((((_la - 231)) & ~0x1F) === 0 && ((1 << (_la - 231)) & 15) !== 0)) {
+					if (((((_la - 160)) & ~0x1F) === 0 && ((1 << (_la - 160)) & 16838657) !== 0) || ((((_la - 203)) & ~0x1F) === 0 && ((1 << (_la - 203)) & 11) !== 0)) {
 						{
-						this.state = 507;
+						this.state = 493;
 						this.logicalOrExpression();
-						this.state = 512;
+						this.state = 498;
 						this._errHandler.sync(this);
 						_la = this._input.LA(1);
-						while (_la===215) {
+						while (_la===188) {
 							{
 							{
-							this.state = 508;
+							this.state = 494;
 							this.match(proglang12dParser.Comma);
-							this.state = 509;
+							this.state = 495;
 							this.logicalOrExpression();
 							}
 							}
-							this.state = 514;
+							this.state = 500;
 							this._errHandler.sync(this);
 							_la = this._input.LA(1);
 						}
@@ -3444,13 +3234,13 @@ export default class proglang12dParser extends Parser {
 
 					}
 					}
-					this.state = 521;
+					this.state = 507;
 					this._errHandler.sync(this);
 					_la = this._input.LA(1);
 				}
-				this.state = 522;
+				this.state = 508;
 				this.match(proglang12dParser.RightParen);
-				this.state = 523;
+				this.state = 509;
 				this.match(proglang12dParser.Semi);
 				}
 				break;
@@ -3473,43 +3263,43 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public labeledStatement(): LabeledStatementContext {
 		let localctx: LabeledStatementContext = new LabeledStatementContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 96, proglang12dParser.RULE_labeledStatement);
+		this.enterRule(localctx, 94, proglang12dParser.RULE_labeledStatement);
 		try {
-			this.state = 537;
+			this.state = 523;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case 231:
+			case 203:
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 526;
+				this.state = 512;
 				this.match(proglang12dParser.Identifier);
-				this.state = 527;
+				this.state = 513;
 				this.match(proglang12dParser.Colon);
-				this.state = 528;
+				this.state = 514;
 				this.statement();
 				}
 				break;
 			case 145:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 529;
+				this.state = 515;
 				this.match(proglang12dParser.Case);
-				this.state = 530;
+				this.state = 516;
 				this.constantExpression();
-				this.state = 531;
+				this.state = 517;
 				this.match(proglang12dParser.Colon);
-				this.state = 532;
+				this.state = 518;
 				this.statement();
 				}
 				break;
 			case 148:
 				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 534;
+				this.state = 520;
 				this.match(proglang12dParser.Default);
-				this.state = 535;
+				this.state = 521;
 				this.match(proglang12dParser.Colon);
-				this.state = 536;
+				this.state = 522;
 				this.compoundStatement();
 				}
 				break;
@@ -3534,24 +3324,24 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public compoundStatement(): CompoundStatementContext {
 		let localctx: CompoundStatementContext = new CompoundStatementContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 98, proglang12dParser.RULE_compoundStatement);
+		this.enterRule(localctx, 96, proglang12dParser.RULE_compoundStatement);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 539;
+			this.state = 525;
 			this.match(proglang12dParser.LeftBrace);
-			this.state = 541;
+			this.state = 527;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967292) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 4290740223) !== 0) || ((((_la - 187)) & ~0x1F) === 0 && ((1 << (_la - 187)) & 153743377) !== 0) || ((((_la - 231)) & ~0x1F) === 0 && ((1 << (_la - 231)) & 15) !== 0)) {
+			if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967294) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 4290721791) !== 0) || ((((_la - 160)) & ~0x1F) === 0 && ((1 << (_la - 160)) & 151056401) !== 0) || ((((_la - 203)) & ~0x1F) === 0 && ((1 << (_la - 203)) & 11) !== 0)) {
 				{
-				this.state = 540;
+				this.state = 526;
 				this.blockItemList();
 				}
 			}
 
-			this.state = 543;
+			this.state = 529;
 			this.match(proglang12dParser.RightBrace);
 			}
 		}
@@ -3572,25 +3362,25 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public blockItemList(): BlockItemListContext {
 		let localctx: BlockItemListContext = new BlockItemListContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 100, proglang12dParser.RULE_blockItemList);
+		this.enterRule(localctx, 98, proglang12dParser.RULE_blockItemList);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 546;
+			this.state = 532;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			do {
 				{
 				{
-				this.state = 545;
+				this.state = 531;
 				this.blockItem();
 				}
 				}
-				this.state = 548;
+				this.state = 534;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-			} while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967292) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 4290740223) !== 0) || ((((_la - 187)) & ~0x1F) === 0 && ((1 << (_la - 187)) & 153743377) !== 0) || ((((_la - 231)) & ~0x1F) === 0 && ((1 << (_la - 231)) & 15) !== 0));
+			} while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967294) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 4290721791) !== 0) || ((((_la - 160)) & ~0x1F) === 0 && ((1 << (_la - 160)) & 151056401) !== 0) || ((((_la - 203)) & ~0x1F) === 0 && ((1 << (_la - 203)) & 11) !== 0));
 			}
 		}
 		catch (re) {
@@ -3610,14 +3400,13 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public blockItem(): BlockItemContext {
 		let localctx: BlockItemContext = new BlockItemContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 102, proglang12dParser.RULE_blockItem);
+		this.enterRule(localctx, 100, proglang12dParser.RULE_blockItem);
 		try {
-			this.state = 552;
+			this.state = 538;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case 2:
+			case 140:
 			case 141:
-			case 142:
 			case 144:
 			case 145:
 			case 147:
@@ -3629,27 +3418,25 @@ export default class proglang12dParser extends Parser {
 			case 156:
 			case 157:
 			case 159:
+			case 160:
+			case 164:
+			case 172:
+			case 173:
+			case 174:
+			case 175:
+			case 184:
 			case 187:
-			case 191:
-			case 199:
-			case 200:
-			case 201:
-			case 202:
 			case 203:
+			case 204:
 			case 206:
-			case 208:
-			case 211:
-			case 214:
-			case 231:
-			case 232:
-			case 233:
-			case 234:
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 550;
+				this.state = 536;
 				this.statement();
 				}
 				break;
+			case 1:
+			case 2:
 			case 3:
 			case 4:
 			case 5:
@@ -3786,15 +3573,13 @@ export default class proglang12dParser extends Parser {
 			case 136:
 			case 137:
 			case 138:
-			case 139:
-			case 140:
 			case 146:
 			case 151:
 			case 155:
 			case 158:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 551;
+				this.state = 537;
 				this.declaration();
 				}
 				break;
@@ -3819,22 +3604,22 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public expressionStatement(): ExpressionStatementContext {
 		let localctx: ExpressionStatementContext = new ExpressionStatementContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 104, proglang12dParser.RULE_expressionStatement);
+		this.enterRule(localctx, 102, proglang12dParser.RULE_expressionStatement);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 555;
+			this.state = 541;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la===2 || ((((_la - 187)) & ~0x1F) === 0 && ((1 << (_la - 187)) & 19525633) !== 0) || ((((_la - 231)) & ~0x1F) === 0 && ((1 << (_la - 231)) & 15) !== 0)) {
+			if (((((_la - 160)) & ~0x1F) === 0 && ((1 << (_la - 160)) & 16838657) !== 0) || ((((_la - 203)) & ~0x1F) === 0 && ((1 << (_la - 203)) & 11) !== 0)) {
 				{
-				this.state = 554;
+				this.state = 540;
 				this.expression();
 				}
 			}
 
-			this.state = 557;
+			this.state = 543;
 			this.match(proglang12dParser.Semi);
 			}
 		}
@@ -3855,32 +3640,32 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public selectionStatement(): SelectionStatementContext {
 		let localctx: SelectionStatementContext = new SelectionStatementContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 106, proglang12dParser.RULE_selectionStatement);
+		this.enterRule(localctx, 104, proglang12dParser.RULE_selectionStatement);
 		try {
-			this.state = 574;
+			this.state = 560;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
 			case 154:
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 559;
+				this.state = 545;
 				this.match(proglang12dParser.If);
-				this.state = 560;
+				this.state = 546;
 				this.match(proglang12dParser.LeftParen);
-				this.state = 561;
+				this.state = 547;
 				this.expression();
-				this.state = 562;
+				this.state = 548;
 				this.match(proglang12dParser.RightParen);
-				this.state = 563;
+				this.state = 549;
 				this.statement();
-				this.state = 566;
+				this.state = 552;
 				this._errHandler.sync(this);
-				switch ( this._interp.adaptivePredict(this._input, 62, this._ctx) ) {
+				switch ( this._interp.adaptivePredict(this._input, 60, this._ctx) ) {
 				case 1:
 					{
-					this.state = 564;
+					this.state = 550;
 					this.match(proglang12dParser.Else);
-					this.state = 565;
+					this.state = 551;
 					this.statement();
 					}
 					break;
@@ -3890,15 +3675,15 @@ export default class proglang12dParser extends Parser {
 			case 157:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 568;
+				this.state = 554;
 				this.match(proglang12dParser.Switch);
-				this.state = 569;
+				this.state = 555;
 				this.match(proglang12dParser.LeftParen);
-				this.state = 570;
+				this.state = 556;
 				this.expression();
-				this.state = 571;
+				this.state = 557;
 				this.match(proglang12dParser.RightParen);
-				this.state = 572;
+				this.state = 558;
 				this.statement();
 				}
 				break;
@@ -3923,57 +3708,57 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public iterationStatement(): IterationStatementContext {
 		let localctx: IterationStatementContext = new IterationStatementContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 108, proglang12dParser.RULE_iterationStatement);
+		this.enterRule(localctx, 106, proglang12dParser.RULE_iterationStatement);
 		try {
-			this.state = 596;
+			this.state = 582;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
 			case 159:
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 576;
+				this.state = 562;
 				this.match(proglang12dParser.While);
-				this.state = 577;
+				this.state = 563;
 				this.match(proglang12dParser.LeftParen);
-				this.state = 578;
+				this.state = 564;
 				this.expression();
-				this.state = 579;
+				this.state = 565;
 				this.match(proglang12dParser.RightParen);
-				this.state = 580;
+				this.state = 566;
 				this.statement();
 				}
 				break;
 			case 149:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 582;
+				this.state = 568;
 				this.match(proglang12dParser.Do);
-				this.state = 583;
+				this.state = 569;
 				this.statement();
-				this.state = 584;
+				this.state = 570;
 				this.match(proglang12dParser.While);
-				this.state = 585;
+				this.state = 571;
 				this.match(proglang12dParser.LeftParen);
-				this.state = 586;
+				this.state = 572;
 				this.expression();
-				this.state = 587;
+				this.state = 573;
 				this.match(proglang12dParser.RightParen);
-				this.state = 588;
+				this.state = 574;
 				this.match(proglang12dParser.Semi);
 				}
 				break;
 			case 152:
 				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 590;
+				this.state = 576;
 				this.match(proglang12dParser.For);
-				this.state = 591;
+				this.state = 577;
 				this.match(proglang12dParser.LeftParen);
-				this.state = 592;
+				this.state = 578;
 				this.forCondition();
-				this.state = 593;
+				this.state = 579;
 				this.match(proglang12dParser.RightParen);
-				this.state = 594;
+				this.state = 580;
 				this.statement();
 				}
 				break;
@@ -3998,14 +3783,16 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public forCondition(): ForConditionContext {
 		let localctx: ForConditionContext = new ForConditionContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 110, proglang12dParser.RULE_forCondition);
+		this.enterRule(localctx, 108, proglang12dParser.RULE_forCondition);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 602;
+			this.state = 588;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
+			case 1:
+			case 2:
 			case 3:
 			case 4:
 			case 5:
@@ -4142,39 +3929,32 @@ export default class proglang12dParser extends Parser {
 			case 136:
 			case 137:
 			case 138:
-			case 139:
-			case 140:
 			case 146:
 			case 151:
 			case 155:
 			case 158:
 				{
-				this.state = 598;
+				this.state = 584;
 				this.forDeclaration();
 				}
 				break;
-			case 2:
+			case 160:
+			case 172:
+			case 173:
+			case 174:
+			case 175:
+			case 184:
 			case 187:
-			case 199:
-			case 200:
-			case 201:
-			case 202:
 			case 203:
+			case 204:
 			case 206:
-			case 208:
-			case 211:
-			case 214:
-			case 231:
-			case 232:
-			case 233:
-			case 234:
 				{
-				this.state = 600;
+				this.state = 586;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la===2 || ((((_la - 187)) & ~0x1F) === 0 && ((1 << (_la - 187)) & 19525633) !== 0) || ((((_la - 231)) & ~0x1F) === 0 && ((1 << (_la - 231)) & 15) !== 0)) {
+				if (((((_la - 160)) & ~0x1F) === 0 && ((1 << (_la - 160)) & 16838657) !== 0) || ((((_la - 203)) & ~0x1F) === 0 && ((1 << (_la - 203)) & 11) !== 0)) {
 					{
-					this.state = 599;
+					this.state = 585;
 					this.expression();
 					}
 				}
@@ -4184,26 +3964,26 @@ export default class proglang12dParser extends Parser {
 			default:
 				throw new NoViableAltException(this);
 			}
-			this.state = 604;
+			this.state = 590;
 			this.match(proglang12dParser.Semi);
-			this.state = 606;
+			this.state = 592;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la===2 || ((((_la - 187)) & ~0x1F) === 0 && ((1 << (_la - 187)) & 19525633) !== 0) || ((((_la - 231)) & ~0x1F) === 0 && ((1 << (_la - 231)) & 15) !== 0)) {
+			if (((((_la - 160)) & ~0x1F) === 0 && ((1 << (_la - 160)) & 16838657) !== 0) || ((((_la - 203)) & ~0x1F) === 0 && ((1 << (_la - 203)) & 11) !== 0)) {
 				{
-				this.state = 605;
+				this.state = 591;
 				this.forExpression();
 				}
 			}
 
-			this.state = 608;
+			this.state = 594;
 			this.match(proglang12dParser.Semi);
-			this.state = 610;
+			this.state = 596;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la===2 || ((((_la - 187)) & ~0x1F) === 0 && ((1 << (_la - 187)) & 19525633) !== 0) || ((((_la - 231)) & ~0x1F) === 0 && ((1 << (_la - 231)) & 15) !== 0)) {
+			if (((((_la - 160)) & ~0x1F) === 0 && ((1 << (_la - 160)) & 16838657) !== 0) || ((((_la - 203)) & ~0x1F) === 0 && ((1 << (_la - 203)) & 11) !== 0)) {
 				{
-				this.state = 609;
+				this.state = 595;
 				this.forExpression();
 				}
 			}
@@ -4227,13 +4007,13 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public forDeclaration(): ForDeclarationContext {
 		let localctx: ForDeclarationContext = new ForDeclarationContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 112, proglang12dParser.RULE_forDeclaration);
+		this.enterRule(localctx, 110, proglang12dParser.RULE_forDeclaration);
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 612;
+			this.state = 598;
 			this.declarationSpecifiers();
-			this.state = 613;
+			this.state = 599;
 			this.initDeclaratorList();
 			}
 		}
@@ -4254,26 +4034,26 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public forExpression(): ForExpressionContext {
 		let localctx: ForExpressionContext = new ForExpressionContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 114, proglang12dParser.RULE_forExpression);
+		this.enterRule(localctx, 112, proglang12dParser.RULE_forExpression);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 615;
+			this.state = 601;
 			this.assignmentExpression();
-			this.state = 620;
+			this.state = 606;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la===215) {
+			while (_la===188) {
 				{
 				{
-				this.state = 616;
+				this.state = 602;
 				this.match(proglang12dParser.Comma);
-				this.state = 617;
+				this.state = 603;
 				this.assignmentExpression();
 				}
 				}
-				this.state = 622;
+				this.state = 608;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -4296,44 +4076,44 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public jumpStatement(): JumpStatementContext {
 		let localctx: JumpStatementContext = new JumpStatementContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 116, proglang12dParser.RULE_jumpStatement);
+		this.enterRule(localctx, 114, proglang12dParser.RULE_jumpStatement);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 633;
+			this.state = 619;
 			this._errHandler.sync(this);
-			switch ( this._interp.adaptivePredict(this._input, 71, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 69, this._ctx) ) {
 			case 1:
 				{
-				this.state = 623;
+				this.state = 609;
 				this.match(proglang12dParser.Goto);
-				this.state = 624;
+				this.state = 610;
 				this.match(proglang12dParser.Identifier);
 				}
 				break;
 			case 2:
 				{
-				this.state = 625;
+				this.state = 611;
 				this.match(proglang12dParser.Continue);
 				}
 				break;
 			case 3:
 				{
-				this.state = 626;
+				this.state = 612;
 				this.match(proglang12dParser.Break);
 				}
 				break;
 			case 4:
 				{
-				this.state = 627;
+				this.state = 613;
 				this.match(proglang12dParser.Return);
-				this.state = 629;
+				this.state = 615;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la===2 || ((((_la - 187)) & ~0x1F) === 0 && ((1 << (_la - 187)) & 19525633) !== 0) || ((((_la - 231)) & ~0x1F) === 0 && ((1 << (_la - 231)) & 15) !== 0)) {
+				if (((((_la - 160)) & ~0x1F) === 0 && ((1 << (_la - 160)) & 16838657) !== 0) || ((((_la - 203)) & ~0x1F) === 0 && ((1 << (_la - 203)) & 11) !== 0)) {
 					{
-					this.state = 628;
+					this.state = 614;
 					this.expression();
 					}
 				}
@@ -4342,14 +4122,14 @@ export default class proglang12dParser extends Parser {
 				break;
 			case 5:
 				{
-				this.state = 631;
+				this.state = 617;
 				this.match(proglang12dParser.Goto);
-				this.state = 632;
+				this.state = 618;
 				this.unaryExpression();
 				}
 				break;
 			}
-			this.state = 635;
+			this.state = 621;
 			this.match(proglang12dParser.Semi);
 			}
 		}
@@ -4370,22 +4150,22 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public compilationUnit(): CompilationUnitContext {
 		let localctx: CompilationUnitContext = new CompilationUnitContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 118, proglang12dParser.RULE_compilationUnit);
+		this.enterRule(localctx, 116, proglang12dParser.RULE_compilationUnit);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 638;
+			this.state = 624;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967288) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 1216618495) !== 0) || _la===214 || _la===231) {
+			if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967294) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 1216612351) !== 0) || _la===187 || _la===203) {
 				{
-				this.state = 637;
+				this.state = 623;
 				this.translationUnit();
 				}
 			}
 
-			this.state = 640;
+			this.state = 626;
 			this.match(proglang12dParser.EOF);
 			}
 		}
@@ -4406,25 +4186,25 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public translationUnit(): TranslationUnitContext {
 		let localctx: TranslationUnitContext = new TranslationUnitContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 120, proglang12dParser.RULE_translationUnit);
+		this.enterRule(localctx, 118, proglang12dParser.RULE_translationUnit);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 643;
+			this.state = 629;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			do {
 				{
 				{
-				this.state = 642;
+				this.state = 628;
 				this.externalDeclaration();
 				}
 				}
-				this.state = 645;
+				this.state = 631;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-			} while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967288) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 1216618495) !== 0) || _la===214 || _la===231);
+			} while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967294) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 1216612351) !== 0) || _la===187 || _la===203);
 			}
 		}
 		catch (re) {
@@ -4444,29 +4224,29 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public externalDeclaration(): ExternalDeclarationContext {
 		let localctx: ExternalDeclarationContext = new ExternalDeclarationContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 122, proglang12dParser.RULE_externalDeclaration);
+		this.enterRule(localctx, 120, proglang12dParser.RULE_externalDeclaration);
 		try {
-			this.state = 650;
+			this.state = 636;
 			this._errHandler.sync(this);
-			switch ( this._interp.adaptivePredict(this._input, 74, this._ctx) ) {
+			switch ( this._interp.adaptivePredict(this._input, 72, this._ctx) ) {
 			case 1:
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 647;
+				this.state = 633;
 				this.functionDefinition();
 				}
 				break;
 			case 2:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 648;
+				this.state = 634;
 				this.declaration();
 				}
 				break;
 			case 3:
 				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 649;
+				this.state = 635;
 				this.match(proglang12dParser.Semi);
 				}
 				break;
@@ -4489,34 +4269,34 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public functionDefinition(): FunctionDefinitionContext {
 		let localctx: FunctionDefinitionContext = new FunctionDefinitionContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 124, proglang12dParser.RULE_functionDefinition);
+		this.enterRule(localctx, 122, proglang12dParser.RULE_functionDefinition);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 653;
+			this.state = 639;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967288) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 1216618495) !== 0)) {
+			if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967294) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 1216612351) !== 0)) {
 				{
-				this.state = 652;
+				this.state = 638;
 				this.declarationSpecifiers();
 				}
 			}
 
-			this.state = 655;
+			this.state = 641;
 			this.declarator();
-			this.state = 657;
+			this.state = 643;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967288) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 1216618495) !== 0)) {
+			if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967294) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 1216612351) !== 0)) {
 				{
-				this.state = 656;
+				this.state = 642;
 				this.declarationList();
 				}
 			}
 
-			this.state = 659;
+			this.state = 645;
 			this.compoundStatement();
 			}
 		}
@@ -4537,25 +4317,25 @@ export default class proglang12dParser extends Parser {
 	// @RuleVersion(0)
 	public declarationList(): DeclarationListContext {
 		let localctx: DeclarationListContext = new DeclarationListContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 126, proglang12dParser.RULE_declarationList);
+		this.enterRule(localctx, 124, proglang12dParser.RULE_declarationList);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 662;
+			this.state = 648;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			do {
 				{
 				{
-				this.state = 661;
+				this.state = 647;
 				this.declaration();
 				}
 				}
-				this.state = 664;
+				this.state = 650;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-			} while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967288) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 1216618495) !== 0));
+			} while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294967294) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4294967295) !== 0) || ((((_la - 64)) & ~0x1F) === 0 && ((1 << (_la - 64)) & 4294967295) !== 0) || ((((_la - 96)) & ~0x1F) === 0 && ((1 << (_la - 96)) & 4294967295) !== 0) || ((((_la - 128)) & ~0x1F) === 0 && ((1 << (_la - 128)) & 1216612351) !== 0));
 			}
 		}
 		catch (re) {
@@ -4575,9 +4355,9 @@ export default class proglang12dParser extends Parser {
 
 	public sempred(localctx: RuleContext, ruleIndex: number, predIndex: number): boolean {
 		switch (ruleIndex) {
-		case 33:
+		case 32:
 			return this.directDeclarator_sempred(localctx as DirectDeclaratorContext, predIndex);
-		case 40:
+		case 39:
 			return this.directAbstractDeclarator_sempred(localctx as DirectAbstractDeclaratorContext, predIndex);
 		}
 		return true;
@@ -4603,7 +4383,7 @@ export default class proglang12dParser extends Parser {
 		return true;
 	}
 
-	public static readonly _serializedATN: number[] = [4,1,244,667,2,0,7,0,
+	public static readonly _serializedATN: number[] = [4,1,212,653,2,0,7,0,
 	2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,7,7,7,2,8,7,8,2,9,7,9,
 	2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,2,14,7,14,2,15,7,15,2,16,7,16,2,
 	17,7,17,2,18,7,18,2,19,7,19,2,20,7,20,2,21,7,21,2,22,7,22,2,23,7,23,2,24,
@@ -4612,222 +4392,216 @@ export default class proglang12dParser extends Parser {
 	2,39,7,39,2,40,7,40,2,41,7,41,2,42,7,42,2,43,7,43,2,44,7,44,2,45,7,45,2,
 	46,7,46,2,47,7,47,2,48,7,48,2,49,7,49,2,50,7,50,2,51,7,51,2,52,7,52,2,53,
 	7,53,2,54,7,54,2,55,7,55,2,56,7,56,2,57,7,57,2,58,7,58,2,59,7,59,2,60,7,
-	60,2,61,7,61,2,62,7,62,2,63,7,63,1,0,1,0,1,0,4,0,132,8,0,11,0,12,0,133,
-	1,0,1,0,1,0,1,0,3,0,140,8,0,1,1,1,1,1,1,5,1,145,8,1,10,1,12,1,148,9,1,1,
-	2,1,2,3,2,152,8,2,1,2,1,2,1,2,1,3,1,3,1,3,1,3,1,3,1,3,1,3,3,3,164,8,3,1,
-	3,1,3,1,3,1,3,1,3,5,3,171,8,3,10,3,12,3,174,9,3,1,4,1,4,1,4,5,4,179,8,4,
-	10,4,12,4,182,9,4,1,5,5,5,185,8,5,10,5,12,5,188,9,5,1,5,1,5,1,5,1,5,1,5,
-	1,5,3,5,196,8,5,1,6,1,6,1,7,1,7,3,7,202,8,7,1,8,1,8,1,8,5,8,207,8,8,10,
-	8,12,8,210,9,8,1,9,1,9,1,9,5,9,215,8,9,10,9,12,9,218,9,9,1,10,1,10,1,10,
-	5,10,223,8,10,10,10,12,10,226,9,10,1,11,1,11,1,11,5,11,231,8,11,10,11,12,
-	11,234,9,11,1,12,1,12,1,12,5,12,239,8,12,10,12,12,12,242,9,12,1,13,1,13,
-	1,13,5,13,247,8,13,10,13,12,13,250,9,13,1,14,1,14,1,14,5,14,255,8,14,10,
-	14,12,14,258,9,14,1,15,1,15,1,15,5,15,263,8,15,10,15,12,15,266,9,15,1,16,
-	1,16,1,16,5,16,271,8,16,10,16,12,16,274,9,16,1,17,1,17,1,17,5,17,279,8,
-	17,10,17,12,17,282,9,17,1,18,1,18,1,18,1,18,1,18,1,18,3,18,290,8,18,1,19,
-	1,19,1,19,1,19,1,19,1,19,3,19,298,8,19,1,20,1,20,1,21,1,21,1,21,5,21,305,
-	8,21,10,21,12,21,308,9,21,1,22,1,22,1,23,1,23,1,23,1,23,1,24,1,24,1,24,
-	5,24,319,8,24,10,24,12,24,322,9,24,1,25,1,25,1,25,3,25,327,8,25,1,26,4,
-	26,330,8,26,11,26,12,26,331,1,27,4,27,335,8,27,11,27,12,27,336,1,28,1,28,
-	3,28,341,8,28,1,29,1,29,1,30,1,30,1,31,1,31,3,31,349,8,31,1,32,1,32,1,33,
-	1,33,1,33,1,33,1,33,1,33,3,33,359,8,33,1,33,1,33,1,33,1,33,1,33,1,33,1,
-	33,1,33,1,33,3,33,370,8,33,1,33,5,33,373,8,33,10,33,12,33,376,9,33,1,34,
-	1,34,1,34,1,34,1,34,5,34,383,8,34,10,34,12,34,386,9,34,1,35,1,35,1,35,3,
-	35,391,8,35,1,36,1,36,1,36,5,36,396,8,36,10,36,12,36,399,9,36,1,37,1,37,
-	3,37,403,8,37,1,37,1,37,1,37,1,37,1,37,1,37,1,37,1,37,1,37,3,37,414,8,37,
-	1,38,1,38,1,38,5,38,419,8,38,10,38,12,38,422,9,38,1,39,1,39,1,40,1,40,1,
-	40,1,40,1,40,1,40,1,40,1,40,3,40,434,8,40,1,40,1,40,1,40,1,40,1,40,5,40,
-	441,8,40,10,40,12,40,444,9,40,1,41,1,41,1,42,1,42,1,42,1,42,3,42,452,8,
-	42,1,42,1,42,3,42,456,8,42,1,43,3,43,459,8,43,1,43,1,43,1,43,3,43,464,8,
-	43,1,43,5,43,467,8,43,10,43,12,43,470,9,43,1,44,1,44,1,44,1,45,4,45,476,
-	8,45,11,45,12,45,477,1,46,1,46,1,46,1,46,1,46,1,46,3,46,486,8,46,1,47,1,
-	47,1,47,1,47,1,47,1,47,1,47,1,47,1,47,1,47,1,47,1,47,5,47,500,8,47,10,47,
-	12,47,503,9,47,3,47,505,8,47,1,47,1,47,1,47,1,47,5,47,511,8,47,10,47,12,
-	47,514,9,47,3,47,516,8,47,5,47,518,8,47,10,47,12,47,521,9,47,1,47,1,47,
-	3,47,525,8,47,1,48,1,48,1,48,1,48,1,48,1,48,1,48,1,48,1,48,1,48,1,48,3,
-	48,538,8,48,1,49,1,49,3,49,542,8,49,1,49,1,49,1,50,4,50,547,8,50,11,50,
-	12,50,548,1,51,1,51,3,51,553,8,51,1,52,3,52,556,8,52,1,52,1,52,1,53,1,53,
-	1,53,1,53,1,53,1,53,1,53,3,53,567,8,53,1,53,1,53,1,53,1,53,1,53,1,53,3,
-	53,575,8,53,1,54,1,54,1,54,1,54,1,54,1,54,1,54,1,54,1,54,1,54,1,54,1,54,
-	1,54,1,54,1,54,1,54,1,54,1,54,1,54,1,54,3,54,597,8,54,1,55,1,55,3,55,601,
-	8,55,3,55,603,8,55,1,55,1,55,3,55,607,8,55,1,55,1,55,3,55,611,8,55,1,56,
-	1,56,1,56,1,57,1,57,1,57,5,57,619,8,57,10,57,12,57,622,9,57,1,58,1,58,1,
-	58,1,58,1,58,1,58,3,58,630,8,58,1,58,1,58,3,58,634,8,58,1,58,1,58,1,59,
-	3,59,639,8,59,1,59,1,59,1,60,4,60,644,8,60,11,60,12,60,645,1,61,1,61,1,
-	61,3,61,651,8,61,1,62,3,62,654,8,62,1,62,1,62,3,62,658,8,62,1,62,1,62,1,
-	63,4,63,663,8,63,11,63,12,63,664,1,63,0,2,66,80,64,0,2,4,6,8,10,12,14,16,
+	60,2,61,7,61,2,62,7,62,1,0,1,0,1,0,4,0,130,8,0,11,0,12,0,131,1,0,1,0,1,
+	0,1,0,3,0,138,8,0,1,1,1,1,1,1,5,1,143,8,1,10,1,12,1,146,9,1,1,2,1,2,3,2,
+	150,8,2,1,2,1,2,1,2,1,3,1,3,1,3,1,3,1,3,1,3,1,3,3,3,162,8,3,1,3,1,3,1,3,
+	5,3,167,8,3,10,3,12,3,170,9,3,1,4,1,4,1,4,5,4,175,8,4,10,4,12,4,178,9,4,
+	1,5,5,5,181,8,5,10,5,12,5,184,9,5,1,5,1,5,1,5,1,5,3,5,190,8,5,1,6,1,6,1,
+	7,1,7,1,8,1,8,1,8,5,8,199,8,8,10,8,12,8,202,9,8,1,9,1,9,1,9,5,9,207,8,9,
+	10,9,12,9,210,9,9,1,10,1,10,1,10,5,10,215,8,10,10,10,12,10,218,9,10,1,11,
+	1,11,1,11,5,11,223,8,11,10,11,12,11,226,9,11,1,12,1,12,1,12,5,12,231,8,
+	12,10,12,12,12,234,9,12,1,13,1,13,1,13,5,13,239,8,13,10,13,12,13,242,9,
+	13,1,14,1,14,1,14,5,14,247,8,14,10,14,12,14,250,9,14,1,15,1,15,1,15,5,15,
+	255,8,15,10,15,12,15,258,9,15,1,16,1,16,1,16,5,16,263,8,16,10,16,12,16,
+	266,9,16,1,17,1,17,1,17,5,17,271,8,17,10,17,12,17,274,9,17,1,18,1,18,1,
+	18,1,18,1,18,1,18,3,18,282,8,18,1,19,1,19,1,19,1,19,1,19,3,19,289,8,19,
+	1,20,1,20,1,21,1,21,1,21,5,21,296,8,21,10,21,12,21,299,9,21,1,22,1,22,1,
+	23,1,23,1,23,1,23,1,24,1,24,1,24,5,24,310,8,24,10,24,12,24,313,9,24,1,25,
+	1,25,1,25,3,25,318,8,25,1,26,4,26,321,8,26,11,26,12,26,322,1,27,1,27,3,
+	27,327,8,27,1,28,1,28,1,29,1,29,1,30,1,30,3,30,335,8,30,1,31,1,31,1,32,
+	1,32,1,32,1,32,1,32,1,32,3,32,345,8,32,1,32,1,32,1,32,1,32,1,32,1,32,1,
+	32,1,32,1,32,3,32,356,8,32,1,32,5,32,359,8,32,10,32,12,32,362,9,32,1,33,
+	1,33,1,33,1,33,1,33,5,33,369,8,33,10,33,12,33,372,9,33,1,34,1,34,1,34,3,
+	34,377,8,34,1,35,1,35,1,35,5,35,382,8,35,10,35,12,35,385,9,35,1,36,1,36,
+	3,36,389,8,36,1,36,1,36,1,36,1,36,1,36,1,36,1,36,1,36,1,36,3,36,400,8,36,
+	1,37,1,37,1,37,5,37,405,8,37,10,37,12,37,408,9,37,1,38,1,38,1,39,1,39,1,
+	39,1,39,1,39,1,39,1,39,1,39,3,39,420,8,39,1,39,1,39,1,39,1,39,1,39,5,39,
+	427,8,39,10,39,12,39,430,9,39,1,40,1,40,1,41,1,41,1,41,1,41,3,41,438,8,
+	41,1,41,1,41,3,41,442,8,41,1,42,3,42,445,8,42,1,42,1,42,1,42,3,42,450,8,
+	42,1,42,5,42,453,8,42,10,42,12,42,456,9,42,1,43,1,43,1,43,1,44,4,44,462,
+	8,44,11,44,12,44,463,1,45,1,45,1,45,1,45,1,45,1,45,3,45,472,8,45,1,46,1,
+	46,1,46,1,46,1,46,1,46,1,46,1,46,1,46,1,46,1,46,1,46,5,46,486,8,46,10,46,
+	12,46,489,9,46,3,46,491,8,46,1,46,1,46,1,46,1,46,5,46,497,8,46,10,46,12,
+	46,500,9,46,3,46,502,8,46,5,46,504,8,46,10,46,12,46,507,9,46,1,46,1,46,
+	3,46,511,8,46,1,47,1,47,1,47,1,47,1,47,1,47,1,47,1,47,1,47,1,47,1,47,3,
+	47,524,8,47,1,48,1,48,3,48,528,8,48,1,48,1,48,1,49,4,49,533,8,49,11,49,
+	12,49,534,1,50,1,50,3,50,539,8,50,1,51,3,51,542,8,51,1,51,1,51,1,52,1,52,
+	1,52,1,52,1,52,1,52,1,52,3,52,553,8,52,1,52,1,52,1,52,1,52,1,52,1,52,3,
+	52,561,8,52,1,53,1,53,1,53,1,53,1,53,1,53,1,53,1,53,1,53,1,53,1,53,1,53,
+	1,53,1,53,1,53,1,53,1,53,1,53,1,53,1,53,3,53,583,8,53,1,54,1,54,3,54,587,
+	8,54,3,54,589,8,54,1,54,1,54,3,54,593,8,54,1,54,1,54,3,54,597,8,54,1,55,
+	1,55,1,55,1,56,1,56,1,56,5,56,605,8,56,10,56,12,56,608,9,56,1,57,1,57,1,
+	57,1,57,1,57,1,57,3,57,616,8,57,1,57,1,57,3,57,620,8,57,1,57,1,57,1,58,
+	3,58,625,8,58,1,58,1,58,1,59,4,59,630,8,59,11,59,12,59,631,1,60,1,60,1,
+	60,3,60,637,8,60,1,61,3,61,640,8,61,1,61,1,61,3,61,644,8,61,1,61,1,61,1,
+	62,4,62,649,8,62,11,62,12,62,650,1,62,0,2,64,78,63,0,2,4,6,8,10,12,14,16,
 	18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,
 	66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,96,98,100,102,104,106,108,
-	110,112,114,116,118,120,122,124,126,0,14,2,0,1,1,229,229,2,0,200,200,202,
-	202,6,0,2,2,199,199,201,201,203,203,206,206,211,211,1,0,203,205,2,0,199,
-	199,201,201,1,0,197,198,1,0,193,196,1,0,227,228,1,0,216,226,4,0,146,146,
-	151,151,155,155,158,158,1,0,3,140,1,0,187,188,1,0,141,142,2,0,143,143,186,
-	186,700,0,139,1,0,0,0,2,141,1,0,0,0,4,151,1,0,0,0,6,156,1,0,0,0,8,175,1,
-	0,0,0,10,186,1,0,0,0,12,197,1,0,0,0,14,201,1,0,0,0,16,203,1,0,0,0,18,211,
-	1,0,0,0,20,219,1,0,0,0,22,227,1,0,0,0,24,235,1,0,0,0,26,243,1,0,0,0,28,
-	251,1,0,0,0,30,259,1,0,0,0,32,267,1,0,0,0,34,275,1,0,0,0,36,283,1,0,0,0,
-	38,297,1,0,0,0,40,299,1,0,0,0,42,301,1,0,0,0,44,309,1,0,0,0,46,311,1,0,
-	0,0,48,315,1,0,0,0,50,323,1,0,0,0,52,329,1,0,0,0,54,334,1,0,0,0,56,340,
-	1,0,0,0,58,342,1,0,0,0,60,344,1,0,0,0,62,346,1,0,0,0,64,350,1,0,0,0,66,
-	352,1,0,0,0,68,384,1,0,0,0,70,387,1,0,0,0,72,392,1,0,0,0,74,413,1,0,0,0,
-	76,415,1,0,0,0,78,423,1,0,0,0,80,425,1,0,0,0,82,445,1,0,0,0,84,455,1,0,
-	0,0,86,458,1,0,0,0,88,471,1,0,0,0,90,475,1,0,0,0,92,485,1,0,0,0,94,524,
-	1,0,0,0,96,537,1,0,0,0,98,539,1,0,0,0,100,546,1,0,0,0,102,552,1,0,0,0,104,
-	555,1,0,0,0,106,574,1,0,0,0,108,596,1,0,0,0,110,602,1,0,0,0,112,612,1,0,
-	0,0,114,615,1,0,0,0,116,633,1,0,0,0,118,638,1,0,0,0,120,643,1,0,0,0,122,
-	650,1,0,0,0,124,653,1,0,0,0,126,662,1,0,0,0,128,140,5,231,0,0,129,140,5,
-	232,0,0,130,132,5,234,0,0,131,130,1,0,0,0,132,133,1,0,0,0,133,131,1,0,0,
-	0,133,134,1,0,0,0,134,140,1,0,0,0,135,136,5,187,0,0,136,137,3,42,21,0,137,
-	138,5,188,0,0,138,140,1,0,0,0,139,128,1,0,0,0,139,129,1,0,0,0,139,131,1,
-	0,0,0,139,135,1,0,0,0,140,1,1,0,0,0,141,146,3,4,2,0,142,143,5,215,0,0,143,
-	145,3,4,2,0,144,142,1,0,0,0,145,148,1,0,0,0,146,144,1,0,0,0,146,147,1,0,
-	0,0,147,3,1,0,0,0,148,146,1,0,0,0,149,152,3,78,39,0,150,152,5,148,0,0,151,
-	149,1,0,0,0,151,150,1,0,0,0,152,153,1,0,0,0,153,154,5,213,0,0,154,155,3,
-	38,19,0,155,5,1,0,0,0,156,172,3,0,0,0,157,158,5,189,0,0,158,159,3,42,21,
-	0,159,160,5,190,0,0,160,171,1,0,0,0,161,163,5,187,0,0,162,164,3,8,4,0,163,
-	162,1,0,0,0,163,164,1,0,0,0,164,165,1,0,0,0,165,171,5,188,0,0,166,167,7,
-	0,0,0,167,171,5,231,0,0,168,171,5,200,0,0,169,171,5,202,0,0,170,157,1,0,
-	0,0,170,161,1,0,0,0,170,166,1,0,0,0,170,168,1,0,0,0,170,169,1,0,0,0,171,
-	174,1,0,0,0,172,170,1,0,0,0,172,173,1,0,0,0,173,7,1,0,0,0,174,172,1,0,0,
-	0,175,180,3,38,19,0,176,177,5,215,0,0,177,179,3,38,19,0,178,176,1,0,0,0,
-	179,182,1,0,0,0,180,178,1,0,0,0,180,181,1,0,0,0,181,9,1,0,0,0,182,180,1,
-	0,0,0,183,185,7,1,0,0,184,183,1,0,0,0,185,188,1,0,0,0,186,184,1,0,0,0,186,
-	187,1,0,0,0,187,195,1,0,0,0,188,186,1,0,0,0,189,196,3,6,3,0,190,191,3,12,
-	6,0,191,192,3,14,7,0,192,196,1,0,0,0,193,194,5,208,0,0,194,196,5,231,0,
-	0,195,189,1,0,0,0,195,190,1,0,0,0,195,193,1,0,0,0,196,11,1,0,0,0,197,198,
-	7,2,0,0,198,13,1,0,0,0,199,202,3,10,5,0,200,202,5,233,0,0,201,199,1,0,0,
-	0,201,200,1,0,0,0,202,15,1,0,0,0,203,208,3,14,7,0,204,205,7,3,0,0,205,207,
-	3,14,7,0,206,204,1,0,0,0,207,210,1,0,0,0,208,206,1,0,0,0,208,209,1,0,0,
-	0,209,17,1,0,0,0,210,208,1,0,0,0,211,216,3,16,8,0,212,213,7,4,0,0,213,215,
-	3,16,8,0,214,212,1,0,0,0,215,218,1,0,0,0,216,214,1,0,0,0,216,217,1,0,0,
-	0,217,19,1,0,0,0,218,216,1,0,0,0,219,224,3,18,9,0,220,221,7,5,0,0,221,223,
-	3,18,9,0,222,220,1,0,0,0,223,226,1,0,0,0,224,222,1,0,0,0,224,225,1,0,0,
-	0,225,21,1,0,0,0,226,224,1,0,0,0,227,232,3,20,10,0,228,229,7,6,0,0,229,
-	231,3,20,10,0,230,228,1,0,0,0,231,234,1,0,0,0,232,230,1,0,0,0,232,233,1,
-	0,0,0,233,23,1,0,0,0,234,232,1,0,0,0,235,240,3,22,11,0,236,237,7,7,0,0,
-	237,239,3,22,11,0,238,236,1,0,0,0,239,242,1,0,0,0,240,238,1,0,0,0,240,241,
-	1,0,0,0,241,25,1,0,0,0,242,240,1,0,0,0,243,248,3,24,12,0,244,245,5,206,
-	0,0,245,247,3,24,12,0,246,244,1,0,0,0,247,250,1,0,0,0,248,246,1,0,0,0,248,
-	249,1,0,0,0,249,27,1,0,0,0,250,248,1,0,0,0,251,256,3,26,13,0,252,253,5,
-	210,0,0,253,255,3,26,13,0,254,252,1,0,0,0,255,258,1,0,0,0,256,254,1,0,0,
-	0,256,257,1,0,0,0,257,29,1,0,0,0,258,256,1,0,0,0,259,264,3,28,14,0,260,
-	261,5,207,0,0,261,263,3,28,14,0,262,260,1,0,0,0,263,266,1,0,0,0,264,262,
-	1,0,0,0,264,265,1,0,0,0,265,31,1,0,0,0,266,264,1,0,0,0,267,272,3,30,15,
-	0,268,269,5,208,0,0,269,271,3,30,15,0,270,268,1,0,0,0,271,274,1,0,0,0,272,
-	270,1,0,0,0,272,273,1,0,0,0,273,33,1,0,0,0,274,272,1,0,0,0,275,280,3,32,
-	16,0,276,277,5,209,0,0,277,279,3,32,16,0,278,276,1,0,0,0,279,282,1,0,0,
-	0,280,278,1,0,0,0,280,281,1,0,0,0,281,35,1,0,0,0,282,280,1,0,0,0,283,289,
-	3,34,17,0,284,285,5,212,0,0,285,286,3,42,21,0,286,287,5,213,0,0,287,288,
-	3,36,18,0,288,290,1,0,0,0,289,284,1,0,0,0,289,290,1,0,0,0,290,37,1,0,0,
-	0,291,298,3,36,18,0,292,293,3,10,5,0,293,294,3,40,20,0,294,295,3,38,19,
-	0,295,298,1,0,0,0,296,298,5,233,0,0,297,291,1,0,0,0,297,292,1,0,0,0,297,
-	296,1,0,0,0,298,39,1,0,0,0,299,300,7,8,0,0,300,41,1,0,0,0,301,306,3,38,
-	19,0,302,303,5,215,0,0,303,305,3,38,19,0,304,302,1,0,0,0,305,308,1,0,0,
-	0,306,304,1,0,0,0,306,307,1,0,0,0,307,43,1,0,0,0,308,306,1,0,0,0,309,310,
-	3,36,18,0,310,45,1,0,0,0,311,312,3,52,26,0,312,313,3,48,24,0,313,314,5,
-	214,0,0,314,47,1,0,0,0,315,320,3,50,25,0,316,317,5,215,0,0,317,319,3,50,
-	25,0,318,316,1,0,0,0,319,322,1,0,0,0,320,318,1,0,0,0,320,321,1,0,0,0,321,
-	49,1,0,0,0,322,320,1,0,0,0,323,326,3,64,32,0,324,325,5,216,0,0,325,327,
-	3,84,42,0,326,324,1,0,0,0,326,327,1,0,0,0,327,51,1,0,0,0,328,330,3,56,28,
-	0,329,328,1,0,0,0,330,331,1,0,0,0,331,329,1,0,0,0,331,332,1,0,0,0,332,53,
-	1,0,0,0,333,335,3,56,28,0,334,333,1,0,0,0,335,336,1,0,0,0,336,334,1,0,0,
-	0,336,337,1,0,0,0,337,55,1,0,0,0,338,341,3,58,29,0,339,341,3,60,30,0,340,
-	338,1,0,0,0,340,339,1,0,0,0,341,57,1,0,0,0,342,343,7,9,0,0,343,59,1,0,0,
-	0,344,345,7,10,0,0,345,61,1,0,0,0,346,348,3,58,29,0,347,349,3,62,31,0,348,
-	347,1,0,0,0,348,349,1,0,0,0,349,63,1,0,0,0,350,351,3,66,33,0,351,65,1,0,
-	0,0,352,353,6,33,-1,0,353,354,5,231,0,0,354,374,1,0,0,0,355,356,10,3,0,
-	0,356,358,5,189,0,0,357,359,3,44,22,0,358,357,1,0,0,0,358,359,1,0,0,0,359,
-	360,1,0,0,0,360,373,5,190,0,0,361,362,10,2,0,0,362,363,5,187,0,0,363,364,
-	3,70,35,0,364,365,5,188,0,0,365,373,1,0,0,0,366,367,10,1,0,0,367,369,5,
-	187,0,0,368,370,3,76,38,0,369,368,1,0,0,0,369,370,1,0,0,0,370,371,1,0,0,
-	0,371,373,5,188,0,0,372,355,1,0,0,0,372,361,1,0,0,0,372,366,1,0,0,0,373,
-	376,1,0,0,0,374,372,1,0,0,0,374,375,1,0,0,0,375,67,1,0,0,0,376,374,1,0,
-	0,0,377,383,8,11,0,0,378,379,5,187,0,0,379,380,3,68,34,0,380,381,5,188,
-	0,0,381,383,1,0,0,0,382,377,1,0,0,0,382,378,1,0,0,0,383,386,1,0,0,0,384,
-	382,1,0,0,0,384,385,1,0,0,0,385,69,1,0,0,0,386,384,1,0,0,0,387,390,3,72,
-	36,0,388,389,5,215,0,0,389,391,5,230,0,0,390,388,1,0,0,0,390,391,1,0,0,
-	0,391,71,1,0,0,0,392,397,3,74,37,0,393,394,5,215,0,0,394,396,3,74,37,0,
-	395,393,1,0,0,0,396,399,1,0,0,0,397,395,1,0,0,0,397,398,1,0,0,0,398,73,
-	1,0,0,0,399,397,1,0,0,0,400,402,3,54,27,0,401,403,5,231,0,0,402,401,1,0,
-	0,0,402,403,1,0,0,0,403,414,1,0,0,0,404,405,3,54,27,0,405,406,5,206,0,0,
-	406,407,5,231,0,0,407,414,1,0,0,0,408,409,3,54,27,0,409,410,5,231,0,0,410,
-	411,5,189,0,0,411,412,5,190,0,0,412,414,1,0,0,0,413,400,1,0,0,0,413,404,
-	1,0,0,0,413,408,1,0,0,0,414,75,1,0,0,0,415,420,5,231,0,0,416,417,5,215,
-	0,0,417,419,5,231,0,0,418,416,1,0,0,0,419,422,1,0,0,0,420,418,1,0,0,0,420,
-	421,1,0,0,0,421,77,1,0,0,0,422,420,1,0,0,0,423,424,3,62,31,0,424,79,1,0,
-	0,0,425,426,6,40,-1,0,426,427,5,189,0,0,427,428,5,203,0,0,428,429,5,190,
-	0,0,429,442,1,0,0,0,430,431,10,2,0,0,431,433,5,189,0,0,432,434,3,38,19,
-	0,433,432,1,0,0,0,433,434,1,0,0,0,434,435,1,0,0,0,435,441,5,190,0,0,436,
-	437,10,1,0,0,437,438,5,189,0,0,438,439,5,203,0,0,439,441,5,190,0,0,440,
-	430,1,0,0,0,440,436,1,0,0,0,441,444,1,0,0,0,442,440,1,0,0,0,442,443,1,0,
-	0,0,443,81,1,0,0,0,444,442,1,0,0,0,445,446,5,231,0,0,446,83,1,0,0,0,447,
-	456,3,38,19,0,448,449,5,191,0,0,449,451,3,86,43,0,450,452,5,215,0,0,451,
-	450,1,0,0,0,451,452,1,0,0,0,452,453,1,0,0,0,453,454,5,192,0,0,454,456,1,
-	0,0,0,455,447,1,0,0,0,455,448,1,0,0,0,456,85,1,0,0,0,457,459,3,88,44,0,
-	458,457,1,0,0,0,458,459,1,0,0,0,459,460,1,0,0,0,460,468,3,84,42,0,461,463,
-	5,215,0,0,462,464,3,88,44,0,463,462,1,0,0,0,463,464,1,0,0,0,464,465,1,0,
-	0,0,465,467,3,84,42,0,466,461,1,0,0,0,467,470,1,0,0,0,468,466,1,0,0,0,468,
-	469,1,0,0,0,469,87,1,0,0,0,470,468,1,0,0,0,471,472,3,90,45,0,472,473,5,
-	216,0,0,473,89,1,0,0,0,474,476,3,92,46,0,475,474,1,0,0,0,476,477,1,0,0,
-	0,477,475,1,0,0,0,477,478,1,0,0,0,478,91,1,0,0,0,479,480,5,189,0,0,480,
-	481,3,44,22,0,481,482,5,190,0,0,482,486,1,0,0,0,483,484,5,229,0,0,484,486,
-	5,231,0,0,485,479,1,0,0,0,485,483,1,0,0,0,486,93,1,0,0,0,487,525,3,96,48,
-	0,488,525,3,98,49,0,489,525,3,104,52,0,490,525,3,106,53,0,491,525,3,108,
-	54,0,492,525,3,116,58,0,493,494,7,12,0,0,494,495,7,13,0,0,495,504,5,187,
-	0,0,496,501,3,34,17,0,497,498,5,215,0,0,498,500,3,34,17,0,499,497,1,0,0,
-	0,500,503,1,0,0,0,501,499,1,0,0,0,501,502,1,0,0,0,502,505,1,0,0,0,503,501,
-	1,0,0,0,504,496,1,0,0,0,504,505,1,0,0,0,505,519,1,0,0,0,506,515,5,213,0,
-	0,507,512,3,34,17,0,508,509,5,215,0,0,509,511,3,34,17,0,510,508,1,0,0,0,
-	511,514,1,0,0,0,512,510,1,0,0,0,512,513,1,0,0,0,513,516,1,0,0,0,514,512,
-	1,0,0,0,515,507,1,0,0,0,515,516,1,0,0,0,516,518,1,0,0,0,517,506,1,0,0,0,
-	518,521,1,0,0,0,519,517,1,0,0,0,519,520,1,0,0,0,520,522,1,0,0,0,521,519,
-	1,0,0,0,522,523,5,188,0,0,523,525,5,214,0,0,524,487,1,0,0,0,524,488,1,0,
-	0,0,524,489,1,0,0,0,524,490,1,0,0,0,524,491,1,0,0,0,524,492,1,0,0,0,524,
-	493,1,0,0,0,525,95,1,0,0,0,526,527,5,231,0,0,527,528,5,213,0,0,528,538,
-	3,94,47,0,529,530,5,145,0,0,530,531,3,44,22,0,531,532,5,213,0,0,532,533,
-	3,94,47,0,533,538,1,0,0,0,534,535,5,148,0,0,535,536,5,213,0,0,536,538,3,
-	98,49,0,537,526,1,0,0,0,537,529,1,0,0,0,537,534,1,0,0,0,538,97,1,0,0,0,
-	539,541,5,191,0,0,540,542,3,100,50,0,541,540,1,0,0,0,541,542,1,0,0,0,542,
-	543,1,0,0,0,543,544,5,192,0,0,544,99,1,0,0,0,545,547,3,102,51,0,546,545,
-	1,0,0,0,547,548,1,0,0,0,548,546,1,0,0,0,548,549,1,0,0,0,549,101,1,0,0,0,
-	550,553,3,94,47,0,551,553,3,46,23,0,552,550,1,0,0,0,552,551,1,0,0,0,553,
-	103,1,0,0,0,554,556,3,42,21,0,555,554,1,0,0,0,555,556,1,0,0,0,556,557,1,
-	0,0,0,557,558,5,214,0,0,558,105,1,0,0,0,559,560,5,154,0,0,560,561,5,187,
-	0,0,561,562,3,42,21,0,562,563,5,188,0,0,563,566,3,94,47,0,564,565,5,150,
-	0,0,565,567,3,94,47,0,566,564,1,0,0,0,566,567,1,0,0,0,567,575,1,0,0,0,568,
-	569,5,157,0,0,569,570,5,187,0,0,570,571,3,42,21,0,571,572,5,188,0,0,572,
-	573,3,94,47,0,573,575,1,0,0,0,574,559,1,0,0,0,574,568,1,0,0,0,575,107,1,
-	0,0,0,576,577,5,159,0,0,577,578,5,187,0,0,578,579,3,42,21,0,579,580,5,188,
-	0,0,580,581,3,94,47,0,581,597,1,0,0,0,582,583,5,149,0,0,583,584,3,94,47,
-	0,584,585,5,159,0,0,585,586,5,187,0,0,586,587,3,42,21,0,587,588,5,188,0,
-	0,588,589,5,214,0,0,589,597,1,0,0,0,590,591,5,152,0,0,591,592,5,187,0,0,
-	592,593,3,110,55,0,593,594,5,188,0,0,594,595,3,94,47,0,595,597,1,0,0,0,
-	596,576,1,0,0,0,596,582,1,0,0,0,596,590,1,0,0,0,597,109,1,0,0,0,598,603,
-	3,112,56,0,599,601,3,42,21,0,600,599,1,0,0,0,600,601,1,0,0,0,601,603,1,
-	0,0,0,602,598,1,0,0,0,602,600,1,0,0,0,603,604,1,0,0,0,604,606,5,214,0,0,
-	605,607,3,114,57,0,606,605,1,0,0,0,606,607,1,0,0,0,607,608,1,0,0,0,608,
-	610,5,214,0,0,609,611,3,114,57,0,610,609,1,0,0,0,610,611,1,0,0,0,611,111,
-	1,0,0,0,612,613,3,52,26,0,613,614,3,48,24,0,614,113,1,0,0,0,615,620,3,38,
-	19,0,616,617,5,215,0,0,617,619,3,38,19,0,618,616,1,0,0,0,619,622,1,0,0,
-	0,620,618,1,0,0,0,620,621,1,0,0,0,621,115,1,0,0,0,622,620,1,0,0,0,623,624,
-	5,153,0,0,624,634,5,231,0,0,625,634,5,147,0,0,626,634,5,144,0,0,627,629,
-	5,156,0,0,628,630,3,42,21,0,629,628,1,0,0,0,629,630,1,0,0,0,630,634,1,0,
-	0,0,631,632,5,153,0,0,632,634,3,10,5,0,633,623,1,0,0,0,633,625,1,0,0,0,
-	633,626,1,0,0,0,633,627,1,0,0,0,633,631,1,0,0,0,634,635,1,0,0,0,635,636,
-	5,214,0,0,636,117,1,0,0,0,637,639,3,120,60,0,638,637,1,0,0,0,638,639,1,
-	0,0,0,639,640,1,0,0,0,640,641,5,0,0,1,641,119,1,0,0,0,642,644,3,122,61,
-	0,643,642,1,0,0,0,644,645,1,0,0,0,645,643,1,0,0,0,645,646,1,0,0,0,646,121,
-	1,0,0,0,647,651,3,124,62,0,648,651,3,46,23,0,649,651,5,214,0,0,650,647,
-	1,0,0,0,650,648,1,0,0,0,650,649,1,0,0,0,651,123,1,0,0,0,652,654,3,52,26,
-	0,653,652,1,0,0,0,653,654,1,0,0,0,654,655,1,0,0,0,655,657,3,64,32,0,656,
-	658,3,126,63,0,657,656,1,0,0,0,657,658,1,0,0,0,658,659,1,0,0,0,659,660,
-	3,98,49,0,660,125,1,0,0,0,661,663,3,46,23,0,662,661,1,0,0,0,663,664,1,0,
-	0,0,664,662,1,0,0,0,664,665,1,0,0,0,665,127,1,0,0,0,78,133,139,146,151,
-	163,170,172,180,186,195,201,208,216,224,232,240,248,256,264,272,280,289,
-	297,306,320,326,331,336,340,348,358,369,372,374,382,384,390,397,402,413,
-	420,433,440,442,451,455,458,463,468,477,485,501,504,512,515,519,524,537,
-	541,548,552,555,566,574,596,600,602,606,610,620,629,633,638,645,650,653,
-	657,664];
+	110,112,114,116,118,120,122,124,0,13,2,0,173,173,175,175,3,0,172,172,174,
+	174,184,184,1,0,176,178,2,0,172,172,174,174,1,0,170,171,1,0,166,169,1,0,
+	200,201,1,0,189,194,4,0,146,146,151,151,155,155,158,158,1,0,1,138,1,0,160,
+	161,1,0,140,141,1,0,142,143,682,0,137,1,0,0,0,2,139,1,0,0,0,4,149,1,0,0,
+	0,6,154,1,0,0,0,8,171,1,0,0,0,10,182,1,0,0,0,12,191,1,0,0,0,14,193,1,0,
+	0,0,16,195,1,0,0,0,18,203,1,0,0,0,20,211,1,0,0,0,22,219,1,0,0,0,24,227,
+	1,0,0,0,26,235,1,0,0,0,28,243,1,0,0,0,30,251,1,0,0,0,32,259,1,0,0,0,34,
+	267,1,0,0,0,36,275,1,0,0,0,38,288,1,0,0,0,40,290,1,0,0,0,42,292,1,0,0,0,
+	44,300,1,0,0,0,46,302,1,0,0,0,48,306,1,0,0,0,50,314,1,0,0,0,52,320,1,0,
+	0,0,54,326,1,0,0,0,56,328,1,0,0,0,58,330,1,0,0,0,60,332,1,0,0,0,62,336,
+	1,0,0,0,64,338,1,0,0,0,66,370,1,0,0,0,68,373,1,0,0,0,70,378,1,0,0,0,72,
+	399,1,0,0,0,74,401,1,0,0,0,76,409,1,0,0,0,78,411,1,0,0,0,80,431,1,0,0,0,
+	82,441,1,0,0,0,84,444,1,0,0,0,86,457,1,0,0,0,88,461,1,0,0,0,90,471,1,0,
+	0,0,92,510,1,0,0,0,94,523,1,0,0,0,96,525,1,0,0,0,98,532,1,0,0,0,100,538,
+	1,0,0,0,102,541,1,0,0,0,104,560,1,0,0,0,106,582,1,0,0,0,108,588,1,0,0,0,
+	110,598,1,0,0,0,112,601,1,0,0,0,114,619,1,0,0,0,116,624,1,0,0,0,118,629,
+	1,0,0,0,120,636,1,0,0,0,122,639,1,0,0,0,124,648,1,0,0,0,126,138,5,203,0,
+	0,127,138,5,204,0,0,128,130,5,206,0,0,129,128,1,0,0,0,130,131,1,0,0,0,131,
+	129,1,0,0,0,131,132,1,0,0,0,132,138,1,0,0,0,133,134,5,160,0,0,134,135,3,
+	42,21,0,135,136,5,161,0,0,136,138,1,0,0,0,137,126,1,0,0,0,137,127,1,0,0,
+	0,137,129,1,0,0,0,137,133,1,0,0,0,138,1,1,0,0,0,139,144,3,4,2,0,140,141,
+	5,188,0,0,141,143,3,4,2,0,142,140,1,0,0,0,143,146,1,0,0,0,144,142,1,0,0,
+	0,144,145,1,0,0,0,145,3,1,0,0,0,146,144,1,0,0,0,147,150,3,76,38,0,148,150,
+	5,148,0,0,149,147,1,0,0,0,149,148,1,0,0,0,150,151,1,0,0,0,151,152,5,186,
+	0,0,152,153,3,38,19,0,153,5,1,0,0,0,154,168,3,0,0,0,155,156,5,162,0,0,156,
+	157,3,42,21,0,157,158,5,163,0,0,158,167,1,0,0,0,159,161,5,160,0,0,160,162,
+	3,8,4,0,161,160,1,0,0,0,161,162,1,0,0,0,162,163,1,0,0,0,163,167,5,161,0,
+	0,164,167,5,173,0,0,165,167,5,175,0,0,166,155,1,0,0,0,166,159,1,0,0,0,166,
+	164,1,0,0,0,166,165,1,0,0,0,167,170,1,0,0,0,168,166,1,0,0,0,168,169,1,0,
+	0,0,169,7,1,0,0,0,170,168,1,0,0,0,171,176,3,38,19,0,172,173,5,188,0,0,173,
+	175,3,38,19,0,174,172,1,0,0,0,175,178,1,0,0,0,176,174,1,0,0,0,176,177,1,
+	0,0,0,177,9,1,0,0,0,178,176,1,0,0,0,179,181,7,0,0,0,180,179,1,0,0,0,181,
+	184,1,0,0,0,182,180,1,0,0,0,182,183,1,0,0,0,183,189,1,0,0,0,184,182,1,0,
+	0,0,185,190,3,6,3,0,186,187,3,12,6,0,187,188,3,14,7,0,188,190,1,0,0,0,189,
+	185,1,0,0,0,189,186,1,0,0,0,190,11,1,0,0,0,191,192,7,1,0,0,192,13,1,0,0,
+	0,193,194,3,10,5,0,194,15,1,0,0,0,195,200,3,14,7,0,196,197,7,2,0,0,197,
+	199,3,14,7,0,198,196,1,0,0,0,199,202,1,0,0,0,200,198,1,0,0,0,200,201,1,
+	0,0,0,201,17,1,0,0,0,202,200,1,0,0,0,203,208,3,16,8,0,204,205,7,3,0,0,205,
+	207,3,16,8,0,206,204,1,0,0,0,207,210,1,0,0,0,208,206,1,0,0,0,208,209,1,
+	0,0,0,209,19,1,0,0,0,210,208,1,0,0,0,211,216,3,18,9,0,212,213,7,4,0,0,213,
+	215,3,18,9,0,214,212,1,0,0,0,215,218,1,0,0,0,216,214,1,0,0,0,216,217,1,
+	0,0,0,217,21,1,0,0,0,218,216,1,0,0,0,219,224,3,20,10,0,220,221,7,5,0,0,
+	221,223,3,20,10,0,222,220,1,0,0,0,223,226,1,0,0,0,224,222,1,0,0,0,224,225,
+	1,0,0,0,225,23,1,0,0,0,226,224,1,0,0,0,227,232,3,22,11,0,228,229,7,6,0,
+	0,229,231,3,22,11,0,230,228,1,0,0,0,231,234,1,0,0,0,232,230,1,0,0,0,232,
+	233,1,0,0,0,233,25,1,0,0,0,234,232,1,0,0,0,235,240,3,24,12,0,236,237,5,
+	179,0,0,237,239,3,24,12,0,238,236,1,0,0,0,239,242,1,0,0,0,240,238,1,0,0,
+	0,240,241,1,0,0,0,241,27,1,0,0,0,242,240,1,0,0,0,243,248,3,26,13,0,244,
+	245,5,183,0,0,245,247,3,26,13,0,246,244,1,0,0,0,247,250,1,0,0,0,248,246,
+	1,0,0,0,248,249,1,0,0,0,249,29,1,0,0,0,250,248,1,0,0,0,251,256,3,28,14,
+	0,252,253,5,180,0,0,253,255,3,28,14,0,254,252,1,0,0,0,255,258,1,0,0,0,256,
+	254,1,0,0,0,256,257,1,0,0,0,257,31,1,0,0,0,258,256,1,0,0,0,259,264,3,30,
+	15,0,260,261,5,181,0,0,261,263,3,30,15,0,262,260,1,0,0,0,263,266,1,0,0,
+	0,264,262,1,0,0,0,264,265,1,0,0,0,265,33,1,0,0,0,266,264,1,0,0,0,267,272,
+	3,32,16,0,268,269,5,182,0,0,269,271,3,32,16,0,270,268,1,0,0,0,271,274,1,
+	0,0,0,272,270,1,0,0,0,272,273,1,0,0,0,273,35,1,0,0,0,274,272,1,0,0,0,275,
+	281,3,34,17,0,276,277,5,185,0,0,277,278,3,42,21,0,278,279,5,186,0,0,279,
+	280,3,36,18,0,280,282,1,0,0,0,281,276,1,0,0,0,281,282,1,0,0,0,282,37,1,
+	0,0,0,283,289,3,36,18,0,284,285,3,10,5,0,285,286,3,40,20,0,286,287,3,38,
+	19,0,287,289,1,0,0,0,288,283,1,0,0,0,288,284,1,0,0,0,289,39,1,0,0,0,290,
+	291,7,7,0,0,291,41,1,0,0,0,292,297,3,38,19,0,293,294,5,188,0,0,294,296,
+	3,38,19,0,295,293,1,0,0,0,296,299,1,0,0,0,297,295,1,0,0,0,297,298,1,0,0,
+	0,298,43,1,0,0,0,299,297,1,0,0,0,300,301,3,36,18,0,301,45,1,0,0,0,302,303,
+	3,52,26,0,303,304,3,48,24,0,304,305,5,187,0,0,305,47,1,0,0,0,306,311,3,
+	50,25,0,307,308,5,188,0,0,308,310,3,50,25,0,309,307,1,0,0,0,310,313,1,0,
+	0,0,311,309,1,0,0,0,311,312,1,0,0,0,312,49,1,0,0,0,313,311,1,0,0,0,314,
+	317,3,62,31,0,315,316,5,189,0,0,316,318,3,82,41,0,317,315,1,0,0,0,317,318,
+	1,0,0,0,318,51,1,0,0,0,319,321,3,54,27,0,320,319,1,0,0,0,321,322,1,0,0,
+	0,322,320,1,0,0,0,322,323,1,0,0,0,323,53,1,0,0,0,324,327,3,56,28,0,325,
+	327,3,58,29,0,326,324,1,0,0,0,326,325,1,0,0,0,327,55,1,0,0,0,328,329,7,
+	8,0,0,329,57,1,0,0,0,330,331,7,9,0,0,331,59,1,0,0,0,332,334,3,56,28,0,333,
+	335,3,60,30,0,334,333,1,0,0,0,334,335,1,0,0,0,335,61,1,0,0,0,336,337,3,
+	64,32,0,337,63,1,0,0,0,338,339,6,32,-1,0,339,340,5,203,0,0,340,360,1,0,
+	0,0,341,342,10,3,0,0,342,344,5,162,0,0,343,345,3,44,22,0,344,343,1,0,0,
+	0,344,345,1,0,0,0,345,346,1,0,0,0,346,359,5,163,0,0,347,348,10,2,0,0,348,
+	349,5,160,0,0,349,350,3,68,34,0,350,351,5,161,0,0,351,359,1,0,0,0,352,353,
+	10,1,0,0,353,355,5,160,0,0,354,356,3,74,37,0,355,354,1,0,0,0,355,356,1,
+	0,0,0,356,357,1,0,0,0,357,359,5,161,0,0,358,341,1,0,0,0,358,347,1,0,0,0,
+	358,352,1,0,0,0,359,362,1,0,0,0,360,358,1,0,0,0,360,361,1,0,0,0,361,65,
+	1,0,0,0,362,360,1,0,0,0,363,369,8,10,0,0,364,365,5,160,0,0,365,366,3,66,
+	33,0,366,367,5,161,0,0,367,369,1,0,0,0,368,363,1,0,0,0,368,364,1,0,0,0,
+	369,372,1,0,0,0,370,368,1,0,0,0,370,371,1,0,0,0,371,67,1,0,0,0,372,370,
+	1,0,0,0,373,376,3,70,35,0,374,375,5,188,0,0,375,377,5,139,0,0,376,374,1,
+	0,0,0,376,377,1,0,0,0,377,69,1,0,0,0,378,383,3,72,36,0,379,380,5,188,0,
+	0,380,382,3,72,36,0,381,379,1,0,0,0,382,385,1,0,0,0,383,381,1,0,0,0,383,
+	384,1,0,0,0,384,71,1,0,0,0,385,383,1,0,0,0,386,388,3,52,26,0,387,389,5,
+	203,0,0,388,387,1,0,0,0,388,389,1,0,0,0,389,400,1,0,0,0,390,391,3,52,26,
+	0,391,392,5,179,0,0,392,393,5,203,0,0,393,400,1,0,0,0,394,395,3,52,26,0,
+	395,396,5,203,0,0,396,397,5,162,0,0,397,398,5,163,0,0,398,400,1,0,0,0,399,
+	386,1,0,0,0,399,390,1,0,0,0,399,394,1,0,0,0,400,73,1,0,0,0,401,406,5,203,
+	0,0,402,403,5,188,0,0,403,405,5,203,0,0,404,402,1,0,0,0,405,408,1,0,0,0,
+	406,404,1,0,0,0,406,407,1,0,0,0,407,75,1,0,0,0,408,406,1,0,0,0,409,410,
+	3,60,30,0,410,77,1,0,0,0,411,412,6,39,-1,0,412,413,5,162,0,0,413,414,5,
+	176,0,0,414,415,5,163,0,0,415,428,1,0,0,0,416,417,10,2,0,0,417,419,5,162,
+	0,0,418,420,3,38,19,0,419,418,1,0,0,0,419,420,1,0,0,0,420,421,1,0,0,0,421,
+	427,5,163,0,0,422,423,10,1,0,0,423,424,5,162,0,0,424,425,5,176,0,0,425,
+	427,5,163,0,0,426,416,1,0,0,0,426,422,1,0,0,0,427,430,1,0,0,0,428,426,1,
+	0,0,0,428,429,1,0,0,0,429,79,1,0,0,0,430,428,1,0,0,0,431,432,5,203,0,0,
+	432,81,1,0,0,0,433,442,3,38,19,0,434,435,5,164,0,0,435,437,3,84,42,0,436,
+	438,5,188,0,0,437,436,1,0,0,0,437,438,1,0,0,0,438,439,1,0,0,0,439,440,5,
+	165,0,0,440,442,1,0,0,0,441,433,1,0,0,0,441,434,1,0,0,0,442,83,1,0,0,0,
+	443,445,3,86,43,0,444,443,1,0,0,0,444,445,1,0,0,0,445,446,1,0,0,0,446,454,
+	3,82,41,0,447,449,5,188,0,0,448,450,3,86,43,0,449,448,1,0,0,0,449,450,1,
+	0,0,0,450,451,1,0,0,0,451,453,3,82,41,0,452,447,1,0,0,0,453,456,1,0,0,0,
+	454,452,1,0,0,0,454,455,1,0,0,0,455,85,1,0,0,0,456,454,1,0,0,0,457,458,
+	3,88,44,0,458,459,5,189,0,0,459,87,1,0,0,0,460,462,3,90,45,0,461,460,1,
+	0,0,0,462,463,1,0,0,0,463,461,1,0,0,0,463,464,1,0,0,0,464,89,1,0,0,0,465,
+	466,5,162,0,0,466,467,3,44,22,0,467,468,5,163,0,0,468,472,1,0,0,0,469,470,
+	5,202,0,0,470,472,5,203,0,0,471,465,1,0,0,0,471,469,1,0,0,0,472,91,1,0,
+	0,0,473,511,3,94,47,0,474,511,3,96,48,0,475,511,3,102,51,0,476,511,3,104,
+	52,0,477,511,3,106,53,0,478,511,3,114,57,0,479,480,7,11,0,0,480,481,7,12,
+	0,0,481,490,5,160,0,0,482,487,3,34,17,0,483,484,5,188,0,0,484,486,3,34,
+	17,0,485,483,1,0,0,0,486,489,1,0,0,0,487,485,1,0,0,0,487,488,1,0,0,0,488,
+	491,1,0,0,0,489,487,1,0,0,0,490,482,1,0,0,0,490,491,1,0,0,0,491,505,1,0,
+	0,0,492,501,5,186,0,0,493,498,3,34,17,0,494,495,5,188,0,0,495,497,3,34,
+	17,0,496,494,1,0,0,0,497,500,1,0,0,0,498,496,1,0,0,0,498,499,1,0,0,0,499,
+	502,1,0,0,0,500,498,1,0,0,0,501,493,1,0,0,0,501,502,1,0,0,0,502,504,1,0,
+	0,0,503,492,1,0,0,0,504,507,1,0,0,0,505,503,1,0,0,0,505,506,1,0,0,0,506,
+	508,1,0,0,0,507,505,1,0,0,0,508,509,5,161,0,0,509,511,5,187,0,0,510,473,
+	1,0,0,0,510,474,1,0,0,0,510,475,1,0,0,0,510,476,1,0,0,0,510,477,1,0,0,0,
+	510,478,1,0,0,0,510,479,1,0,0,0,511,93,1,0,0,0,512,513,5,203,0,0,513,514,
+	5,186,0,0,514,524,3,92,46,0,515,516,5,145,0,0,516,517,3,44,22,0,517,518,
+	5,186,0,0,518,519,3,92,46,0,519,524,1,0,0,0,520,521,5,148,0,0,521,522,5,
+	186,0,0,522,524,3,96,48,0,523,512,1,0,0,0,523,515,1,0,0,0,523,520,1,0,0,
+	0,524,95,1,0,0,0,525,527,5,164,0,0,526,528,3,98,49,0,527,526,1,0,0,0,527,
+	528,1,0,0,0,528,529,1,0,0,0,529,530,5,165,0,0,530,97,1,0,0,0,531,533,3,
+	100,50,0,532,531,1,0,0,0,533,534,1,0,0,0,534,532,1,0,0,0,534,535,1,0,0,
+	0,535,99,1,0,0,0,536,539,3,92,46,0,537,539,3,46,23,0,538,536,1,0,0,0,538,
+	537,1,0,0,0,539,101,1,0,0,0,540,542,3,42,21,0,541,540,1,0,0,0,541,542,1,
+	0,0,0,542,543,1,0,0,0,543,544,5,187,0,0,544,103,1,0,0,0,545,546,5,154,0,
+	0,546,547,5,160,0,0,547,548,3,42,21,0,548,549,5,161,0,0,549,552,3,92,46,
+	0,550,551,5,150,0,0,551,553,3,92,46,0,552,550,1,0,0,0,552,553,1,0,0,0,553,
+	561,1,0,0,0,554,555,5,157,0,0,555,556,5,160,0,0,556,557,3,42,21,0,557,558,
+	5,161,0,0,558,559,3,92,46,0,559,561,1,0,0,0,560,545,1,0,0,0,560,554,1,0,
+	0,0,561,105,1,0,0,0,562,563,5,159,0,0,563,564,5,160,0,0,564,565,3,42,21,
+	0,565,566,5,161,0,0,566,567,3,92,46,0,567,583,1,0,0,0,568,569,5,149,0,0,
+	569,570,3,92,46,0,570,571,5,159,0,0,571,572,5,160,0,0,572,573,3,42,21,0,
+	573,574,5,161,0,0,574,575,5,187,0,0,575,583,1,0,0,0,576,577,5,152,0,0,577,
+	578,5,160,0,0,578,579,3,108,54,0,579,580,5,161,0,0,580,581,3,92,46,0,581,
+	583,1,0,0,0,582,562,1,0,0,0,582,568,1,0,0,0,582,576,1,0,0,0,583,107,1,0,
+	0,0,584,589,3,110,55,0,585,587,3,42,21,0,586,585,1,0,0,0,586,587,1,0,0,
+	0,587,589,1,0,0,0,588,584,1,0,0,0,588,586,1,0,0,0,589,590,1,0,0,0,590,592,
+	5,187,0,0,591,593,3,112,56,0,592,591,1,0,0,0,592,593,1,0,0,0,593,594,1,
+	0,0,0,594,596,5,187,0,0,595,597,3,112,56,0,596,595,1,0,0,0,596,597,1,0,
+	0,0,597,109,1,0,0,0,598,599,3,52,26,0,599,600,3,48,24,0,600,111,1,0,0,0,
+	601,606,3,38,19,0,602,603,5,188,0,0,603,605,3,38,19,0,604,602,1,0,0,0,605,
+	608,1,0,0,0,606,604,1,0,0,0,606,607,1,0,0,0,607,113,1,0,0,0,608,606,1,0,
+	0,0,609,610,5,153,0,0,610,620,5,203,0,0,611,620,5,147,0,0,612,620,5,144,
+	0,0,613,615,5,156,0,0,614,616,3,42,21,0,615,614,1,0,0,0,615,616,1,0,0,0,
+	616,620,1,0,0,0,617,618,5,153,0,0,618,620,3,10,5,0,619,609,1,0,0,0,619,
+	611,1,0,0,0,619,612,1,0,0,0,619,613,1,0,0,0,619,617,1,0,0,0,620,621,1,0,
+	0,0,621,622,5,187,0,0,622,115,1,0,0,0,623,625,3,118,59,0,624,623,1,0,0,
+	0,624,625,1,0,0,0,625,626,1,0,0,0,626,627,5,0,0,1,627,117,1,0,0,0,628,630,
+	3,120,60,0,629,628,1,0,0,0,630,631,1,0,0,0,631,629,1,0,0,0,631,632,1,0,
+	0,0,632,119,1,0,0,0,633,637,3,122,61,0,634,637,3,46,23,0,635,637,5,187,
+	0,0,636,633,1,0,0,0,636,634,1,0,0,0,636,635,1,0,0,0,637,121,1,0,0,0,638,
+	640,3,52,26,0,639,638,1,0,0,0,639,640,1,0,0,0,640,641,1,0,0,0,641,643,3,
+	62,31,0,642,644,3,124,62,0,643,642,1,0,0,0,643,644,1,0,0,0,644,645,1,0,
+	0,0,645,646,3,96,48,0,646,123,1,0,0,0,647,649,3,46,23,0,648,647,1,0,0,0,
+	649,650,1,0,0,0,650,648,1,0,0,0,650,651,1,0,0,0,651,125,1,0,0,0,76,131,
+	137,144,149,161,166,168,176,182,189,200,208,216,224,232,240,248,256,264,
+	272,281,288,297,311,317,322,326,334,344,355,358,360,368,370,376,383,388,
+	399,406,419,426,428,437,441,444,449,454,463,471,487,490,498,501,505,510,
+	523,527,534,538,541,552,560,582,586,588,592,596,606,615,619,624,631,636,
+	639,643,650];
 
 	private static __ATN: ATN;
 	public static get _ATN(): ATN {
@@ -5013,12 +4787,6 @@ export class PostfixExpressionContext extends ParserRuleContext {
 	public RightParen(i: number): TerminalNode {
 		return this.getToken(proglang12dParser.RightParen, i);
 	}
-	public Identifier_list(): TerminalNode[] {
-	    	return this.getTokens(proglang12dParser.Identifier);
-	}
-	public Identifier(i: number): TerminalNode {
-		return this.getToken(proglang12dParser.Identifier, i);
-	}
 	public PlusPlus_list(): TerminalNode[] {
 	    	return this.getTokens(proglang12dParser.PlusPlus);
 	}
@@ -5030,12 +4798,6 @@ export class PostfixExpressionContext extends ParserRuleContext {
 	}
 	public MinusMinus(i: number): TerminalNode {
 		return this.getToken(proglang12dParser.MinusMinus, i);
-	}
-	public Dot_list(): TerminalNode[] {
-	    	return this.getTokens(proglang12dParser.Dot);
-	}
-	public Dot(i: number): TerminalNode {
-		return this.getToken(proglang12dParser.Dot, i);
 	}
 	public argumentExpressionList_list(): ArgumentExpressionListContext[] {
 		return this.getTypedRuleContexts(ArgumentExpressionListContext) as ArgumentExpressionListContext[];
@@ -5122,12 +4884,6 @@ export class UnaryExpressionContext extends ParserRuleContext {
 	public castExpression(): CastExpressionContext {
 		return this.getTypedRuleContext(CastExpressionContext, 0) as CastExpressionContext;
 	}
-	public AndAnd(): TerminalNode {
-		return this.getToken(proglang12dParser.AndAnd, 0);
-	}
-	public Identifier(): TerminalNode {
-		return this.getToken(proglang12dParser.Identifier, 0);
-	}
 	public PlusPlus_list(): TerminalNode[] {
 	    	return this.getTokens(proglang12dParser.PlusPlus);
 	}
@@ -5169,12 +4925,6 @@ export class UnaryOperatorContext extends ParserRuleContext {
 		super(parent, invokingState);
     	this.parser = parser;
 	}
-	public And(): TerminalNode {
-		return this.getToken(proglang12dParser.And, 0);
-	}
-	public Star(): TerminalNode {
-		return this.getToken(proglang12dParser.Star, 0);
-	}
 	public Plus(): TerminalNode {
 		return this.getToken(proglang12dParser.Plus, 0);
 	}
@@ -5215,9 +4965,6 @@ export class CastExpressionContext extends ParserRuleContext {
 	}
 	public unaryExpression(): UnaryExpressionContext {
 		return this.getTypedRuleContext(UnaryExpressionContext, 0) as UnaryExpressionContext;
-	}
-	public DigitSequence(): TerminalNode {
-		return this.getToken(proglang12dParser.DigitSequence, 0);
 	}
     public get ruleIndex(): number {
     	return proglang12dParser.RULE_castExpression;
@@ -5762,9 +5509,6 @@ export class AssignmentExpressionContext extends ParserRuleContext {
 	public assignmentExpression(): AssignmentExpressionContext {
 		return this.getTypedRuleContext(AssignmentExpressionContext, 0) as AssignmentExpressionContext;
 	}
-	public DigitSequence(): TerminalNode {
-		return this.getToken(proglang12dParser.DigitSequence, 0);
-	}
     public get ruleIndex(): number {
     	return proglang12dParser.RULE_assignmentExpression;
 	}
@@ -5811,21 +5555,6 @@ export class AssignmentOperatorContext extends ParserRuleContext {
 	}
 	public MinusAssign(): TerminalNode {
 		return this.getToken(proglang12dParser.MinusAssign, 0);
-	}
-	public LeftShiftAssign(): TerminalNode {
-		return this.getToken(proglang12dParser.LeftShiftAssign, 0);
-	}
-	public RightShiftAssign(): TerminalNode {
-		return this.getToken(proglang12dParser.RightShiftAssign, 0);
-	}
-	public AndAssign(): TerminalNode {
-		return this.getToken(proglang12dParser.AndAssign, 0);
-	}
-	public XorAssign(): TerminalNode {
-		return this.getToken(proglang12dParser.XorAssign, 0);
-	}
-	public OrAssign(): TerminalNode {
-		return this.getToken(proglang12dParser.OrAssign, 0);
 	}
     public get ruleIndex(): number {
     	return proglang12dParser.RULE_assignmentOperator;
@@ -6069,41 +5798,6 @@ export class DeclarationSpecifiersContext extends ParserRuleContext {
 	public accept<Result>(visitor: proglang12dVisitor<Result>): Result {
 		if (visitor.visitDeclarationSpecifiers) {
 			return visitor.visitDeclarationSpecifiers(this);
-		} else {
-			return visitor.visitChildren(this);
-		}
-	}
-}
-
-
-export class DeclarationSpecifiers2Context extends ParserRuleContext {
-	constructor(parser?: proglang12dParser, parent?: ParserRuleContext, invokingState?: number) {
-		super(parent, invokingState);
-    	this.parser = parser;
-	}
-	public declarationSpecifier_list(): DeclarationSpecifierContext[] {
-		return this.getTypedRuleContexts(DeclarationSpecifierContext) as DeclarationSpecifierContext[];
-	}
-	public declarationSpecifier(i: number): DeclarationSpecifierContext {
-		return this.getTypedRuleContext(DeclarationSpecifierContext, i) as DeclarationSpecifierContext;
-	}
-    public get ruleIndex(): number {
-    	return proglang12dParser.RULE_declarationSpecifiers2;
-	}
-	public enterRule(listener: proglang12dListener): void {
-	    if(listener.enterDeclarationSpecifiers2) {
-	 		listener.enterDeclarationSpecifiers2(this);
-		}
-	}
-	public exitRule(listener: proglang12dListener): void {
-	    if(listener.exitDeclarationSpecifiers2) {
-	 		listener.exitDeclarationSpecifiers2(this);
-		}
-	}
-	// @Override
-	public accept<Result>(visitor: proglang12dVisitor<Result>): Result {
-		if (visitor.visitDeclarationSpecifiers2) {
-			return visitor.visitDeclarationSpecifiers2(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -6397,9 +6091,6 @@ export class ParameterTypeListContext extends ParserRuleContext {
 	public Comma(): TerminalNode {
 		return this.getToken(proglang12dParser.Comma, 0);
 	}
-	public Ellipsis(): TerminalNode {
-		return this.getToken(proglang12dParser.Ellipsis, 0);
-	}
     public get ruleIndex(): number {
     	return proglang12dParser.RULE_parameterTypeList;
 	}
@@ -6470,8 +6161,8 @@ export class ParameterDeclarationContext extends ParserRuleContext {
 		super(parent, invokingState);
     	this.parser = parser;
 	}
-	public declarationSpecifiers2(): DeclarationSpecifiers2Context {
-		return this.getTypedRuleContext(DeclarationSpecifiers2Context, 0) as DeclarationSpecifiers2Context;
+	public declarationSpecifiers(): DeclarationSpecifiersContext {
+		return this.getTypedRuleContext(DeclarationSpecifiersContext, 0) as DeclarationSpecifiersContext;
 	}
 	public Identifier(): TerminalNode {
 		return this.getToken(proglang12dParser.Identifier, 0);
@@ -6894,9 +6585,6 @@ export class StatementContext extends ParserRuleContext {
 	}
 	public Semi(): TerminalNode {
 		return this.getToken(proglang12dParser.Semi, 0);
-	}
-	public Volatile(): TerminalNode {
-		return this.getToken(proglang12dParser.Volatile, 0);
 	}
 	public logicalOrExpression_list(): LogicalOrExpressionContext[] {
 		return this.getTypedRuleContexts(LogicalOrExpressionContext) as LogicalOrExpressionContext[];

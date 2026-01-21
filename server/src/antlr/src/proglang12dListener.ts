@@ -30,7 +30,6 @@ import { DeclarationContext } from "./proglang12dParser";
 import { InitDeclaratorListContext } from "./proglang12dParser";
 import { InitDeclaratorContext } from "./proglang12dParser";
 import { DeclarationSpecifiersContext } from "./proglang12dParser";
-import { DeclarationSpecifiers2Context } from "./proglang12dParser";
 import { DeclarationSpecifierContext } from "./proglang12dParser";
 import { TypeSpecifierContext } from "./proglang12dParser";
 import { BuiltInTypeSpecifierContext } from "./proglang12dParser";
@@ -344,16 +343,6 @@ export default class proglang12dListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitDeclarationSpecifiers?: (ctx: DeclarationSpecifiersContext) => void;
-	/**
-	 * Enter a parse tree produced by `proglang12dParser.declarationSpecifiers2`.
-	 * @param ctx the parse tree
-	 */
-	enterDeclarationSpecifiers2?: (ctx: DeclarationSpecifiers2Context) => void;
-	/**
-	 * Exit a parse tree produced by `proglang12dParser.declarationSpecifiers2`.
-	 * @param ctx the parse tree
-	 */
-	exitDeclarationSpecifiers2?: (ctx: DeclarationSpecifiers2Context) => void;
 	/**
 	 * Enter a parse tree produced by `proglang12dParser.declarationSpecifier`.
 	 * @param ctx the parse tree
