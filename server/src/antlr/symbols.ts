@@ -174,7 +174,7 @@ function getFunctionParamsFromDirectDeclarator(ctx: DirectDeclaratorContext | nu
 				try {
 					const plist = pt.parameterList?.();
 					for (const pd of plist?.parameterDeclaration_list?.() ?? []) {
-						const typeText = getDeclarationSpecifiersText(pd?.declarationSpecifiers2?.());
+						const typeText = getDeclarationSpecifiersText(pd?.declarationSpecifiers?.());
 						const nameText = safeTokenText(pd?.Identifier?.());
 						const byRef = !!pd?.And?.();
 						const isArray = !!pd?.LeftBracket?.();
