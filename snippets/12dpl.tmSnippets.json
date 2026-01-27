@@ -1,166 +1,165 @@
 {
-	"For Loop": {
-		"prefix": "for",
-		"body": [
-			"for(Integer ${1:element} = 1; ${1:element} <= ${2:limit}; ${1:element}++)\n{", "\t$0", "}"
+	"For Loop": {
+		"prefix": "for",
+		"body": [
+			"for(Integer ${1:element} = 1; ${1:element} <= ${2:limit}; ${1:element}++)\n{", "\t$0", "}"
 		],
-		"description": "A for loop."
+		"description": "A for loop."
 	},
-	"If Statement": {
-		"prefix" : "if",
-		"body" : [
-			"if(${1:condition})\n{", "\t$0", "}"
+	"If Statement": {
+		"prefix" : "if",
+		"body" : [
+			"if(${1:condition})\n{", "\t$0", "}"
 		],
-		"description" : "An if statement"
+		"description" : "An if statement"
 	},
 	"If-Else": {
-		"prefix" : "if",
-		"body" : [
-			"if(${1:condition})\n{", "\t$2", "}\nelse\n{", "\t$0", "}"
+		"prefix" : "ife",
+		"body" : [
+			"if(${1:condition})\n{", "\t$2", "}\nelse\n{", "\t$0", "}"
 		],
-		"description" : "An if else statement"
+		"description" : "An if else statement"
 	},
 	"Else": {
-		"prefix" : "else",
-		"body" : [
-			"else\n{", "\t$0", "}"
+		"prefix" : "else",
+		"body" : [
+			"else\n{", "\t$0", "}"
 		],
-		"description" : "An else statement"
+		"description" : "An else statement"
 	},
-	"Else If": {
-		"prefix" : [
-			"else",
-			"else if", "elif"
+	"Else If": {
+		"prefix" : [
+			"elseif", "elif"
 		],
-		"body" : [
-			"else if(${1:condition})\n{", "\t$0", "}"
+		"body" : [
+			"else if(${1:condition})\n{", "\t$0", "}"
 		],
-		"description" : "An else if statement"
+		"description" : "An else if statement"
 	},
 	"While": {
-		"prefix" : "while",
-		"body" : [
-			"while(${1:condition})\n{", "\t$0", "}"
+		"prefix" : "while",
+		"body" : [
+			"while(${1:condition})\n{", "\t$0", "}"
 		],
-		"description" : "A while loop"
+		"description" : "A while loop"
 	},
-	"Do While": {
-		"prefix" : "do",
-		"body" : [
-			"do\n{", "\t$0", "}\nwhile(${1:condition})"
+	"Do While": {
+		"prefix" : "do",
+		"body" : [
+			"do\n{", "\t$0", "}\nwhile(${1:condition})"
 		],
-		"description" : "A do-while loop"
+		"description" : "A do-while loop"
 	},
 	"switch": {
-		"prefix" : "switch",
-		"body" : [
-			"switch(${1:variable})\n{", "\t$0", "}"
+		"prefix" : "switch",
+		"body" : [
+			"switch(${1:variable})\n{", "\t$0", "}"
 		],
-		"description" : "Switch statement"
+		"description" : "Switch statement"
 	},
 	"case": {
-		"prefix" : "case",
-		"body" : [
-			"case ${1:condition}:\n{", "\t$0\n\tbreak;", "}"
+		"prefix" : "case",
+		"body" : [
+			"case ${1:condition}:\n{", "\t$0\n\tbreak;", "}"
 		],
-		"description" : "A case for a switch statement"
+		"description" : "A case for a switch statement"
 	},
 	"default": {
-		"prefix" : "default",
-		"body" : [
-			"default:\n{", "\t$0\n\tbreak;", "}"
+		"prefix" : "default",
+		"body" : [
+			"default:\n{", "\t$0\n\tbreak;", "}"
 		],
-		"description" : "A default case for a switch statement"
+		"description" : "A default case for a switch statement"
 	},
-	"Create void Func": {
-		"prefix" : "void",
-		"body" : [
-			"void ${1:func_name}(${2:func_args})\n{", "\t$0", "}"
+	"Create void Func": {
+		"prefix" : "void",
+		"body" : [
+			"void ${1:func_name}(${2:func_args})\n{", "\t$0", "}"
 		],
-		"description" : "An else statement"
+		"description" : "Create a void function"
 	},
-	"Create Integer Func": {
-		"prefix" : "Integer",
-		"body" : [
-			"Integer ${1:func_name}(${2:func_args})\n{", "\t$0", "}"
+	"Create Integer Func": {
+		"prefix" : "Integer",
+		"body" : [
+			"Integer ${1:func_name}(${2:func_args})\n{", "\t$0", "}"
 		],
-		"description" : "An else statement"
+		"description" : "Create an Integer function"
 	},
-	"Create Real Func": {
-		"prefix" : "Real",
-		"body" : [
-			"Real ${1:func_name}(${2:func_args})\n{", "\t$0", "}"
+	"Create Real Func": {
+		"prefix" : "Real",
+		"body" : [
+			"Real ${1:func_name}(${2:func_args})\n{", "\t$0", "}"
 		],
-		"description" : "An else statement"
+		"description" : "Create a Real function"
 	},
-	"Create Text Func": {
-		"prefix" : "Text",
-		"body" : [
-			"Text ${1:func_name}(${2:func_args})\n{", "\t$0", "}"
+	"Create Text Func": {
+		"prefix" : "Text",
+		"body" : [
+			"Text ${1:func_name}(${2:func_args})\n{", "\t$0", "}"
 		],
-		"description" : "An else statement"
+		"description" : "Create a Text function"
 	},
-	"Create Panel": {
-		"prefix" : "Panel",
-		"body" : [
-			"Panel ${1:pn_name} = Create_panel(${2:panel_title}, ${3:resizable});"
+	"Create Panel": {
+		"prefix" : "Panel",
+		"body" : [
+			"Panel ${1:pn_name} = Create_panel(${2:panel_title}, ${3:resizable});"
 		],
-		"description" : "Create a panel"
+		"description" : "Create a panel"
 	},
-	"Create Button": {
-		"prefix" : "Button",
-		"body" : [
-			"Button ${1:btn_name} = Create_button(${2:btn_title}, ${3:btn_reply});"
+	"Create Button": {
+		"prefix" : "Button",
+		"body" : [
+			"Button ${1:btn_name} = Create_button(${2:btn_title}, ${3:btn_reply});"
 		],
-		"description" : "Create a button"
+		"description" : "Create a button"
 	},
-	"Create Vertical_Group": {
-		"prefix" : "Vertical_Group",
-		"body" : [
-			"Vertical_Group ${1:vg_name} = Create_vertical_group(${2:vg_mode});"
+	"Create Vertical_Group": {
+		"prefix" : "Vertical_Group",
+		"body" : [
+			"Vertical_Group ${1:vg_name} = Create_vertical_group(${2:vg_mode});"
 		],
-		"description" : "Create a vertical group"
+		"description" : "Create a vertical group"
 	},
-	"Create Horizontal_Group Standard": {
-		"prefix" : "Horizontal_Group",
-		"body" : [
-			"Horizontal_Group ${1:vg_name} = Create_horizontal_group(${2:vg_mode});"
+	"Create Horizontal_Group Standard": {
+		"prefix" : "Horizontal_Group",
+		"body" : [
+			"Horizontal_Group ${1:vg_name} = Create_horizontal_group(${2:vg_mode});"
 		],
-		"description" : "Create a vertical group"
+		"description" : "Create a horizontal group"
 	},
-	"Create Horizontal_Group Button": {
-		"prefix" : "Horizontal_Group",
-		"body" : [
-			"Horizontal_Group ${1:vg_name} = Create_button_group();"
+	"Create Horizontal_Group Button": {
+		"prefix" : "Horizontal_Button_Group",
+		"body" : [
+			"Horizontal_Group ${1:vg_name} = Create_button_group();"
 		],
-		"description" : "Create a vertical group"
+		"description" : "Create a horizontal button group"
 	},
-	"Create Source_Box": {
-		"prefix" : "Source_Box",
-		"body" : [
-			"Source_Box ${1:sb_name} = Create_source_box(${2:sb_title},${3:message_box},${4:flags});"
+	"Create Source_Box": {
+		"prefix" : "Source_Box",
+		"body" : [
+			"Source_Box ${1:sb_name} = Create_source_box(${2:sb_title},${3:message_box},${4:flags});"
 		],
-		"description" : "Create a source box"
+		"description" : "Create a source box"
 	},
-	"Create Message_Box": {
-		"prefix" : "Message_Box",
-		"body" : [
-			"Colour_Message_Box ${1:message} = Create_colour_message_box(${2:\"\"});"
+	"Create Message_Box": {
+		"prefix" : "Message_Box",
+		"body" : [
+			"Colour_Message_Box ${1:message} = Create_colour_message_box(${2:\"\"});"
 		],
-		"description" : ""
+		"description" : "Create a colour message box"
 	},
-	"Create GridCtrl_Box": {
-		"prefix" : "GridCtrl_Box",
-		"body" : [
-			"Integer num_cols = 1; // This needs to match the number of columns you want to make\n\nWidget  column_widgets[num_cols]; // Create the array\n\nInput_Box example = Create_input_box(\"Example\", message); // Create the widget\n\ncolumn_widgets[1] = cast(example); // Add the widget to the array\n\nGridCtrl_Box ${1:gcb_name} = Create_gridctrl_box(\"${2:Title}\", ${3:num_rows}, num_cols, column_widgets, ${4:show_nav}, message, ${5:width}, ${6:height});"
+	"Create GridCtrl_Box": {
+		"prefix" : "GridCtrl_Box",
+		"body" : [
+			"Integer num_cols = 1; // This needs to match the number of columns you want to make\n\nWidget  column_widgets[num_cols]; // Create the array\n\nInput_Box example = Create_input_box(\"Example\", message); // Create the widget\n\ncolumn_widgets[1] = cast(example); // Add the widget to the array\n\nGridCtrl_Box ${1:gcb_name} = Create_gridctrl_box(\"${2:Title}\", ${3:num_rows}, num_cols, column_widgets, ${4:show_nav}, message, ${5:width}, ${6:height});"
 		],
-		"description" : "Create Grid Control Box"
+		"description" : "Create Grid Control Box"
 	},
 	"Append": {
-		"prefix" : "Append",
-		"body" : [
-			"Append(${1:object}, ${2:group});"
+		"prefix" : "Append",
+		"body" : [
+			"Append(${1:object}, ${2:group});"
 		],
-		"description" : "Append something"
+		"description" : "Append something"
 	}
 }
