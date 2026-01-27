@@ -341,7 +341,7 @@ export function collectDocumentSymbolIndex(documentText: string): DocumentSymbol
 			},
 			visitParameterDeclaration(ctx: any) {
 				const name = safeTokenText(ctx?.Identifier?.());
-				const type = getDeclarationSpecifiersText(ctx?.declarationSpecifiers2?.());
+				const type = getDeclarationSpecifiersText(ctx?.declarationSpecifiers?.());
 				if (name) {
 					const idNode = ctx?.Identifier?.();
 					const range = rangeFromIdentifierNode(idNode, name);

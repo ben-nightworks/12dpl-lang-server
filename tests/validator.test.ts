@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import * as fs from "fs";
 import * as path from "path";
-import { Validator } from "../server/src/validator.ts";
+import { Validator } from "../server/src/antlr/validator.ts";
 
 function repoRoot(): string {
 	// tests/* lives one level below repo root
