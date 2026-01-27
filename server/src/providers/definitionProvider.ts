@@ -64,7 +64,6 @@ export function registerDefinitionProvider(opts: {
                 for (const d of parseDefinesFromText(text, candidate)) {
                     if (d.name === word && d.range) {
                         return Location.create(candidate, d.range as any);
-                        break;
                     }
                 }
             }
