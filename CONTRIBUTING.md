@@ -18,7 +18,6 @@ Key folders:
 - `client/` — VS Code extension source (entry: `client/src/extension.ts`)
 - `server/` — language server source (entry: `server/src/server.ts`)
 - `server/src/resources/` — JSON resources used at runtime (`functions.enriched.json`, `functions.compiler.json`)
-- `compiler/prototypes/` — raw compiler outputs and scripts used to regenerate prototypes JSON
 - `tests/` — unit/integration tests run under Bun
 
 See individual modules under `server/src/providers/` for completion, hover and formatting logic.
@@ -96,10 +95,6 @@ Important modules:
 │   │   ├── antlr/             # ANTLR parser files
 │   │   ├── providers/         # LSP feature providers (completion/hover/formatting)
 │   │   ├── server.ts          # LSP wiring + provider registration
-│   │   ├── validator.ts       # Code validation with ANTLR parsing
-│   │   ├── prototypes.ts      # Builtin prototype loader
-│   │   ├── includes.ts        # #include graph traversal
-│   │   ├── symbols.ts         # Symbol extraction (functions/variables)
 │   │   └── ...
 │   └── out/                   # Compiled output
 │
@@ -203,7 +198,7 @@ Add or update the `README.md` image links to reference committed assets.
 - [ ] Find references
 
 #### Medium Term
-- [ ] Custom library support (partially done)
+- ✅ Custom library support
 - [ ] Symbol documentation panel
 - [ ] Code formatting (partially done)
 - [ ] Workspace symbol search

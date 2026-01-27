@@ -5,7 +5,7 @@ import {
 
 import { RecognitionException, ErrorListener }  from 'antlr4';
 
-import { createLexerAndParser } from './parsePipeline.js';
+import { createLexerAndParser } from './parsePipeline';
 
 class DiagnosticErrorListener extends ErrorListener<any> {
 	public diagnostics: Diagnostic[] = [];
@@ -17,7 +17,7 @@ class DiagnosticErrorListener extends ErrorListener<any> {
 				start: { line: line - 1, character: column },
 				end: { line: line - 1, character: column + 1 }
 			},
-			message: `Syntax Error: ${msg}`
+			message: `Error: ${msg}`
 		});
 	}
 }

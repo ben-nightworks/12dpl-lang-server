@@ -17,8 +17,7 @@ import {
 	InitializeParams,
 	DidChangeConfigurationNotification,
 	TextDocumentSyncKind,
-	InitializeResult,
-	Location
+	InitializeResult
 } from 'vscode-languageserver/node';
 
 import {
@@ -27,28 +26,18 @@ import {
 
 import {
 	Validator
-} from './validator.js';
-
-import {
-	collectRecursiveIncludeFiles,
-	fileUriToFsPath,
-	fsPathToFileUri
-} from './includes.js';
+} from './antlr/validator';
 
 import {
 	prototypesLoader
-} from './prototypes.js';
+} from './util/prototypes';
 
-import {
-	SymbolRange
-} from './symbols.js';
-
-import { DocumentSymbolStore } from './providers/documentSymbols.js';
-import { registerCompletionProvider } from './providers/completionProvider.js';
-import { registerHoverProvider } from './providers/hoverProvider.js';
-import { registerFormattingProvider } from './providers/formattingProvider.js';
-import { getWordAtPosition } from './providers/utils.js';
-import { parseDefinesFromText } from './providers/defines.js';
+import { DocumentSymbolStore } from './providers/documentSymbols';
+import { registerCompletionProvider } from './providers/completionProvider';
+import { registerDefinitionProvider } from './providers/definitionProvider';
+import { registerHoverProvider } from './providers/hoverProvider';
+import { registerFormattingProvider } from './providers/formattingProvider';
+import { registerIncludesProvider } from './providers/includesProvider';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -59,9 +48,11 @@ const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
 const documentSymbols = new DocumentSymbolStore(documents);
 
+// Set defaults for capabilities as a starting point
 let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
 let hasDiagnosticRelatedInformationCapability = false;
+
 connection.onInitialize((params: InitializeParams) => {
 	const capabilities = params.capabilities;
 
@@ -84,8 +75,7 @@ connection.onInitialize((params: InitializeParams) => {
 			textDocumentSync: TextDocumentSyncKind.Full,
 			// Tell the client that this server supports code completion.
 			completionProvider: {
-				resolveProvider: true,
-				triggerCharacters: ['.', '#']
+				resolveProvider: true
 			},
 			// Tell the client that this server supports hover.
 			hoverProvider: true,
@@ -148,21 +138,6 @@ connection.onDidChangeConfiguration(change => {
 	documents.all().forEach(validateTextDocument);
 });
 
-function getDocumentSettings(resource: string): Thenable<ServerSettings> {
-	if (!hasConfigurationCapability) {
-		return Promise.resolve(globalSettings);
-	}
-	let result = documentSettings.get(resource);
-	if (!result) {
-		result = connection.workspace.getConfiguration({
-			scopeUri: resource,
-			section: 'langServer'
-		});
-		documentSettings.set(resource, result);
-	}
-	return result;
-}
-
 // Only keep settings for open documents
 documents.onDidClose(e => {
 	documentSettings.delete(e.document.uri);
@@ -176,69 +151,8 @@ documents.onDidChangeContent(change => {
 	validateTextDocument(change.document);
 });
 
-connection.onDefinition((params) => {
-	const doc = documents.get(params.textDocument.uri);
-	if (!doc) return null;
-
-	const word = getWordAtPosition(doc, params.position);
-	if (!word) return null;
-
-	// Prefer current document symbol (function or variable)
-	const local = documentSymbols.getSymbolInfo(doc.uri, word);
-	if (local?.range) {
-		return Location.create(doc.uri, local.range as any);
-	}
-
-	// Prefer local #define
-	const docPath = fileUriToFsPath(doc.uri);
-	if (!docPath) return null;
-	for (const d of parseDefinesFromText(doc.getText(), docPath)) {
-		if (d.name === word && d.range) {
-			return Location.create(doc.uri, d.range as any);
-		}
-	}
-
-	const readText = (fsPath: string): string | null => documentSymbols.getTextForFsPath(fsPath);
-
-	const includeFiles = collectRecursiveIncludeFiles(docPath, readText, { maxFiles: 500 });
-	const results: Location[] = [];
-	const seen = new Set<string>();
-
-	const pushLocation = (candidateFsPath: string, range: SymbolRange) => {
-		const uri = fsPathToFileUri(candidateFsPath);
-		const key = `${uri}:${range.start.line}:${range.start.character}:${range.end.line}:${range.end.character}`;
-		if (seen.has(key)) return;
-		seen.add(key);
-		results.push(Location.create(uri, range as any));
-	};
-
-	for (const candidate of includeFiles) {
-		const idx = documentSymbols.getIndexForFsPath(candidate);
-		if (!idx) continue;
-		const fn = (idx.functions as any)[word];
-		if (fn?.range) pushLocation(candidate, fn.range);
-		const v = (idx.variables as any)[word];
-		if (v?.range) pushLocation(candidate, v.range);
-
-		// Also resolve #define macros in included files
-		const text = readText(candidate);
-		if (text != null) {
-			for (const d of parseDefinesFromText(text, candidate)) {
-				if (d.name === word && d.range) {
-					pushLocation(candidate, d.range);
-					break;
-				}
-			}
-		}
-	}
-
-	return results.length ? results : null;
-});
-
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
-	// In this simple example we get the settings for every validate run.
-	const settings = await getDocumentSettings(textDocument.uri);
-	
+
 	const text = textDocument.getText();
 
 	const diagnostics: Diagnostic[] = Validator.Validate(text);
@@ -247,13 +161,13 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
 
-connection.onDidChangeWatchedFiles(_change => {
-	// Monitored files have change in VSCode
-	connection.console.log('We received an file change event');
-});
+// Register providers
+// Register a single shared includes provider and pass it to other providers.
+const includesProvider = registerIncludesProvider({ connection, documents, documentSymbols });
 
-registerCompletionProvider({ connection, documents, documentSymbols });
-registerHoverProvider({ connection, documents, documentSymbols });
+registerCompletionProvider({ connection, documents, documentSymbols, includesProvider });
+registerDefinitionProvider({ connection, documents, documentSymbols, includesProvider });
+registerHoverProvider({ connection, documents, documentSymbols, includesProvider });
 registerFormattingProvider({ connection, documents });
 
 // Make the text document manager listen on the connection

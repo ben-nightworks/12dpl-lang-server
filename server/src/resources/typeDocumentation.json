@@ -1,5 +1,5 @@
-export const typeDocumentation: Record<string, string> = {
-    "Integer": "**Integer**\n\nA 32-bit whole number. It can be positive or negative. For example -1, 0 and 1.",
+{
+    "Integer": "**Integer**\n\nA 32-bit whole number. It can be positive or negative. For example -1, 0 and 1. ",
     "Integer64": "**Integer64**\n\nA 64-bit whole number. It can be positive or negative. For example -1LL, 0 and 123456789123.",
     "Real": "**Real**\n\nA 64-bit decimal number. It can be positive or negative. For example -1.0, 0.0 and 1.0",
     "Text": "**Text**\n\nA sequence of characters. For example \"Dog\"",
@@ -65,7 +65,7 @@ export const typeDocumentation: Record<string, string> = {
     "Name_Box": "**Name_Box**\n\nA box for name input.",
     "Named_Tick_Box": "**Named_Tick_Box**\n\nA tick box with a name.",
     "New_Select_Box": "**New_Select_Box**\n\nA new style select box.",
-    "New_XYZ_Box": "**New_XYZ_Box**\n\nA new style XYZ input box.",
+    "New_XYZ_Box": "**New_XYZ_BOX**\n\nA new style XYZ input box.",
     "Plotter_Box": "**Plotter_Box**\n\nA box for plotter selection.",
     "Polygon_Box": "**Polygon_Box**\n\nA box for polygon operations.",
     "Real_Box": "**Real_Box**\n\nA box for real number input.",
@@ -77,7 +77,7 @@ export const typeDocumentation: Record<string, string> = {
     "Tab_Box": "**Tab_Box**\n\nA box for tabs.",
     "Template_Box": "**Template_Box**\n\nA box for template selection.",
     "Text_Edit_Box": "**Text_Edit_Box**\n\nA box for editing text.",
-    "Text_Style_Box": "**Text_Style_Box**\n\nA box for text style selection.",
+    "Text_Style_Box": "**Text_Style_BOX**\n\nA box for text style selection.",
     "Texture_Box": "**Texture_Box**\n\nA box for texture selection.",
     "Tree_Box": "**Tree_Box**\n\nA box for tree views.",
     "Tick_Box": "**Tick_Box**\n\nA tick box.",
@@ -91,7 +91,7 @@ export const typeDocumentation: Record<string, string> = {
     "XML_Node": "**XML_Node**\n\nA node within an XML document.",
     "Connection": "**Connection**\n\nThe connection to the database.",
     "Select_Query": "**Select_Query**\n\nUsed to retrieve data from the database.",
-    "Insert_Query": "**Insert_Query**\n\nUsed to add data to the database.",
+    "Insert_Query": "**Insert_QUERY**\n\nUsed to add data to the database.",
     "Update_Query": "**Update_Query**\n\nUsed to update data in the database.",
     "Delete_Query": "**Delete_Query**\n\nUsed to delete data in the database.",
     "Database_Result": "**Database_Result**\n\nDatabase results.",
@@ -115,4 +115,4 @@ export const typeDocumentation: Record<string, string> = {
     "Dynamic_Integer": "**Dynamic_Integer**\n\nA dynamic array of Integers.",
     "Dynamic_Integer64": "**Dynamic_Integer64**\n\nA dynamic array of 64 bits Integers.",
     "Dynamic_Real": "**Dynamic_Real**\n\nA dynamic array of Reals."
-};
+}

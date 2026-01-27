@@ -10,7 +10,7 @@
 	],
 	"license": "MIT",
 	"displayName": "12dPL Language Server",
-	"version": "1.1.2",
+	"version": "1.2.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ben-nightworks/12dpl-lang-server"
@@ -166,7 +166,7 @@
 				"12dpl.formatOnSave": {
 					"scope": "resource",
 					"type": "boolean",
-					"default": true,
+					"default": false,
 					"description": "Auto-format 12dPL files when they are saved."
 				},
 				"12dpl.indentSize": {

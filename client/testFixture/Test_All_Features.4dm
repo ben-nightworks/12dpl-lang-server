@@ -19,6 +19,10 @@ void main()
 {
     Panel panel = Create_panel("Title", FALSE, TRUE);
 
+    Time test = some_random_value;
+
+    Time test();
+
     Integer bool_def_test = TRUE;
     Integer bool_int_test = bool_def_test ? 1 : 0;
 
@@ -84,5 +88,10 @@ void main()
     }
 
     Integer test_value = int_array[1];
+
+    Test_Indirect();
+    Test_Indirect();
+
+    Integer new = 0;
 
 }

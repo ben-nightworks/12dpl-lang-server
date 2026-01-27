@@ -1,27 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
+import { getModuleDir } from './moduleDir';
 import { CompletionItem, CompletionItemKind, MarkupKind, InsertTextFormat } from 'vscode-languageserver/node';
 
-function getModuleDir(): string {
-	// In CommonJS, __dirname is available.
-	if (typeof __dirname === 'string') {
-		return __dirname;
-	}
 
-	// In ESM (e.g. Bun test running TS as ESM), compute from import.meta.url.
-	// Use an indirect lookup so this file still parses in CommonJS.
-	try {
-		const importMetaUrl = new Function('return import.meta.url')() as string;
-		if (typeof importMetaUrl === 'string' && importMetaUrl.length > 0) {
-			return path.dirname(fileURLToPath(importMetaUrl));
-		}
-	} catch {
-		// ignore
-	}
-
-	return process.cwd();
-}
 
 interface FunctionData {
 	name: string;
@@ -46,8 +28,8 @@ class PrototypesLoader {
 			// Load PDF-enriched docs first (best descriptions), then merge in compiler list
 			// to pick up missing functions/overloads that have no documentation.
 			const moduleDir = getModuleDir();
-			const enrichedPath = path.join(moduleDir, 'resources', 'functions.enriched.json');
-			const compilerPath = path.join(moduleDir, 'resources', 'functions.compiler.json');
+			const enrichedPath = path.join(moduleDir, ".." ,'resources', 'functions.enriched.json');
+			const compilerPath = path.join(moduleDir, "..", 'resources', 'functions.compiler.json');
 
 			const baseByName = new Map<string, FunctionData>();
 			if (fs.existsSync(enrichedPath)) {

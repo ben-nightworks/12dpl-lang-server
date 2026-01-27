@@ -11,16 +11,15 @@ import type { TextDocument } from 'vscode-languageserver-textdocument';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { prototypesLoader } from '../prototypes.js';
-import { typeDocumentation } from '../documentation.js';
+import { prototypesLoader } from '../util/prototypes.js';
+import { typeDocumentation } from '../util/typeDocumentation.js';
 import type { DocumentSymbolStore } from './documentSymbols.js';
-import { collectRecursiveIncludeFiles, fileUriToFsPath } from '../includes.js';
-import { buildFunctionCallSnippet, fuzzyScore, getWordAtPosition } from './utils.js';
-import { parseDefinesFromText } from './defines.js';
-import type { FunctionSymbolInfo, VariableSymbolInfo } from '../symbols.js';
+import { fileUriToFsPath } from '../util/includes.js';
+import { buildFunctionCallSnippet, fuzzyScore, getWordAtPosition } from '../util/utils.js';
+import { parseDefinesFromText } from '../util/defines.js';
+import type { FunctionSymbolInfo, VariableSymbolInfo } from '../antlr/symbols.js';
 
 type IncludeCompletionCacheEntry = { version: number; items: CompletionItem[] };
-type IncludeFileListCacheEntry = { version: number; files: string[] };
 
 type IncludePathContext = {
 	startCharacter: number;
@@ -122,7 +121,10 @@ export function registerCompletionProvider(opts: {
 	connection: Connection;
 	documents: TextDocuments<TextDocument>;
 	documentSymbols: DocumentSymbolStore;
+	includesProvider: { getIncludeFilesForUri(uri: string): Promise<string[]> };
 }): void {
+	// Include paths will be fetched per-document using `scopeUri` so resource-scoped
+	// settings (user/workspace/folder) are respected.
 	/**
 	 * NOTE: This provider intentionally returns a fully-ranked completion list.
 	 * VS Code will still apply some client-side heuristics, so we set `filterText`/`sortText` when fuzzing.
@@ -137,36 +139,21 @@ export function registerCompletionProvider(opts: {
 		return (typeof item.filterText === 'string' && item.filterText.length) ? item.filterText : getLabelText(item);
 	};
 	const includeCompletionsCache: Map<string, IncludeCompletionCacheEntry> = new Map();
-	const includeFileListCache: Map<string, IncludeFileListCacheEntry> = new Map();
 	const defineCompletionsCache: Map<string, IncludeCompletionCacheEntry> = new Map();
+	const includesProvider = opts.includesProvider;
 
-	const getIncludeFilesForUri = (uri: string): string[] => {
-		const doc = documents.get(uri);
-		if (!doc) return [];
-
-		const cached = includeFileListCache.get(uri);
-		if (cached && cached.version === doc.version) return cached.files;
-
-		const docPath = fileUriToFsPath(uri);
-		if (!docPath) return [];
-
-		const includeFiles = collectRecursiveIncludeFiles(
-			docPath,
-			(fsPath) => documentSymbols.getTextForFsPath(fsPath),
-			{ maxFiles: 500 }
-		);
-		includeFileListCache.set(uri, { version: doc.version, files: includeFiles });
-		return includeFiles;
+	const getIncludeFilesForUri = async (uri: string): Promise<string[]> => {
+		return includesProvider.getIncludeFilesForUri(uri);
 	};
 
-	const getIncludeCompletionItems = (uri: string): CompletionItem[] => {
+	const getIncludeCompletionItems = async (uri: string): Promise<CompletionItem[]> => {
 		const doc = documents.get(uri);
 		if (!doc) return [];
 
 		const cached = includeCompletionsCache.get(uri);
 		if (cached && cached.version === doc.version) return cached.items;
 
-		const includeFiles = getIncludeFilesForUri(uri);
+		const includeFiles = await getIncludeFilesForUri(uri);
 
 		const items: CompletionItem[] = [];
 		const byLabel = new Set<string>();
@@ -207,7 +194,7 @@ export function registerCompletionProvider(opts: {
 		return items;
 	};
 
-	const getDefineCompletionItems = (uri: string): CompletionItem[] => {
+	const getDefineCompletionItems = async (uri: string): Promise<CompletionItem[]> => {
 		const doc = documents.get(uri);
 		if (!doc) return [];
 
@@ -245,7 +232,7 @@ export function registerCompletionProvider(opts: {
 		}
 
 		// Then defines from includes.
-		for (const includeFsPath of getIncludeFilesForUri(uri)) {
+		for (const includeFsPath of await getIncludeFilesForUri(uri)) {
 			const text = documentSymbols.getTextForFsPath(includeFsPath);
 			if (text == null) continue;
 			for (const def of parseDefinesFromText(text, includeFsPath)) {
@@ -276,7 +263,7 @@ export function registerCompletionProvider(opts: {
 		return items;
 	};
 
-	connection.onCompletion((textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
+	connection.onCompletion(async (textDocumentPosition: TextDocumentPositionParams): Promise<CompletionItem[]> => {
 		const doc = documents.get(textDocumentPosition.textDocument.uri);
 		if (doc) {
 			const ctx = getIncludePathContext(doc, textDocumentPosition.position);
@@ -298,8 +285,8 @@ export function registerCompletionProvider(opts: {
 		const query = doc ? (getWordAtPosition(doc, textDocumentPosition.position) ?? '') : '';
 
 		const symbolItems = documentSymbols.getCompletionItems(textDocumentPosition.textDocument.uri);
-		const defineItems = getDefineCompletionItems(textDocumentPosition.textDocument.uri);
-		const includeItems = getIncludeCompletionItems(textDocumentPosition.textDocument.uri);
+		const defineItems = await getDefineCompletionItems(textDocumentPosition.textDocument.uri);
+		const includeItems = await getIncludeCompletionItems(textDocumentPosition.textDocument.uri);
 
 		// Get completions from loaded prototypes
 		const prototypeItems = prototypesLoader.getCompletionItems();

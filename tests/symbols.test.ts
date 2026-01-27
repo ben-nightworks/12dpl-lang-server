@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { collectDocumentSymbolNames, collectDocumentSymbolIndex } from '../server/src/symbols.ts';
+import { collectDocumentSymbolNames, collectDocumentSymbolIndex } from '../server/src/antlr/symbols.ts';
 
 describe('collectDocumentSymbolNames', () => {
 	test('collects variables, parameters, and functions', () => {

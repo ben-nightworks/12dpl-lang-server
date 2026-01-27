@@ -1,4 +1,4 @@
-import type { SymbolRange } from '../symbols.js';
+import type { SymbolRange } from '../antlr/symbols.js';
 
 /** Represents a `#define` macro found in a source or header file. */
 export type DefineSymbolInfo = {

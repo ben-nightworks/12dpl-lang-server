@@ -2926,7 +2926,7 @@
     "description": "Get the current date as the day of the month, month & year. The day of the month value is returned in Integer d. The month value is returned in Integer m. The year value is returned in Integer y (fours digits). A function return value of zero indicates the date was returned successfully. Page 148 System Chapter 5 12dPL Library Calls"
   },
   {
-    "name": "Time",
+    "name": "Get_time",
     "id": 660,
     "returnType": "Integer",
     "parameters": [
@@ -2938,7 +2938,7 @@
     "description": "Get the current time as seconds since January 1 1970. The time value is returned in Integer time. A function return value of zero indicates the time was returned successfully."
   },
   {
-    "name": "Time",
+    "name": "Get_time",
     "id": 661,
     "returnType": "Integer",
     "parameters": [
@@ -2950,7 +2950,7 @@
     "description": "Get the current time as the number of seconds since January 1st 1601 down to precision of 10-7 (100 nanoseconds) and return it as time. A function return value of zero indicates the time was returned successfully."
   },
   {
-    "name": "Time",
+    "name": "Get_time",
     "id": 662,
     "returnType": "Integer",
     "parameters": [
@@ -2962,7 +2962,7 @@
     "description": "Get the current time. The time is returned in Text time with the format (known as the ctime format) DDD MMM dd hh:mm:ss yyyy where where DDD is three characters for the day, MMM is three characters for the month dd two digits for the day of the month, hh two digits for the hour, mm two digits for the hour (in twenty four hour format), ss two digits for seconds and yyyy is four digits for the year. For example, Sun Mar 17 23:19:24 1996 A function return value of zero indicates the time was returned successfully."
   },
   {
-    "name": "Time",
+    "name": "Get_time",
     "id": 663,
     "returnType": "Integer",
     "parameters": [
