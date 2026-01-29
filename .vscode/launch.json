@@ -16,14 +16,11 @@
 			"preLaunchTask": "bun: watch"
 		},
 		{
-			"type": "node",
+			"type": "bun",
 			"request": "attach",
 			"name": "Attach to Server",
-			"port": 6009,
-			"restart": true,
-			"outFiles": [
-				"${workspaceRoot}/server/out/**/*.js"
-			]
+			"url": "ws://localhost:6009",
+			"stopOnEntry": false
 		}
 	]
 }
