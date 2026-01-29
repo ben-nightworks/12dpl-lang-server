@@ -15,7 +15,7 @@ async function getCompilerInfo(compilerExe: string): Promise<CompilerInfo> {
     return new Promise((resolve) => {
         const config = workspace.getConfiguration('12dpl');
         const includePaths = (config.get<string[]>('compiler.includePaths') ?? []).map((p) => String(p).trim()).filter(Boolean);
-        const env = { ...process.env } as NodeJS.ProcessEnv;
+        const env = { ...process.env };
         if (includePaths.length > 0) {
             const sep = process.platform === 'win32' ? ';' : ':';
             env.PATH = `${includePaths.join(sep)}${sep}${env.PATH ?? ''}`;
@@ -210,7 +210,7 @@ export function registerCompileFeatures(context: ExtensionContext) {
 
         const configTop = workspace.getConfiguration('12dpl', document.uri);
         const includePathsTop = (configTop.get<string[]>('compiler.includePaths') ?? []).map((p) => String(p).trim()).filter(Boolean);
-        const envTop = { ...process.env } as NodeJS.ProcessEnv;
+        const envTop = { ...process.env };
         if (includePathsTop.length > 0) {
             const sep = ':';
             envTop.CPLUS_INCLUDE_PATH = `${envTop.CPLUS_INCLUDE_PATH ?? ''}${sep}${includePathsTop.join(sep)}${sep}${inputFileFolder}`;
