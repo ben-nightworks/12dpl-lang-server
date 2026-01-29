@@ -33,3 +33,177 @@ describe("Validator.Validate", () => {
 		expect(diagnostics.length).toBeGreaterThan(0);
 	});
 });
+
+describe("RHS operand validation (issue #26)", () => {
+	test("reports warning for undeclared variable on RHS of assignment", () => {
+		const code = `
+void main() {
+    Integer x = undeclaredVar;
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
+		expect(warnings.length).toBeGreaterThan(0);
+		expect(warnings.some(d => d.message.includes("undeclaredVar"))).toBe(true);
+	});
+
+	test("does not report warning for declared variable on RHS", () => {
+		const code = `
+void main() {
+    Integer y = 10;
+    Integer x = y;
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		const undeclaredWarnings = diagnostics.filter(d => 
+			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
+		);
+		expect(undeclaredWarnings.length).toBe(0);
+	});
+
+	test("reports warning for undeclared variable in expression", () => {
+		const code = `
+void main() {
+    Integer x = 5;
+    Integer y = x + undeclaredVar + 10;
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
+		expect(warnings.length).toBeGreaterThan(0);
+		expect(warnings.some(d => d.message.includes("undeclaredVar"))).toBe(true);
+	});
+
+	test("handles function parameters as declared", () => {
+		const code = `
+void myFunc(Integer param1, Real param2) {
+    Integer x = param1;
+    Real y = param2;
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		const undeclaredWarnings = diagnostics.filter(d => 
+			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
+		);
+		expect(undeclaredWarnings.length).toBe(0);
+	});
+
+	test("handles for-loop declarations", () => {
+		const code = `
+void main() {
+    for (Integer i = 0; i < 10; i++) {
+        Integer x = i;
+    }
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		const undeclaredWarnings = diagnostics.filter(d => 
+			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
+		);
+		expect(undeclaredWarnings.length).toBe(0);
+	});
+
+	test("does not flag function calls as undeclared", () => {
+		const code = `
+void main() {
+    Integer x = someFunction(1, 2);
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		// Function calls should not be flagged as undeclared variables
+		const warnings = diagnostics.filter(d => 
+			d.severity === 2 /* Warning */ && d.message.includes("someFunction")
+		);
+		expect(warnings.length).toBe(0);
+	});
+
+	test("reports multiple undeclared variables", () => {
+		const code = `
+void main() {
+    Integer x = undeclared1 + undeclared2;
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
+		expect(warnings.length).toBeGreaterThanOrEqual(2);
+		expect(warnings.some(d => d.message.includes("undeclared1"))).toBe(true);
+		expect(warnings.some(d => d.message.includes("undeclared2"))).toBe(true);
+	});
+
+	test("does not flag #define macro identifiers as undeclared", () => {
+		const code = `
+#define MY_CONSTANT 42
+#define ANOTHER_MACRO 100
+
+void main() {
+    Integer x = MY_CONSTANT;
+    Integer y = ANOTHER_MACRO + 10;
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		const undeclaredWarnings = diagnostics.filter(d => 
+			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
+		);
+		expect(undeclaredWarnings.length).toBe(0);
+	});
+
+	test("does not flag TRUE and FALSE as undeclared", () => {
+		const code = `
+void main() {
+    Integer flag = TRUE;
+    Integer other = FALSE;
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		const undeclaredWarnings = diagnostics.filter(d => 
+			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
+		);
+		expect(undeclaredWarnings.length).toBe(0);
+	});
+
+	test("reports type mismatch when switch on Integer uses string case", () => {
+		const code = `
+void main() {
+    Integer x = 1;
+    switch(x)
+    {
+    case "Test":
+        {
+        }
+    case 0:
+        {
+        }
+    }
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		const typeMismatchWarnings = diagnostics.filter(d => 
+			d.severity === 2 /* Warning */ && d.message.includes("Case type mismatch")
+		);
+		expect(typeMismatchWarnings.length).toBe(1);
+		expect(typeMismatchWarnings[0].message).toContain("Integer");
+		expect(typeMismatchWarnings[0].message).toContain("Text");
+	});
+
+	test("does not report type mismatch for matching switch/case types", () => {
+		const code = `
+void main() {
+    Text status = "ok";
+    switch(status)
+    {
+    case "ok":
+        {
+        }
+    case "error":
+        {
+        }
+    }
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		const typeMismatchWarnings = diagnostics.filter(d => 
+			d.severity === 2 /* Warning */ && d.message.includes("Case type mismatch")
+		);
+		expect(typeMismatchWarnings.length).toBe(0);
+	});
+});
