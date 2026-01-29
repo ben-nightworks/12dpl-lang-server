@@ -217,7 +217,7 @@ export function registerCompileFeatures(context: ExtensionContext) {
         }
 
         const child = cp.spawn(compilerExe, args, {
-            cwd: path.dirname(compilerExe),
+            cwd: inputFileFolder,
             windowsHide: true,
             env: envTop
         });
@@ -231,10 +231,21 @@ export function registerCompileFeatures(context: ExtensionContext) {
         child.on('close', (code) => {
             outputChannel.appendLine(`\n[exit code] ${code ?? 'unknown'}`);
             if (code === 0) {
+                // Check if .4do was created next to input, or in compiler directory
+                const compilerDirOutput = path.join(path.dirname(compilerExe), path.basename(expectedOutput));
                 if (fs.existsSync(expectedOutput)) {
                     void window.showInformationMessage(`Compiled: ${expectedOutput}`);
+                } else if (fs.existsSync(compilerDirOutput)) {
+                    // Move the .4do from compiler directory to input file directory
+                    try {
+                        fs.copyFileSync(compilerDirOutput, expectedOutput);
+                        fs.unlinkSync(compilerDirOutput);
+                        void window.showInformationMessage(`Compiled: ${expectedOutput}`);
+                    } catch (err) {
+                        void window.showWarningMessage(`Compiled to ${compilerDirOutput} but failed to move to source directory.`);
+                    }
                 } else {
-                    void window.showWarningMessage('Compilation fauled, .4do was not found next to the input file.');
+                    void window.showWarningMessage('Compilation succeeded but .4do was not found next to the input file.');
                 }
             } else {
                 void window.showErrorMessage('Compilation failed. See Output: 12dPL Compiler.');

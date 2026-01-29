@@ -5,7 +5,7 @@
 #if DEBUG
 Clear_console();
 #endif
-#include "set_ups.h"
+
 
 
 
