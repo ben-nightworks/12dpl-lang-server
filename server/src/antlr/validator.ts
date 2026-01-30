@@ -164,15 +164,16 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 		// Check if variable is already declared in an include file
 		const includeSource = includeVars.get(lowerName);
 		if (includeSource) {
+			// Shadowing a global variable from an include file - warning, not error
 			diagnostics.push({
-				severity: DiagnosticSeverity.Error,
+				severity: DiagnosticSeverity.Warning,
 				range: {
 					start: { line: info.line - 1, character: info.column },
 					end: { line: info.line - 1, character: info.column + info.name.length }
 				},
-				message: `Variable '${info.name}' is already declared in included file '${includeSource}'`
+				message: `Variable '${info.name}' shadows a global variable declared in '${includeSource}'`
 			});
-			return;
+			// Don't return - still track the variable in local scope
 		}
 		
 		const existing = scopeVars.get(lowerName);

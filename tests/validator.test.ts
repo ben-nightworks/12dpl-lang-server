@@ -25,7 +25,12 @@ describe("Validator.Validate", () => {
 	test("handles preprocessor directives and top-level blocks", () => {
 		const text = readFixture("client/testFixture/Test2.4dm");
 		const diagnostics = Validator.Validate(text);
-		expect(diagnostics.filter(d => d.severity === 1 /* Error */).length).toBe(0);
+		// Test2.4dm has intentional re-declarations marked as "SHOULD BE ERROR"
+		// - program_name is declared twice at lines 16-17
+		const syntaxErrors = diagnostics.filter(d => 
+			d.severity === 1 /* Error */ && !d.message.includes("already declared")
+		);
+		expect(syntaxErrors.length).toBe(0);
 	});
 
 	test("reports an error for clearly invalid input", () => {
@@ -144,7 +149,7 @@ void main() {
 		expect(redeclErrors.length).toBe(0);
 	});
 
-	test("reports error when variable conflicts with include file variable", () => {
+	test("reports warning when variable shadows include file variable", () => {
 		const code = `
 void main() {
     Integer myVar = 1;
@@ -155,11 +160,11 @@ void main() {
 			{ name: "myVar", sourceFile: "common.h" }
 		];
 		const diagnostics = Validator.ValidateWithIncludes(code, includeVars);
-		const redeclErrors = diagnostics.filter(d => 
-			d.severity === 1 /* Error */ && d.message.includes("already declared")
+		const shadowWarnings = diagnostics.filter(d => 
+			d.severity === 2 /* Warning */ && d.message.includes("shadows")
 		);
-		expect(redeclErrors.length).toBe(1);
-		expect(redeclErrors[0].message).toContain("common.h");
+		expect(shadowWarnings.length).toBe(1);
+		expect(shadowWarnings[0].message).toContain("common.h");
 	});
 
 	test("include file variable check is case-insensitive", () => {
@@ -173,10 +178,10 @@ void main() {
 			{ name: "myvar", sourceFile: "utils.h" }
 		];
 		const diagnostics = Validator.ValidateWithIncludes(code, includeVars);
-		const redeclErrors = diagnostics.filter(d => 
-			d.severity === 1 /* Error */ && d.message.includes("already declared")
+		const shadowWarnings = diagnostics.filter(d => 
+			d.severity === 2 /* Warning */ && d.message.includes("shadows")
 		);
-		expect(redeclErrors.length).toBe(1);
-		expect(redeclErrors[0].message).toContain("utils.h");
+		expect(shadowWarnings.length).toBe(1);
+		expect(shadowWarnings[0].message).toContain("utils.h");
 	});
 });
