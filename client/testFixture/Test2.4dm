@@ -25,6 +25,7 @@ void main(){
 
     create_rgb(1, 2, 3);
     Real TEST = PI * 2.0;
+    Real TEST = PI * 2.0;//SHOULD BE ERROR
     set_ups_included();
 
 
