@@ -127,4 +127,20 @@ void main() {
 		);
 		expect(redeclErrors.length).toBe(0);
 	});
+
+	test("does not flag function prototypes as variable re-declarations", () => {
+		const code = `
+void main() {
+    Time test = some_value;
+    Time test();
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		// "Time test();" is a function prototype, not a variable declaration
+		// It should not be flagged as a re-declaration of the variable "test"
+		const redeclErrors = diagnostics.filter(d => 
+			d.severity === 1 /* Error */ && d.message.includes("already declared")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
 });

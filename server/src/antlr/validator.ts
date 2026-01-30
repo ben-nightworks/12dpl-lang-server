@@ -77,7 +77,40 @@ function validateRedeclarations(tree: any): Diagnostic[] {
 	// Initialize global scope
 	scopeVariables.set('global', new Map());
 
+	/**
+	 * Checks if a declarator is a function prototype (has parentheses for parameters).
+	 * Function prototypes like `Time test();` should not be treated as variable declarations.
+	 */
+	const isFunctionPrototype = (ctx: any): boolean => {
+		try {
+			// Check if the declarator has parentheses - indicating a function prototype
+			// A function prototype has the form: directDeclarator '(' ... ')'
+			const direct = ctx?.directDeclarator?.();
+			if (direct) {
+				// Check if this directDeclarator has a '(' token, indicating function params
+				const lparen = direct?.LeftParen?.() ?? direct?.getToken?.(0);
+				// If we have a nested directDeclarator with parentheses, it's a function
+				const innerDirect = direct?.directDeclarator?.();
+				if (innerDirect) {
+					// This is pattern: directDeclarator '(' ... ')'
+					// Check for parameterTypeList or identifierList (function signature)
+					const params = direct?.parameterTypeList?.() ?? direct?.identifierList?.();
+					// If we reached here with a nested directDeclarator, it's a function prototype
+					return true;
+				}
+			}
+		} catch {
+			// ignore
+		}
+		return false;
+	};
+
 	const extractIdentifierFromDeclarator = (ctx: any): { name: string; line: number; column: number } | null => {
+		// Skip function prototypes - they're not variable declarations
+		if (isFunctionPrototype(ctx)) {
+			return null;
+		}
+		
 		let cur: any = ctx;
 		while (cur) {
 			try {
