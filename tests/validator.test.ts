@@ -140,21 +140,34 @@ void main() {
     Integer y = ANOTHER_MACRO + 10;
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		// Provide the defines as known symbols (normally collected by server.ts from document text)
+		const knownSymbols = {
+			functions: new Set<string>(),
+			variables: new Set<string>(),
+			defines: new Set(['my_constant', 'another_macro'])
+		};
+		const diagnostics = Validator.ValidateWithSymbols(code, knownSymbols);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
 	});
 
-	test("does not flag TRUE and FALSE as undeclared", () => {
+	test("does not flag TRUE and FALSE as undeclared when provided as defines", () => {
 		const code = `
 void main() {
     Integer flag = TRUE;
     Integer other = FALSE;
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		// TRUE and FALSE are typically defined in include files or as macros
+		// The server.ts collects these from include files - here we simulate that
+		const knownSymbols = {
+			functions: new Set<string>(),
+			variables: new Set<string>(),
+			defines: new Set(['true', 'false'])
+		};
+		const diagnostics = Validator.ValidateWithSymbols(code, knownSymbols);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);

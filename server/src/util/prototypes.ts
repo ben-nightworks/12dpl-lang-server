@@ -181,6 +181,11 @@ class PrototypesLoader {
 		}
 		return this.generateSignature(func);
 	}
+
+	/** Returns all prototype function names (lowercase). */
+	getAllNames(): string[] {
+		return Array.from(this.prototypes.keys());
+	}
 }
 
 export const prototypesLoader = new PrototypesLoader();

@@ -23,31 +23,14 @@ class DiagnosticErrorListener extends ErrorListener<any> {
 	}
 }
 
-/** Keywords and built-in constants that should not be flagged as undeclared. */
-const RESERVED_KEYWORDS = new Set([
-	'void', 'Text', 'Integer', 'Real', 'Element', 'Model', 'Dynamic_Element', 'Tin', 'Menu',
-	'Dynamic_Text', 'Point', 'Line', 'Arc', 'Segment', 'File', 'View', 'Panel', 'Widget',
-	'Map_File', 'Button', 'Select_Button', 'Select_Box', 'Angle_Box', 'Choice_Box',
-	'Colour_Box', 'Directory_Box', 'Real_Box', 'File_Box', 'Input_Box', 'Integer_Box',
-	'Name_Box', 'Report_Box', 'Template_Box', 'Tick_Box', 'Tin_Box', 'View_Box', 'XYZ_Box',
-	'Function', 'Macro_Function', 'Apply_Function', 'Function_Box', 'List_Box', 'Draw_Box',
-	'Screen_Text', 'Text_Edit_Box', 'Tab_Box', 'ListCtrl_Box', 'Undo_List', 'Undo',
-	'if', 'else', 'while', 'for', 'do', 'switch', 'case', 'default', 'break', 'continue',
-	'return', 'true', 'false', 'TRUE', 'FALSE', 'null', 'NULL'
-]);
-
-/**
- * Extracts identifiers defined by #define preprocessor directives.
- * These should not be flagged as undeclared since they're macro-expanded.
- */
-function extractDefineIdentifiers(documentText: string): Set<string> {
-	const defines = new Set<string>();
-	const defineRegex = /^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)/gm;
-	let match;
-	while ((match = defineRegex.exec(documentText)) !== null) {
-		defines.add(match[1].toLowerCase());
-	}
-	return defines;
+/** Known symbols from document and include files, passed in from the server. */
+export interface KnownSymbols {
+	/** Function names (lowercase) */
+	functions: Set<string>;
+	/** Variable names (lowercase) */
+	variables: Set<string>;
+	/** Define macro names (lowercase) */
+	defines: Set<string>;
 }
 
 /** Information about a declared identifier. */
@@ -97,9 +80,9 @@ function safeTokenColumn(node: any): number | null {
  *
  * Returns diagnostics for identifiers used on the RHS that haven't been declared.
  * @param tree The parsed AST
- * @param definedMacros Set of lowercase macro names from #define directives
+ * @param knownSymbols Symbols from document/include files (functions, variables, defines)
  */
-function validateUndeclaredIdentifiers(tree: any, definedMacros: Set<string>): Diagnostic[] {
+function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymbols): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];
 	const declaredSymbols = new Map<string, DeclaredSymbol>();
 	const usages: IdentifierUsage[] = [];
@@ -444,32 +427,42 @@ function validateUndeclaredIdentifiers(tree: any, definedMacros: Set<string>): D
 	for (const usage of usages) {
 		const lowerName = usage.name.toLowerCase();
 		
-		// Skip reserved keywords
-		if (RESERVED_KEYWORDS.has(usage.name)) {
+		// Skip symbols declared locally in this document (from AST traversal)
+		if (declaredSymbols.has(lowerName)) {
 			continue;
 		}
 		
-		// Skip #define macro identifiers
-		if (definedMacros.has(lowerName)) {
+		// Skip functions from document/include files or built-in prototypes
+		if (usage.isFunctionCall && knownSymbols.functions.has(lowerName)) {
 			continue;
 		}
 		
-		// Skip function calls (they're validated against built-in functions elsewhere)
+		// Skip variables from document/include files
+		if (knownSymbols.variables.has(lowerName)) {
+			continue;
+		}
+		
+		// Skip #define macro identifiers from document/include files
+		if (knownSymbols.defines.has(lowerName)) {
+			continue;
+		}
+		
+		// Skip function calls to known functions (built-in or from includes)
 		if (usage.isFunctionCall) {
+			// Function calls are allowed even if the function is only in prototypes
+			// (validated elsewhere via completion/hover)
 			continue;
 		}
 		
-		// Check if the identifier was declared
-		if (!declaredSymbols.has(lowerName)) {
-			diagnostics.push({
-				severity: DiagnosticSeverity.Warning,
-				range: {
-					start: { line: usage.line - 1, character: usage.column },
-					end: { line: usage.line - 1, character: usage.column + usage.name.length }
-				},
-				message: `'${usage.name}' is not declared`
-			});
-		}
+		// Identifier is not declared - emit diagnostic
+		diagnostics.push({
+			severity: DiagnosticSeverity.Warning,
+			range: {
+				start: { line: usage.line - 1, character: usage.column },
+				end: { line: usage.line - 1, character: usage.column + usage.name.length }
+			},
+			message: `'${usage.name}' is not declared`
+		});
 	}
 
 	// Add switch/case type mismatch diagnostics
@@ -493,8 +486,26 @@ export class Validator {
 	 * and semantic issues (like undeclared identifiers on the RHS).
 	 *
 	 * This is used for real-time validation (squiggles) in the editor.
+	 * Note: This basic version doesn't check undeclared identifiers - use ValidateWithSymbols for that.
 	 */
 	static Validate(documentText: string): Diagnostic[] {
+		// Call ValidateWithSymbols with empty known symbols
+		// This means only syntax errors will be detected, not undeclared identifiers
+		return Validator.ValidateWithSymbols(documentText, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set()
+		});
+	}
+
+	/**
+	 * Parses the given document text and returns diagnostics for any syntax errors
+	 * and semantic issues (like undeclared identifiers), using provided known symbols.
+	 *
+	 * @param documentText The document text to validate
+	 * @param knownSymbols Symbols from document, include files, and built-in prototypes
+	 */
+	static ValidateWithSymbols(documentText: string, knownSymbols: KnownSymbols): Diagnostic[] {
 		const diagnostics: Diagnostic[] = [];
 
 		try {
@@ -510,13 +521,10 @@ export class Validator {
 			// Collect syntax errors
 			const syntaxDiagnostics = errorListener.diagnostics;
 			
-			// Extract #define macro identifiers from the original text
-			const definedMacros = extractDefineIdentifiers(documentText);
-			
 			// Only run semantic validation if there are no syntax errors
 			// (semantic validation on a malformed AST can produce false positives)
 			if (syntaxDiagnostics.length === 0) {
-				const semanticDiagnostics = validateUndeclaredIdentifiers(tree, definedMacros);
+				const semanticDiagnostics = validateUndeclaredIdentifiers(tree, knownSymbols);
 				return [...syntaxDiagnostics, ...semanticDiagnostics];
 			}
 			
