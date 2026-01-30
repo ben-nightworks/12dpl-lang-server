@@ -184,17 +184,18 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 			return;
 		}
 		
-		// Check if variable shadows a global from an include file (warning)
+		// Check if variable shadows a global from an include file (error - cannot override)
 		const includeSource = includeVars.get(lowerName);
 		if (includeSource) {
 			diagnostics.push({
-				severity: DiagnosticSeverity.Warning,
+				severity: DiagnosticSeverity.Error,
 				range: {
 					start: { line: info.line - 1, character: info.column },
 					end: { line: info.line - 1, character: info.column + info.name.length }
 				},
-				message: `Variable '${info.name}' shadows a global variable declared in '${includeSource}'`
+				message: `Variable '${info.name}' is already declared in included file '${includeSource}'`
 			});
+			return;
 		}
 		
 		// Check if variable shadows a global variable from the same file (warning)

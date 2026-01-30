@@ -149,7 +149,7 @@ void main() {
 		expect(redeclErrors.length).toBe(0);
 	});
 
-	test("reports warning when variable shadows include file variable", () => {
+	test("reports error when variable conflicts with include file variable", () => {
 		const code = `
 void main() {
     Integer myVar = 1;
@@ -160,11 +160,11 @@ void main() {
 			{ name: "myVar", sourceFile: "common.h" }
 		];
 		const diagnostics = Validator.ValidateWithIncludes(code, includeVars);
-		const shadowWarnings = diagnostics.filter(d => 
-			d.severity === 2 /* Warning */ && d.message.includes("shadows")
+		const redeclErrors = diagnostics.filter(d => 
+			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
-		expect(shadowWarnings.length).toBe(1);
-		expect(shadowWarnings[0].message).toContain("common.h");
+		expect(redeclErrors.length).toBe(1);
+		expect(redeclErrors[0].message).toContain("common.h");
 	});
 
 	test("include file variable check is case-insensitive", () => {
@@ -178,11 +178,11 @@ void main() {
 			{ name: "myvar", sourceFile: "utils.h" }
 		];
 		const diagnostics = Validator.ValidateWithIncludes(code, includeVars);
-		const shadowWarnings = diagnostics.filter(d => 
-			d.severity === 2 /* Warning */ && d.message.includes("shadows")
+		const redeclErrors = diagnostics.filter(d => 
+			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
-		expect(shadowWarnings.length).toBe(1);
-		expect(shadowWarnings[0].message).toContain("utils.h");
+		expect(redeclErrors.length).toBe(1);
+		expect(redeclErrors[0].message).toContain("utils.h");
 	});
 
 	test("reports warning when local variable shadows global variable in same file", () => {
