@@ -143,4 +143,40 @@ void main() {
 		);
 		expect(redeclErrors.length).toBe(0);
 	});
+
+	test("reports error when variable conflicts with include file variable", () => {
+		const code = `
+void main() {
+    Integer myVar = 1;
+}
+`;
+		// Simulate variables from include files
+		const includeVars = [
+			{ name: "myVar", sourceFile: "common.h" }
+		];
+		const diagnostics = Validator.ValidateWithIncludes(code, includeVars);
+		const redeclErrors = diagnostics.filter(d => 
+			d.severity === 1 /* Error */ && d.message.includes("already declared")
+		);
+		expect(redeclErrors.length).toBe(1);
+		expect(redeclErrors[0].message).toContain("common.h");
+	});
+
+	test("include file variable check is case-insensitive", () => {
+		const code = `
+void main() {
+    Integer MYVAR = 1;
+}
+`;
+		// Variable in include file is lowercase
+		const includeVars = [
+			{ name: "myvar", sourceFile: "utils.h" }
+		];
+		const diagnostics = Validator.ValidateWithIncludes(code, includeVars);
+		const redeclErrors = diagnostics.filter(d => 
+			d.severity === 1 /* Error */ && d.message.includes("already declared")
+		);
+		expect(redeclErrors.length).toBe(1);
+		expect(redeclErrors[0].message).toContain("utils.h");
+	});
 });

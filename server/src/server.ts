@@ -25,7 +25,8 @@ import {
 } from 'vscode-languageserver-textdocument';
 
 import {
-	Validator
+	Validator,
+	type IncludeFileVariable
 } from './antlr/validator';
 
 import {
@@ -151,19 +152,36 @@ documents.onDidChangeContent(change => {
 	validateTextDocument(change.document);
 });
 
-async function validateTextDocument(textDocument: TextDocument): Promise<void> {
+// Register providers
+// Register a single shared includes provider and pass it to other providers.
+const includesProvider = registerIncludesProvider({ connection, documents, documentSymbols });
 
+async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	const text = textDocument.getText();
 
-	const diagnostics: Diagnostic[] = Validator.Validate(text);
+	// Collect variables from include files
+	const includeFileVariables: IncludeFileVariable[] = [];
+	try {
+		const includeFiles = await includesProvider.getIncludeFilesForUri(textDocument.uri);
+		for (const filePath of includeFiles) {
+			const index = documentSymbols.getIndexForFsPath(filePath);
+			if (index) {
+				// Extract just the filename for display
+				const fileName = filePath.split(/[\\/]/).pop() || filePath;
+				for (const varName of Object.keys(index.variables)) {
+					includeFileVariables.push({ name: varName, sourceFile: fileName });
+				}
+			}
+		}
+	} catch {
+		// Best-effort: continue validation without include file variables
+	}
+
+	const diagnostics: Diagnostic[] = Validator.ValidateWithIncludes(text, includeFileVariables);
 	
 	// Send the computed diagnostics to VSCode.
 	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
-
-// Register providers
-// Register a single shared includes provider and pass it to other providers.
-const includesProvider = registerIncludesProvider({ connection, documents, documentSymbols });
 
 registerCompletionProvider({ connection, documents, documentSymbols, includesProvider });
 registerDefinitionProvider({ connection, documents, documentSymbols, includesProvider });

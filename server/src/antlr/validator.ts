@@ -30,6 +30,12 @@ interface DeclaredVariable {
 	scopeDepth: number;
 }
 
+/** Information about a variable declared in an include file. */
+export interface IncludeFileVariable {
+	name: string;
+	sourceFile: string;
+}
+
 function safeTokenText(node: any): string | null {
 	const text = node?.symbol?.text ?? node?.getText?.();
 	return typeof text === 'string' ? text : null;
@@ -47,9 +53,19 @@ function safeTokenColumn(node: any): number | null {
 
 /**
  * Validates for variable re-declarations within the same scope.
+ * @param tree The parse tree to validate
+ * @param includeFileVariables Variables declared in include files (optional)
  */
-function validateRedeclarations(tree: any): Diagnostic[] {
+function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVariable[]): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];
+	
+	// Map of variable name (lowercase) -> source file for variables from include files
+	const includeVars = new Map<string, string>();
+	if (includeFileVariables) {
+		for (const v of includeFileVariables) {
+			includeVars.set(v.name.toLowerCase(), v.sourceFile);
+		}
+	}
 	
 	// Map of scope ID -> Map of variable name -> declaration info
 	// Scope ID is a string like "0" for global, "0.1" for first function, etc.
@@ -144,6 +160,21 @@ function validateRedeclarations(tree: any): Diagnostic[] {
 		if (!scopeVars) return;
 		
 		const lowerName = info.name.toLowerCase();
+		
+		// Check if variable is already declared in an include file
+		const includeSource = includeVars.get(lowerName);
+		if (includeSource) {
+			diagnostics.push({
+				severity: DiagnosticSeverity.Error,
+				range: {
+					start: { line: info.line - 1, character: info.column },
+					end: { line: info.line - 1, character: info.column + info.name.length }
+				},
+				message: `Variable '${info.name}' is already declared in included file '${includeSource}'`
+			});
+			return;
+		}
+		
 		const existing = scopeVars.get(lowerName);
 		
 		if (existing) {
@@ -286,6 +317,18 @@ export class Validator {
 	 * This is used for real-time validation (squiggles) in the editor.
 	 */
 	static Validate(documentText: string): Diagnostic[] {
+		return Validator.ValidateWithIncludes(documentText, []);
+	}
+
+	/**
+	 * Parses the given document text and returns diagnostics for any syntax errors
+	 * and semantic issues (like variable re-declarations), including checks against
+	 * variables declared in include files.
+	 *
+	 * @param documentText The document text to validate
+	 * @param includeFileVariables Variables declared in include files
+	 */
+	static ValidateWithIncludes(documentText: string, includeFileVariables: IncludeFileVariable[]): Diagnostic[] {
 		const diagnostics: Diagnostic[] = [];
 
 		try {
@@ -301,7 +344,7 @@ export class Validator {
 			
 			// Only run semantic validation if there are no syntax errors
 			if (syntaxDiagnostics.length === 0) {
-				const redeclarationDiagnostics = validateRedeclarations(tree);
+				const redeclarationDiagnostics = validateRedeclarations(tree, includeFileVariables);
 				return [...syntaxDiagnostics, ...redeclarationDiagnostics];
 			}
 			
