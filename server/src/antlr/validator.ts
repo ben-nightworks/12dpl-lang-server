@@ -67,6 +67,10 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 		}
 	}
 	
+	// Track global variables (declared outside any named function)
+	// These are variables in the wrapper function or top-level blocks
+	const globalVariables = new Map<string, DeclaredVariable>();
+	
 	// Map of scope ID -> Map of variable name -> declaration info
 	// Scope ID is a string like "0" for global, "0.1" for first function, etc.
 	const scopeVariables = new Map<string, Map<string, DeclaredVariable>>();
@@ -74,6 +78,10 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 	let scopeDepth = 0;
 	let scopeCounter = 0;
 	const scopeStack: string[] = ['global'];
+	
+	// Track if we're in the generated wrapper function vs a real function
+	let inWrapperFunction = false;
+	let inRealFunction = false;
 	
 	const getCurrentScopeId = () => scopeStack[scopeStack.length - 1];
 	
@@ -161,23 +169,8 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 		
 		const lowerName = info.name.toLowerCase();
 		
-		// Check if variable is already declared in an include file
-		const includeSource = includeVars.get(lowerName);
-		if (includeSource) {
-			// Shadowing a global variable from an include file - warning, not error
-			diagnostics.push({
-				severity: DiagnosticSeverity.Warning,
-				range: {
-					start: { line: info.line - 1, character: info.column },
-					end: { line: info.line - 1, character: info.column + info.name.length }
-				},
-				message: `Variable '${info.name}' shadows a global variable declared in '${includeSource}'`
-			});
-			// Don't return - still track the variable in local scope
-		}
-		
+		// First check for re-declaration in the same scope (always an error)
 		const existing = scopeVars.get(lowerName);
-		
 		if (existing) {
 			// Re-declaration in same scope!
 			diagnostics.push({
@@ -188,13 +181,89 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 				},
 				message: `Variable '${info.name}' is already declared in this scope (first declared at line ${existing.line})`
 			});
-		} else {
-			scopeVars.set(lowerName, { ...info, scopeDepth });
+			return;
 		}
+		
+		// Check if variable shadows a global from an include file (warning)
+		const includeSource = includeVars.get(lowerName);
+		if (includeSource) {
+			diagnostics.push({
+				severity: DiagnosticSeverity.Warning,
+				range: {
+					start: { line: info.line - 1, character: info.column },
+					end: { line: info.line - 1, character: info.column + info.name.length }
+				},
+				message: `Variable '${info.name}' shadows a global variable declared in '${includeSource}'`
+			});
+		}
+		
+		// Check if variable shadows a global variable from the same file (warning)
+		// Only check when we're inside a real function (not the wrapper)
+		if (inRealFunction) {
+			const globalVar = globalVariables.get(lowerName);
+			if (globalVar) {
+				diagnostics.push({
+					severity: DiagnosticSeverity.Warning,
+					range: {
+						start: { line: info.line - 1, character: info.column },
+						end: { line: info.line - 1, character: info.column + info.name.length }
+					},
+					message: `Variable '${info.name}' shadows a global variable declared at line ${globalVar.line}`
+				});
+			}
+		}
+		
+		// Check if variable shadows a variable from an outer scope in the same file (warning)
+		for (let i = scopeStack.length - 2; i >= 0; i--) {
+			const outerScopeId = scopeStack[i];
+			const outerScopeVars = scopeVariables.get(outerScopeId);
+			if (outerScopeVars) {
+				const outerVar = outerScopeVars.get(lowerName);
+				if (outerVar) {
+					diagnostics.push({
+						severity: DiagnosticSeverity.Warning,
+						range: {
+							start: { line: info.line - 1, character: info.column },
+							end: { line: info.line - 1, character: info.column + info.name.length }
+						},
+						message: `Variable '${info.name}' shadows a variable declared at line ${outerVar.line}`
+					});
+					break; // Only report the closest shadowed variable
+				}
+			}
+		}
+		
+		// Track global variables (declared in wrapper function or its nested blocks)
+		if (inWrapperFunction && !inRealFunction) {
+			globalVariables.set(lowerName, { ...info, scopeDepth });
+		}
+		
+		// Add the variable to the current scope
+		scopeVars.set(lowerName, { ...info, scopeDepth });
 	};
 
 	// Track if we're in a function definition to avoid double-scoping
 	let inFunctionBody = false;
+	
+	// Helper to check if a function is the generated wrapper
+	const isWrapperFunction = (ctx: any): boolean => {
+		try {
+			const decl = ctx?.declarator?.();
+			const direct = decl?.directDeclarator?.();
+			let cur: any = direct;
+			while (cur) {
+				const idNode = cur.Identifier?.();
+				const idText = safeTokenText(idNode);
+				if (idText && idText.startsWith('__12dpl__script__')) {
+					return true;
+				}
+				cur = cur.directDeclarator?.() ?? null;
+			}
+		} catch {
+			// ignore
+		}
+		return false;
+	};
 
 	const visitor: any = {
 		visitTerminal(_node: any) {
@@ -213,11 +282,24 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 			return undefined;
 		},
 		visitFunctionDefinition(ctx: any) {
+			const isWrapper = isWrapperFunction(ctx);
+			const wasInWrapperFunction = inWrapperFunction;
+			const wasInRealFunction = inRealFunction;
+			
+			if (isWrapper) {
+				inWrapperFunction = true;
+			} else {
+				inRealFunction = true;
+			}
+			
 			enterScope();
 			inFunctionBody = true;
 			visitor.visitChildren(ctx);
 			inFunctionBody = false;
 			exitScope();
+			
+			inWrapperFunction = wasInWrapperFunction;
+			inRealFunction = wasInRealFunction;
 			return undefined;
 		},
 		visitCompoundStatement(ctx: any) {

@@ -184,4 +184,21 @@ void main() {
 		expect(shadowWarnings.length).toBe(1);
 		expect(shadowWarnings[0].message).toContain("utils.h");
 	});
+
+	test("reports warning when local variable shadows global variable in same file", () => {
+		const code = `
+{
+    Text prog_name = "Global";
+}
+void main() {
+    Text prog_name = "Local";
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		const shadowWarnings = diagnostics.filter(d => 
+			d.severity === 2 /* Warning */ && d.message.includes("shadows")
+		);
+		expect(shadowWarnings.length).toBe(1);
+		expect(shadowWarnings[0].message).toContain("line 3");
+	});
 });
