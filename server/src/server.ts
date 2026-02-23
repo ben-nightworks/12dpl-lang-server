@@ -25,13 +25,16 @@ import {
 } from 'vscode-languageserver-textdocument';
 
 import {
-	Validator
+	Validator,
+	type KnownSymbols
 } from './antlr/validator';
 
 import {
 	prototypesLoader
 } from './util/prototypes';
 
+import { parseDefinesFromText } from './util/defines';
+import { fileUriToFsPath } from './util/includes';
 import { DocumentSymbolStore } from './providers/documentSymbols';
 import { registerCompletionProvider } from './providers/completionProvider';
 import { registerDefinitionProvider } from './providers/definitionProvider';
@@ -144,6 +147,10 @@ documents.onDidClose(e => {
 	documentSymbols.clearForUri(e.document.uri);
 });
 
+// Register providers
+// Register a single shared includes provider and pass it to other providers.
+const includesProvider = registerIncludesProvider({ connection, documents, documentSymbols });
+
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
 documents.onDidChangeContent(change => {
@@ -152,18 +159,67 @@ documents.onDidChangeContent(change => {
 });
 
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
-
 	const text = textDocument.getText();
+	const uri = textDocument.uri;
+	const docFsPath = fileUriToFsPath(uri);
 
-	const diagnostics: Diagnostic[] = Validator.Validate(text);
+	// Collect known symbols from document, include files, and built-in prototypes
+	const knownSymbols: KnownSymbols = {
+		functions: new Set<string>(),
+		variables: new Set<string>(),
+		defines: new Set<string>()
+	};
+
+	// Add built-in function prototypes (loaded asynchronously on startup)
+	for (const name of prototypesLoader.getAllNames()) {
+		knownSymbols.functions.add(name.toLowerCase());
+	}
+
+	// Get the document's symbol index (already cached by documentSymbols)
+	const docIndex = docFsPath ? documentSymbols.getIndexForFsPath(docFsPath) : null;
+	if (docIndex) {
+		for (const fn of Object.keys(docIndex.functions)) {
+			knownSymbols.functions.add(fn.toLowerCase());
+		}
+		for (const v of Object.keys(docIndex.variables)) {
+			knownSymbols.variables.add(v.toLowerCase());
+		}
+	}
+
+	// Add defines from the document itself
+	if (docFsPath) {
+		for (const def of parseDefinesFromText(text, docFsPath)) {
+			knownSymbols.defines.add(def.name.toLowerCase());
+		}
+	}
+
+	// Get include files and add their symbols
+	const includeFiles = await includesProvider.getIncludeFilesForUri(uri);
+	for (const includeFsPath of includeFiles) {
+		const idx = documentSymbols.getIndexForFsPath(includeFsPath);
+		if (idx) {
+			for (const fn of Object.keys(idx.functions)) {
+				knownSymbols.functions.add(fn.toLowerCase());
+			}
+			for (const v of Object.keys(idx.variables)) {
+				knownSymbols.variables.add(v.toLowerCase());
+			}
+		}
+
+		// Add defines from include files
+		const includeText = documentSymbols.getTextForFsPath(includeFsPath);
+		if (includeText) {
+			for (const def of parseDefinesFromText(includeText, includeFsPath)) {
+				knownSymbols.defines.add(def.name.toLowerCase());
+			}
+		}
+	}
+
+	const diagnostics: Diagnostic[] = Validator.ValidateWithSymbols(text, knownSymbols);
 	
 	// Send the computed diagnostics to VSCode.
 	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
-
-// Register providers
-// Register a single shared includes provider and pass it to other providers.
-const includesProvider = registerIncludesProvider({ connection, documents, documentSymbols });
 
 registerCompletionProvider({ connection, documents, documentSymbols, includesProvider });
 registerDefinitionProvider({ connection, documents, documentSymbols, includesProvider });
