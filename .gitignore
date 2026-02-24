@@ -69,5 +69,6 @@ client/server
 ### Symbolic links / junctions
 macros/
 macros_mattmonk/
-
+### Compiled Macros
+*.4do
 # End
