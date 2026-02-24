@@ -20,7 +20,10 @@ Real xval[],Real yval[],Real lengths[]);
 Widget Cast(Widget &widget)
 {
 return widget;
-}
+};
+void My_function(Text_Text_Map map)
+{
+};
 // -----------------------------------------------------------
 //
 
