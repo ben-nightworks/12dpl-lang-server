@@ -33,6 +33,10 @@ import { DeclarationSpecifiersContext } from "./proglang12dParser";
 import { DeclarationSpecifierContext } from "./proglang12dParser";
 import { TypeSpecifierContext } from "./proglang12dParser";
 import { BuiltInTypeSpecifierContext } from "./proglang12dParser";
+import { BuiltInSetTypeSpecifierContext } from "./proglang12dParser";
+import { BuiltInMultiSetTypeSpecifierContext } from "./proglang12dParser";
+import { BuiltInMapTypeSpecifierContext } from "./proglang12dParser";
+import { BuiltInMultiMapTypeSpecifierContext } from "./proglang12dParser";
 import { SpecifierQualifierListContext } from "./proglang12dParser";
 import { DeclaratorContext } from "./proglang12dParser";
 import { DirectDeclaratorContext } from "./proglang12dParser";
@@ -256,6 +260,30 @@ export default class proglang12dVisitor<Result> extends ParseTreeVisitor<Result>
 	 * @return the visitor result
 	 */
 	visitBuiltInTypeSpecifier?: (ctx: BuiltInTypeSpecifierContext) => Result;
+	/**
+	 * Visit a parse tree produced by `proglang12dParser.builtInSetTypeSpecifier`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitBuiltInSetTypeSpecifier?: (ctx: BuiltInSetTypeSpecifierContext) => Result;
+	/**
+	 * Visit a parse tree produced by `proglang12dParser.builtInMultiSetTypeSpecifier`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitBuiltInMultiSetTypeSpecifier?: (ctx: BuiltInMultiSetTypeSpecifierContext) => Result;
+	/**
+	 * Visit a parse tree produced by `proglang12dParser.builtInMapTypeSpecifier`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitBuiltInMapTypeSpecifier?: (ctx: BuiltInMapTypeSpecifierContext) => Result;
+	/**
+	 * Visit a parse tree produced by `proglang12dParser.builtInMultiMapTypeSpecifier`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitBuiltInMultiMapTypeSpecifier?: (ctx: BuiltInMultiMapTypeSpecifierContext) => Result;
 	/**
 	 * Visit a parse tree produced by `proglang12dParser.specifierQualifierList`.
 	 * @param ctx the parse tree
