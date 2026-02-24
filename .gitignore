@@ -66,4 +66,7 @@ temp/
 ### Project-specific build/Test folders
 client/server
 
+### Symbolic links / junctions
+macros/
+
 # End

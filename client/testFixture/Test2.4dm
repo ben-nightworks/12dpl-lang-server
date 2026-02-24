@@ -27,6 +27,10 @@ void main(){
     Real TEST = PI * 2.0;
     Real TEST = PI * 2.0;//SHOULD BE ERROR
     set_ups_included();
+    Integer colour;//should not be error
+    Integer 2d_string; //should not be error
+
+    
 
 
 

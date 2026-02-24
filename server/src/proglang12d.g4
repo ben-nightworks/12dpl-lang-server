@@ -537,8 +537,21 @@ NotEqual : '!=';
 
 Dot : '.';
 
+Constant
+    :   IntegerConstant
+    |   FloatingConstant
+    |   CharacterConstant
+    ;
+
+// Identifier must be AFTER Constant so that hex/binary literals (0x1F, 0b1010)
+// win ties over digit-prefixed identifiers. ANTLR uses longest-match first,
+// then rule-order for same-length ties.
 Identifier
     :   IdentifierNondigit
+        (   IdentifierNondigit
+        |   Digit
+        )*
+    |   Digit+ IdentifierNondigit    // 12dpl allows digit-prefixed identifiers like 2d_string
         (   IdentifierNondigit
         |   Digit
         )*
@@ -569,12 +582,6 @@ UniversalCharacterName
 fragment
 HexQuad
     :   HexadecimalDigit HexadecimalDigit HexadecimalDigit HexadecimalDigit
-    ;
-
-Constant
-    :   IntegerConstant
-    |   FloatingConstant
-    |   CharacterConstant
     ;
 
 fragment

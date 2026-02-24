@@ -19,9 +19,10 @@ void bar();
 		expect(functions).toContain('bar');
 
 		expect(variables).toContain('count');
-		expect(variables).toContain('a');
-		expect(variables).toContain('b');
-		expect(variables).toContain('local');
+		// a, b, local are inside function foo — they should NOT appear as global variables
+		expect(variables).not.toContain('a');
+		expect(variables).not.toContain('b');
+		expect(variables).not.toContain('local');
 	});
 
 	test('extracts types for variables and full function signatures', () => {
@@ -36,10 +37,11 @@ void bar();
 
 		const index = collectDocumentSymbolIndex(src);
 		expect(index.variables.count.type).toBe('Integer');
-		expect(index.variables.local.type).toBe('Integer');
-		expect(index.variables.a.type).toBe('Integer');
-		expect(index.variables.b.type).toBe('Integer');
-		expect(index.variables.c.type).toBe('Real');
+		// local, a, b, c are inside function foo — not in global index
+		expect(index.variables.local).toBeUndefined();
+		expect(index.variables.a).toBeUndefined();
+		expect(index.variables.b).toBeUndefined();
+		expect(index.variables.c).toBeUndefined();
 
 		expect(index.functions.foo.signature).toBe('void foo(Integer a, Integer &b, Real c[])');
 		expect(index.functions.bar.signature).toBe('void bar()');
