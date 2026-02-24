@@ -23,6 +23,8 @@ void main()
 
     Time test();
 
+    Time();
+
     Integer bool_def_test = TRUE;
     Integer bool_int_test = bool_def_test ? 1 : 0;
 
