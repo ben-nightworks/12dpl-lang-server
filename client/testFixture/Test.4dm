@@ -15,9 +15,12 @@
 // any order in the panel.
 //----------------------------------------------------------
 void get_hip_info(Element align,Integer hip,Integer &type,
-Real xval[],Real yval[],Real lengths[])
+Real xval[],Real yval[],Real lengths[]);
 
-
+Widget Cast(Widget &widget)
+{
+return widget;
+}
 // -----------------------------------------------------------
 //
 
