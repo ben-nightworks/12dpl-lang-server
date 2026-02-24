@@ -169,7 +169,10 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 				// Extract just the filename for display
 				const fileName = filePath.split(/[\\/]/).pop() || filePath;
 				for (const varName of Object.keys(index.variables)) {
-					includeFileVariables.push({ name: varName, sourceFile: fileName });
+					includeFileVariables.push({ name: varName, sourceFile: fileName, kind: 'variable' });
+				}
+				for (const funcName of Object.keys(index.functions)) {
+					includeFileVariables.push({ name: funcName, sourceFile: fileName, kind: 'function' });
 				}
 			}
 		}

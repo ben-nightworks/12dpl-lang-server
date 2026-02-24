@@ -30,10 +30,11 @@ interface DeclaredVariable {
 	scopeDepth: number;
 }
 
-/** Information about a variable declared in an include file. */
+/** Information about a symbol declared in an include file. */
 export interface IncludeFileVariable {
 	name: string;
 	sourceFile: string;
+	kind: 'variable' | 'function';
 }
 
 function safeTokenText(node: any): string | null {
@@ -59,11 +60,11 @@ function safeTokenColumn(node: any): number | null {
 function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVariable[]): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];
 	
-	// Map of variable name (lowercase) -> source file for variables from include files
-	const includeVars = new Map<string, string>();
+	// Map of symbol name (lowercase) -> { sourceFile, kind } for symbols from include files
+	const includeVars = new Map<string, { sourceFile: string; kind: 'variable' | 'function' }>();
 	if (includeFileVariables) {
 		for (const v of includeFileVariables) {
-			includeVars.set(v.name.toLowerCase(), v.sourceFile);
+			includeVars.set(v.name.toLowerCase(), { sourceFile: v.sourceFile, kind: v.kind });
 		}
 	}
 	
@@ -101,40 +102,7 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 	// Initialize global scope
 	scopeVariables.set('global', new Map());
 
-	/**
-	 * Checks if a declarator is a function prototype (has parentheses for parameters).
-	 * Function prototypes like `Time test();` should not be treated as variable declarations.
-	 */
-	const isFunctionPrototype = (ctx: any): boolean => {
-		try {
-			// Check if the declarator has parentheses - indicating a function prototype
-			// A function prototype has the form: directDeclarator '(' ... ')'
-			const direct = ctx?.directDeclarator?.();
-			if (direct) {
-				// Check if this directDeclarator has a '(' token, indicating function params
-				const lparen = direct?.LeftParen?.() ?? direct?.getToken?.(0);
-				// If we have a nested directDeclarator with parentheses, it's a function
-				const innerDirect = direct?.directDeclarator?.();
-				if (innerDirect) {
-					// This is pattern: directDeclarator '(' ... ')'
-					// Check for parameterTypeList or identifierList (function signature)
-					const params = direct?.parameterTypeList?.() ?? direct?.identifierList?.();
-					// If we reached here with a nested directDeclarator, it's a function prototype
-					return true;
-				}
-			}
-		} catch {
-			// ignore
-		}
-		return false;
-	};
-
 	const extractIdentifierFromDeclarator = (ctx: any): { name: string; line: number; column: number } | null => {
-		// Skip function prototypes - they're not variable declarations
-		if (isFunctionPrototype(ctx)) {
-			return null;
-		}
-		
 		let cur: any = ctx;
 		while (cur) {
 			try {
@@ -184,16 +152,17 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 			return;
 		}
 		
-		// Check if variable shadows a global from an include file (error - cannot override)
-		const includeSource = includeVars.get(lowerName);
-		if (includeSource) {
+		// Check if symbol shadows one from an include file (error - cannot override)
+		const includeEntry = includeVars.get(lowerName);
+		if (includeEntry) {
+			const kindLabel = includeEntry.kind === 'function' ? 'Function' : 'Variable';
 			diagnostics.push({
 				severity: DiagnosticSeverity.Error,
 				range: {
 					start: { line: info.line - 1, character: info.column },
 					end: { line: info.line - 1, character: info.column + info.name.length }
 				},
-				message: `Variable '${info.name}' is already declared in included file '${includeSource}'`
+				message: `${kindLabel} '${info.name}' is already declared in included file '${includeEntry.sourceFile}'`
 			});
 			return;
 		}
@@ -245,6 +214,9 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 
 	// Track if we're in a function definition to avoid double-scoping
 	let inFunctionBody = false;
+	// Track if we're inside a declaration statement (prototypes live here;
+	// parameters in declarations should NOT be registered as variables)
+	let inDeclaration = false;
 	
 	// Helper to check if a function is the generated wrapper
 	const isWrapperFunction = (ctx: any): boolean => {
@@ -286,7 +258,6 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 			const isWrapper = isWrapperFunction(ctx);
 			const wasInWrapperFunction = inWrapperFunction;
 			const wasInRealFunction = inRealFunction;
-			
 			if (isWrapper) {
 				inWrapperFunction = true;
 			} else {
@@ -349,7 +320,13 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 			} catch {
 				// ignore
 			}
-			return visitor.visitChildren(ctx);
+			// Mark that we're inside a declaration so that visitParameterDeclaration
+			// can skip prototype parameters (e.g. `Integer create_rgb(Integer r, Integer g, Integer b);`)
+			const wasInDeclaration = inDeclaration;
+			inDeclaration = true;
+			const result = visitor.visitChildren(ctx);
+			inDeclaration = wasInDeclaration;
+			return result;
 		},
 		visitForDeclaration(ctx: any) {
 			// Collect for-loop declared variables
@@ -368,7 +345,12 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 			return visitor.visitChildren(ctx);
 		},
 		visitParameterDeclaration(ctx: any) {
-			// Collect function parameter names
+			// Skip parameters inside declarations (function prototypes),
+			// e.g. `Integer create_rgb(Integer r, Integer g, Integer b);`
+			// Only collect parameters for actual function definitions.
+			if (inDeclaration) {
+				return visitor.visitChildren(ctx);
+			}
 			try {
 				const idNode = ctx?.Identifier?.();
 				const text = safeTokenText(idNode);

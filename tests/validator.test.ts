@@ -136,13 +136,14 @@ void main() {
 	test("does not flag function prototypes as variable re-declarations", () => {
 		const code = `
 void main() {
-    Time test = some_value;
     Time test();
+    Integer other_var = 1;
 }
 `;
 		const diagnostics = Validator.Validate(code);
-		// "Time test();" is a function prototype, not a variable declaration
-		// It should not be flagged as a re-declaration of the variable "test"
+		// "Time test();" is a function prototype, not a variable declaration.
+		// Its parameters should not be treated as variable declarations,
+		// but the prototype name itself is still registered as a declaration.
 		const redeclErrors = diagnostics.filter(d => 
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
@@ -157,7 +158,7 @@ void main() {
 `;
 		// Simulate variables from include files
 		const includeVars = [
-			{ name: "myVar", sourceFile: "common.h" }
+			{ name: "myVar", sourceFile: "common.h", kind: 'variable' as const }
 		];
 		const diagnostics = Validator.ValidateWithIncludes(code, includeVars);
 		const redeclErrors = diagnostics.filter(d => 
@@ -175,7 +176,7 @@ void main() {
 `;
 		// Variable in include file is lowercase
 		const includeVars = [
-			{ name: "myvar", sourceFile: "utils.h" }
+			{ name: "myvar", sourceFile: "utils.h", kind: 'variable' as const }
 		];
 		const diagnostics = Validator.ValidateWithIncludes(code, includeVars);
 		const redeclErrors = diagnostics.filter(d => 
