@@ -336,20 +336,24 @@ export function collectDocumentSymbolIndex(documentText: string): DocumentSymbol
 				return visitor.visitChildren(ctx);
 			},
 			visitForDeclaration(ctx: any) {
-				const declaredType = getDeclarationSpecifiersText(ctx?.declarationSpecifiers?.());
-				const list = ctx?.initDeclaratorList?.();
-				try {
-					for (const initDecl of list?.initDeclarator_list?.() ?? []) {
-						const declarator = initDecl?.declarator?.();
-						const name = extractIdentifierFromDeclarator(declarator ?? null);
-						if (name) {
-							const idNode = extractIdentifierNodeFromDeclarator(declarator ?? null);
-							const range = rangeFromIdentifierNode(idNode, name);
-							addVariable({ name, type: declaredType, range });
+				// Only collect for-loop variables when in the wrapper function,
+				// not inside real user-defined functions (those are local vars).
+				if (!inRealFunction) {
+					const declaredType = getDeclarationSpecifiersText(ctx?.declarationSpecifiers?.());
+					const list = ctx?.initDeclaratorList?.();
+					try {
+						for (const initDecl of list?.initDeclarator_list?.() ?? []) {
+							const declarator = initDecl?.declarator?.();
+							const name = extractIdentifierFromDeclarator(declarator ?? null);
+							if (name) {
+								const idNode = extractIdentifierNodeFromDeclarator(declarator ?? null);
+								const range = rangeFromIdentifierNode(idNode, name);
+								addVariable({ name, type: declaredType, range });
+							}
 						}
+					} catch {
+						// ignore
 					}
-				} catch {
-					// ignore
 				}
 				return visitor.visitChildren(ctx);
 			},

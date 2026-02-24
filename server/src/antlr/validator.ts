@@ -28,6 +28,7 @@ interface DeclaredVariable {
 	line: number;
 	column: number;
 	scopeDepth: number;
+	isFunction: boolean;
 }
 
 /** Information about a symbol declared in an include file. */
@@ -102,6 +103,16 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 	// Initialize global scope
 	scopeVariables.set('global', new Map());
 
+	/** Check if a declarator represents a function (has a parameter list). */
+	const isFunctionDeclarator = (declarator: any): boolean => {
+		try {
+			const direct = declarator?.directDeclarator?.();
+			return direct?.parameterTypeList?.() != null;
+		} catch {
+			return false;
+		}
+	};
+
 	const extractIdentifierFromDeclarator = (ctx: any): { name: string; line: number; column: number } | null => {
 		let cur: any = ctx;
 		while (cur) {
@@ -130,7 +141,7 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 		return null;
 	};
 
-	const checkAndAddDeclaration = (info: { name: string; line: number; column: number }) => {
+	const checkAndAddDeclaration = (info: { name: string; line: number; column: number }, isFunction: boolean = false) => {
 		const scopeId = getCurrentScopeId();
 		const scopeVars = scopeVariables.get(scopeId);
 		if (!scopeVars) return;
@@ -140,6 +151,11 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 		// First check for re-declaration in the same scope (always an error)
 		const existing = scopeVars.get(lowerName);
 		if (existing) {
+			// Allow function overloading: multiple functions with the same name
+			// but different parameter signatures are valid in 12dpl.
+			if (existing.isFunction && isFunction) {
+				return;
+			}
 			// Re-declaration in same scope!
 			diagnostics.push({
 				severity: DiagnosticSeverity.Error,
@@ -205,11 +221,11 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 		
 		// Track global variables (declared in wrapper function or its nested blocks)
 		if (inWrapperFunction && !inRealFunction) {
-			globalVariables.set(lowerName, { ...info, scopeDepth });
+			globalVariables.set(lowerName, { ...info, scopeDepth, isFunction });
 		}
 		
 		// Add the variable to the current scope
-		scopeVars.set(lowerName, { ...info, scopeDepth });
+		scopeVars.set(lowerName, { ...info, scopeDepth, isFunction });
 	};
 
 	// Track if we're in a function definition to avoid double-scoping
@@ -314,7 +330,8 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 					const declarator = initDecl?.declarator?.();
 					const info = extractIdentifierFromDeclarator(declarator);
 					if (info) {
-						checkAndAddDeclaration(info);
+						const isFunc = isFunctionDeclarator(declarator);
+						checkAndAddDeclaration(info, isFunc);
 					}
 				}
 			} catch {

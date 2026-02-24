@@ -125,7 +125,7 @@ assignmentExpression
     ;
 
 assignmentOperator
-    :   '=' | '*=' | '/=' | '%=' | '+=' | '-='
+    :   '=' | '*=' | '/=' | '%=' | '+=' | '-=' | '<<=' | '>>=' | '&=' | '^=' | '|='
     ;
 
 expression
@@ -338,6 +338,7 @@ parameterDeclaration
     :   declarationSpecifiers Identifier?
     |   declarationSpecifiers '&' Identifier
     |   declarationSpecifiers Identifier '[' ']' // Array parameter
+    |   declarationSpecifiers '&' Identifier '[' ']' // Pass-by-reference array parameter
     ;
 
 identifierList
