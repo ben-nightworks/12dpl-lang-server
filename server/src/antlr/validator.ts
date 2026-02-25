@@ -4,7 +4,7 @@ import {
 } from 'vscode-languageserver/node';
 
 import { RecognitionException, ErrorListener }  from 'antlr4';
-
+import { checkDeprecatedFunctions } from './diagnosticHelper';
 import { createLexerAndParser } from './parsePipeline';
 import type { PrimaryExpressionContext, PostfixExpressionContext } from './src/proglang12dParser';
 
@@ -456,7 +456,7 @@ function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymbols): D
 		
 		// Identifier is not declared - emit diagnostic
 		diagnostics.push({
-			severity: DiagnosticSeverity.Warning,
+			severity: DiagnosticSeverity.Error,
 			range: {
 				start: { line: usage.line - 1, character: usage.column },
 				end: { line: usage.line - 1, character: usage.column + usage.name.length }
@@ -468,7 +468,7 @@ function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymbols): D
 	// Add switch/case type mismatch diagnostics
 	for (const mismatch of switchCaseMismatches) {
 		diagnostics.push({
-			severity: DiagnosticSeverity.Warning,
+			severity: DiagnosticSeverity.Error,
 			range: {
 				start: { line: mismatch.caseLine - 1, character: mismatch.caseColumn },
 				end: { line: mismatch.caseLine - 1, character: mismatch.caseColumn + mismatch.caseLength }
@@ -517,18 +517,22 @@ export class Validator {
 			parser.addErrorListener(errorListener);
 
 			const tree = parser.compilationUnit();
+			diagnostics.push(...errorListener.diagnostics);
+
+			// Check for deprecated functions
+			const deprecationDiagnostics = checkDeprecatedFunctions(parser);
+			diagnostics.push(...deprecationDiagnostics);
 			
 			// Collect syntax errors
 			const syntaxDiagnostics = errorListener.diagnostics;
+			diagnostics.push(...syntaxDiagnostics);
 			
 			// Only run semantic validation if there are no syntax errors
 			// (semantic validation on a malformed AST can produce false positives)
-			if (syntaxDiagnostics.length === 0) {
-				const semanticDiagnostics = validateUndeclaredIdentifiers(tree, knownSymbols);
-				return [...syntaxDiagnostics, ...semanticDiagnostics];
-			}
+			const semanticDiagnostics = validateUndeclaredIdentifiers(tree, knownSymbols);
+			diagnostics.push(...semanticDiagnostics);
 			
-			return syntaxDiagnostics;
+			return diagnostics;
 		} catch (error: any) {
 			// Catch any unexpected errors during parsing
 			console.error('Validation error:', error);

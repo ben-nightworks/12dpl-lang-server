@@ -145,6 +145,7 @@ connection.onDidChangeConfiguration(change => {
 documents.onDidClose(e => {
 	documentSettings.delete(e.document.uri);
 	documentSymbols.clearForUri(e.document.uri);
+	connection.sendDiagnostics({ uri: e.document.uri, diagnostics: [] });
 });
 
 // Register providers
