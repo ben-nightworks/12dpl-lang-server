@@ -117,6 +117,7 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 		'Select_Boxes', 'Angle_Box', 'Choice_Box', 'Colour_Box', 'Directory_Box',
 		'Real_Box', 'File_Box', 'Input_Box', 'Integer_Box', 'Justify_Box', 'Linestyle_Box',
 		'Map_File_Box', 'Name_Box', 'Plotter_Box', 'Report_Box', 'Template_Box',
+		'Projection_Box',
 		'Sheet_Size_Box', 'Text_Style_Box', 'Text_Units_Box', 'Tick_Box', 'Tin_Box',
 		'View_Box', 'XYZ_Box', 'Apply_Many_Function', 'Kerb_Return_Function', 'Function',
 		'Macro_Function', 'Apply_Function', 'Function_Box', 'Widget_Pages', 'Sheet_Panel',

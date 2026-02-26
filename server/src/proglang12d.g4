@@ -202,6 +202,7 @@ builtInTypeSpecifier
     | 'Map_File_Box'
     | 'Name_Box'
     | 'Plotter_Box'
+    | 'Projection_Box'
     | 'Report_Box'
     | 'Template_Box'
     | 'Sheet_Size_Box'
