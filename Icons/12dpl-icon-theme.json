@@ -1,0 +1,15 @@
+{
+	"hidesExplorerArrows": false,
+	"iconDefinitions": {
+		"_4dm": {
+			"iconPath": "../Images/4dm.svg"
+		},
+		"_4do": {
+			"iconPath": "../Images/4do.svg"
+		}
+	},
+	"fileExtensions": {
+		"4dm": "_4dm",
+		"4do": "_4do"
+	}
+}

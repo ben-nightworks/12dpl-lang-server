@@ -126,6 +126,13 @@
 				"path": "./snippets/12dpl.tmSnippets.json"
 			}
 		],
+		"iconThemes": [
+			{
+				"id": "12dpl-icons",
+				"label": "12dPL File Icons",
+				"path": "./Icons/12dpl-icon-theme.json"
+			}
+		],
 		"configuration": {
 			"type": "object",
 			"title": "12dPL",
