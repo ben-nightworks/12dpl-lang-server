@@ -21,8 +21,10 @@ Widget Cast(Widget &widget)
 {
 return widget;
 };
+
 void My_function(Text_Text_Map map)
 {
+    Vector4_Guid_Multimap guid_map;
 };
 // -----------------------------------------------------------
 //

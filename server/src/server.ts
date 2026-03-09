@@ -186,7 +186,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 		// Best-effort: continue validation without include file variables
 	}
 
-	const diagnostics: Diagnostic[] = Validator.ValidateWithIncludes(text, includeFileVariables);
+	const includeDiagnostics: Diagnostic[] = Validator.ValidateWithIncludes(text, includeFileVariables);
 	// Collect known symbols from document, include files, and built-in prototypes
 	const knownSymbols: KnownSymbols = {
 		functions: new Set<string>(),
@@ -239,10 +239,10 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 		}
 	}
 
-	// const diagnostics: Diagnostic[] = Validator.ValidateWithSymbols(text, knownSymbols);
+	const symbolDiagnostics: Diagnostic[] = Validator.ValidateWithSymbols(text, knownSymbols);
 	
 	// Send the computed diagnostics to VSCode.
-	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics: [...includeDiagnostics, ...symbolDiagnostics] });
 }
 
 registerCompletionProvider({ connection, documents, documentSymbols, includesProvider });
