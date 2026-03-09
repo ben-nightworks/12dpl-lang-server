@@ -33,6 +33,10 @@ import { DeclarationSpecifiersContext } from "./proglang12dParser";
 import { DeclarationSpecifierContext } from "./proglang12dParser";
 import { TypeSpecifierContext } from "./proglang12dParser";
 import { BuiltInTypeSpecifierContext } from "./proglang12dParser";
+import { BuiltInSetTypeSpecifierContext } from "./proglang12dParser";
+import { BuiltInMultiSetTypeSpecifierContext } from "./proglang12dParser";
+import { BuiltInMapTypeSpecifierContext } from "./proglang12dParser";
+import { BuiltInMultiMapTypeSpecifierContext } from "./proglang12dParser";
 import { SpecifierQualifierListContext } from "./proglang12dParser";
 import { DeclaratorContext } from "./proglang12dParser";
 import { DirectDeclaratorContext } from "./proglang12dParser";
@@ -373,6 +377,46 @@ export default class proglang12dListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitBuiltInTypeSpecifier?: (ctx: BuiltInTypeSpecifierContext) => void;
+	/**
+	 * Enter a parse tree produced by `proglang12dParser.builtInSetTypeSpecifier`.
+	 * @param ctx the parse tree
+	 */
+	enterBuiltInSetTypeSpecifier?: (ctx: BuiltInSetTypeSpecifierContext) => void;
+	/**
+	 * Exit a parse tree produced by `proglang12dParser.builtInSetTypeSpecifier`.
+	 * @param ctx the parse tree
+	 */
+	exitBuiltInSetTypeSpecifier?: (ctx: BuiltInSetTypeSpecifierContext) => void;
+	/**
+	 * Enter a parse tree produced by `proglang12dParser.builtInMultiSetTypeSpecifier`.
+	 * @param ctx the parse tree
+	 */
+	enterBuiltInMultiSetTypeSpecifier?: (ctx: BuiltInMultiSetTypeSpecifierContext) => void;
+	/**
+	 * Exit a parse tree produced by `proglang12dParser.builtInMultiSetTypeSpecifier`.
+	 * @param ctx the parse tree
+	 */
+	exitBuiltInMultiSetTypeSpecifier?: (ctx: BuiltInMultiSetTypeSpecifierContext) => void;
+	/**
+	 * Enter a parse tree produced by `proglang12dParser.builtInMapTypeSpecifier`.
+	 * @param ctx the parse tree
+	 */
+	enterBuiltInMapTypeSpecifier?: (ctx: BuiltInMapTypeSpecifierContext) => void;
+	/**
+	 * Exit a parse tree produced by `proglang12dParser.builtInMapTypeSpecifier`.
+	 * @param ctx the parse tree
+	 */
+	exitBuiltInMapTypeSpecifier?: (ctx: BuiltInMapTypeSpecifierContext) => void;
+	/**
+	 * Enter a parse tree produced by `proglang12dParser.builtInMultiMapTypeSpecifier`.
+	 * @param ctx the parse tree
+	 */
+	enterBuiltInMultiMapTypeSpecifier?: (ctx: BuiltInMultiMapTypeSpecifierContext) => void;
+	/**
+	 * Exit a parse tree produced by `proglang12dParser.builtInMultiMapTypeSpecifier`.
+	 * @param ctx the parse tree
+	 */
+	exitBuiltInMultiMapTypeSpecifier?: (ctx: BuiltInMultiMapTypeSpecifierContext) => void;
 	/**
 	 * Enter a parse tree produced by `proglang12dParser.specifierQualifierList`.
 	 * @param ctx the parse tree
