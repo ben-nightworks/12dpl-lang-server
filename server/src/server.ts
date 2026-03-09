@@ -26,7 +26,7 @@ import {
 
 import {
 	Validator,
-	type IncludeFileVariable
+	type IncludeFileVariable,
 	type KnownSymbols
 } from './antlr/validator';
 
