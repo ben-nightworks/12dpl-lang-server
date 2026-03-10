@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 import * as fs from "fs";
 import * as path from "path";
 import { Validator } from "../server/src/antlr/validator.ts";
+import { collectDocumentSymbolIndex } from "../server/src/antlr/symbols.ts";
+import type { IncludeFileVariable, KnownSymbols } from "../server/src/antlr/validator.ts";
 
 function repoRoot(): string {
 	// tests/* lives one level below repo root
@@ -201,6 +203,73 @@ void main() {
 		);
 		expect(shadowWarnings.length).toBe(1);
 		expect(shadowWarnings[0].message).toContain("line 3");
+	});
+
+	test("allows overloaded forward declarations in same file", () => {
+		const text = readFixture("client/testFixture/Test7.4dm");
+		const diagnostics = Validator.Validate(text);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already declared")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("forward declaration params in header do not cause false errors in including file", () => {
+		// Simulate a header with overloaded forward declarations
+		const headerCode = [
+			'Integer count = 0;',
+			'void process();',
+			'void process(Integer x);',
+			'void process(Integer x, Integer y);',
+			'Integer other_var = 5;',
+		].join('\n');
+
+		// Step 1: Collect symbols from header (same as server.ts does)
+		const headerIndex = collectDocumentSymbolIndex(headerCode);
+
+		// Step 2: Build includeFileVariables the same way server.ts does
+		const includeFileVariables: IncludeFileVariable[] = [];
+		for (const varName of Object.keys(headerIndex.variables)) {
+			includeFileVariables.push({ name: varName, sourceFile: 'header.h', kind: 'variable' });
+		}
+		for (const funcName of Object.keys(headerIndex.functions)) {
+			includeFileVariables.push({ name: funcName, sourceFile: 'header.h', kind: 'function' });
+		}
+
+		// Step 3: Build knownSymbols the same way server.ts does for ValidateWithSymbols
+		const knownSymbols: KnownSymbols = {
+			functions: new Set<string>(),
+			variables: new Set<string>(),
+			defines: new Set<string>()
+		};
+		for (const fn of Object.keys(headerIndex.functions)) {
+			knownSymbols.functions.add(fn.toLowerCase());
+		}
+		for (const v of Object.keys(headerIndex.variables)) {
+			knownSymbols.variables.add(v.toLowerCase());
+		}
+
+		// Step 4: Validate a main file that uses the same parameter names
+		const mainCode = [
+			'void my_func() {',
+			'    Integer x = 1;',
+			'    Integer y = 2;',
+			'}',
+		].join('\n');
+
+		// ValidateWithIncludes: x and y should NOT be flagged as redeclarations
+		const includeDiagnostics = Validator.ValidateWithIncludes(mainCode, includeFileVariables);
+		const redeclErrors = includeDiagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already declared")
+		);
+		expect(redeclErrors.length).toBe(0);
+
+		// ValidateWithSymbols: x and y should NOT be flagged as undeclared
+		const symbolDiagnostics = Validator.ValidateWithSymbols(mainCode, knownSymbols);
+		const undeclaredWarnings = symbolDiagnostics.filter(d =>
+			d.severity === 2 /* Warning */ && d.message.includes("not declared")
+		);
+		expect(undeclaredWarnings.length).toBe(0);
 	});
 });
 

@@ -174,11 +174,16 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 	// Initialize global scope
 	scopeVariables.set('global', new Map());
 
-	/** Check if a declarator represents a function (has a parameter list). */
+	/** Check if a declarator represents a function (has parentheses). */
 	const isFunctionDeclarator = (declarator: any): boolean => {
 		try {
 			const direct = declarator?.directDeclarator?.();
-			return direct?.parameterTypeList?.() != null;
+			if (direct?.parameterTypeList?.() != null) return true;
+			// Also check for empty parens: `void foo();` uses the
+			// `directDeclarator '(' identifierList? ')'` rule with no identifierList,
+			// so parameterTypeList is null but LeftParen is present.
+			if (direct?.LeftParen?.() != null) return true;
+			return false;
 		} catch {
 			return false;
 		}
@@ -827,7 +832,7 @@ export class Validator {
 	 * Note: This basic version doesn't check undeclared identifiers - use ValidateWithSymbols for that.
 	 */
 	static Validate(documentText: string): Diagnostic[] {
-		return Validator.ValidateWithIncludes(documentText, []);
+		return [...Validator.ValidateWithIncludes(documentText, []), ...Validator.ValidateWithSymbols(documentText, { functions: new Set(), variables: new Set(), defines: new Set() })];
 	}
 
 	/**

@@ -67,4 +67,67 @@ x = 1;
 			expect(fn.startsWith('__12dpl__script__')).toBe(false);
 		}
 	});
+
+	test('does not leak forward declaration parameters as global variables', () => {
+		const src = `
+void forward_declaration(Integer x);
+Integer create_rgb(Integer r, Integer g, Integer b);
+`;
+
+		const index = collectDocumentSymbolIndex(src);
+
+		// Forward declarations should register as functions
+		expect(index.functions.forward_declaration).toBeDefined();
+		expect(index.functions.create_rgb).toBeDefined();
+
+		// Parameters should NOT appear as global variables
+		expect(index.variables.x).toBeUndefined();
+		expect(index.variables.r).toBeUndefined();
+		expect(index.variables.g).toBeUndefined();
+		expect(index.variables.b).toBeUndefined();
+	});
+
+	test('still exports script-level variables alongside forward declarations', () => {
+		const src = `
+Integer count = 5;
+void forward_declaration(Integer x);
+Text name = "test";
+`;
+
+		const index = collectDocumentSymbolIndex(src);
+
+		// Functions registered
+		expect(index.functions.forward_declaration).toBeDefined();
+
+		// Script-level variables exported
+		expect(index.variables.count).toBeDefined();
+		expect(index.variables.name).toBeDefined();
+
+		// Forward declaration parameter NOT exported
+		expect(index.variables.x).toBeUndefined();
+	});
+
+	test('does not leak parameters from overloaded forward declarations', () => {
+		const src = `
+Integer count = 0;
+void process();
+void process(Integer x);
+void process(Integer x, Integer y);
+Integer other_var = 5;
+`;
+
+		const index = collectDocumentSymbolIndex(src);
+
+		// Overloaded function registered
+		expect(index.functions.process).toBeDefined();
+
+		// Script-level variables exported
+		expect(index.variables.count).toBeDefined();
+		expect(index.variables.other_var).toBeDefined();
+
+		// Parameters from ALL overloads must NOT leak
+		expect(index.variables.x).toBeUndefined();
+		expect(index.variables.y).toBeUndefined();
+		expect(index.variables.z).toBeUndefined();
+	});
 });

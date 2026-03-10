@@ -266,6 +266,11 @@ export function collectDocumentSymbolIndex(documentText: string): DocumentSymbol
 		// NOT be exported as global symbols.
 		let inRealFunction = false;
 
+		// Track whether we are inside a declaration statement.
+		// Parameters in declarations (forward declarations / prototypes)
+		// should NOT be collected as global variables.
+		let inDeclaration = false;
+
 		const collectFromInitDeclarator = (initDecl: any, declaredType: string | undefined) => {
 			const declarator = initDecl?.declarator?.();
 			const direct = declarator?.directDeclarator?.();
@@ -333,7 +338,11 @@ export function collectDocumentSymbolIndex(documentText: string): DocumentSymbol
 						// ignore
 					}
 				}
-				return visitor.visitChildren(ctx);
+				const wasInDeclaration = inDeclaration;
+				inDeclaration = true;
+				const result = visitor.visitChildren(ctx);
+				inDeclaration = wasInDeclaration;
+				return result;
 			},
 			visitForDeclaration(ctx: any) {
 				// Only collect for-loop variables when in the wrapper function,
@@ -360,7 +369,8 @@ export function collectDocumentSymbolIndex(documentText: string): DocumentSymbol
 			visitParameterDeclaration(ctx: any) {
 				// Only collect parameters as global variables when in the wrapper function,
 				// not inside real user-defined functions (those are local params).
-				if (!inRealFunction) {
+				// Also skip parameters inside declarations (forward declarations / prototypes).
+				if (!inRealFunction && !inDeclaration) {
 					const name = safeTokenText(ctx?.Identifier?.());
 					const type = getDeclarationSpecifiersText(ctx?.declarationSpecifiers?.());
 					if (name) {

@@ -16,3 +16,5 @@
 	Integer include_count = 100;             // Global variable from include file
 	Real include_value = 3.14;               // Global variable from include file
 }
+void test_include_case_insensitive(Integer x); // Forward declaration to test function declaration conflicts
+void test_include_case_insensitive(); // Forward declaration to test function declaration conflicts

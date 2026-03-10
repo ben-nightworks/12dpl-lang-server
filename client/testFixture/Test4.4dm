@@ -21,7 +21,8 @@
 	Text case_test = "CaseTestGlobal";    // Line 23 - Used for case-insensitivity test
 }
 
-
+Integer test_same_scope_redeclaration();
+Integer test_same_scope_redeclaration(Integer param);
 // ############################################################################
 //                        E R R O R   T E S T S
 // ############################################################################
