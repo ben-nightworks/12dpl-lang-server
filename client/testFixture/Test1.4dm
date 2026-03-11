@@ -95,5 +95,6 @@ void main()
     Test_Indirect();
 
     Integer new = 0;
+    Integer new = 0; //should be error
 
 }

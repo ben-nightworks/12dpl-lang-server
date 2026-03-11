@@ -16,7 +16,7 @@
 	},
 	"scripts": {
 		"postinstall": "bun copy-resources.js",
-		"generate-antlr": "java -jar antlr-4.13.1-complete.jar -Dlanguage=TypeScript -visitor -o src/antlr src/proglang12d.g4"
+		"generate-antlr": "java -jar antlr-4.13.1-complete.jar -Dlanguage=TypeScript -visitor -o src/antlr/src src/proglang12d.g4"
 	},
 	"devDependencies": {
 		"@types/xml2js": "^0.4.14"

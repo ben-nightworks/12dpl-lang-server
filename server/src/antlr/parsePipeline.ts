@@ -23,20 +23,55 @@ export function stripConditionalDirectives(documentText: string): string {
 	// For parsing/validation, we treat ALL preprocessor directive lines as non-code,
 	// including multi-line continuations with a trailing '\\'. We preserve
 	// line numbers by replacing stripped lines with empty lines.
+	//
+	// Additionally, content inside `#if 0` blocks is dead code and must be
+	// stripped entirely (not just the directive lines).
 	const lines = documentText.split(/\r?\n/);
 	const out: string[] = [];
 	let inDirectiveContinuation = false;
+	// Track nested #if 0 blocks. When > 0, ALL lines are stripped.
+	let ifZeroDepth = 0;
 	for (const line of lines) {
-		if (!inDirectiveContinuation && /^\s*#/.test(line)) {
-			out.push('');
-			inDirectiveContinuation = /\\\s*$/.test(line);
-			continue;
-		}
+		const trimmed = line.trimStart();
+
+		// Handle multi-line directive continuations (trailing backslash)
 		if (inDirectiveContinuation) {
 			out.push('');
 			inDirectiveContinuation = /\\\s*$/.test(line);
 			continue;
 		}
+
+		// Check for preprocessor directive lines
+		if (trimmed.startsWith('#')) {
+			// Track #if 0 blocks to strip their contents
+			const directiveMatch = trimmed.match(/^#\s*(if|ifdef|ifndef|else|elif|endif)\b(.*)/);
+			if (directiveMatch) {
+				const directive = directiveMatch[1];
+				const rest = directiveMatch[2]?.trim() ?? '';
+				if (directive === 'if' && /^0\b/.test(rest)) {
+					ifZeroDepth++;
+				} else if ((directive === 'ifdef' || directive === 'ifndef' || directive === 'if') && ifZeroDepth > 0) {
+					// Nested #if inside an #if 0 block
+					ifZeroDepth++;
+				} else if (directive === 'endif' && ifZeroDepth > 0) {
+					ifZeroDepth--;
+				} else if ((directive === 'else' || directive === 'elif') && ifZeroDepth === 1) {
+					// #else/#elif at the same level as #if 0 means we're
+					// back to potentially live code (e.g. #if 0 ... #else ... #endif)
+					ifZeroDepth = 0;
+				}
+			}
+			out.push('');
+			inDirectiveContinuation = /\\\s*$/.test(line);
+			continue;
+		}
+
+		// Inside #if 0 block — strip everything
+		if (ifZeroDepth > 0) {
+			out.push('');
+			continue;
+		}
+
 		out.push(line);
 	}
 	return out.join('\n');
@@ -73,25 +108,52 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 		return i;
 	};
 
-	const typeKeywords = [
+	const typeKeywords = new Set([
 		'void', 'Text', 'Integer', 'Real',
-		'Element', 'Model', 'Tin', 'Dynamic_Element', 'Dynamic_Integer', 'Dynamic_Real', 'Dynamic_Text'
-	];
+		'Element', 'Model', 'Tin', 'Dynamic_Element', 'Dynamic_Integer', 'Dynamic_Real', 'Dynamic_Text',
+		'Menu', 'Dynamic_Text', 'Point', 'Line', 'Arc', 'Segment', 'File', 'View',
+		'Panel', 'Vertical_Group', 'Horizontal_Group', 'Message_Box', 'Model_Box',
+		'Named_Tick_Box', 'Button', 'Widget', 'Map_File', 'Select_Button', 'Select_Box',
+		'Select_Boxes', 'Angle_Box', 'Choice_Box', 'Colour_Box', 'Directory_Box',
+		'Real_Box', 'File_Box', 'Input_Box', 'Integer_Box', 'Justify_Box', 'Linestyle_Box',
+		'Map_File_Box', 'Name_Box', 'Plotter_Box', 'Report_Box', 'Template_Box',
+		'Projection_Box',
+		'Sheet_Size_Box', 'Text_Style_Box', 'Text_Units_Box', 'Tick_Box', 'Tin_Box',
+		'View_Box', 'XYZ_Box', 'Apply_Many_Function', 'Kerb_Return_Function', 'Function',
+		'Macro_Function', 'Apply_Function', 'Function_Box', 'Widget_Pages', 'Sheet_Panel',
+		'List_Box', 'Draw_Box', 'Screen_Text', 'Text_Edit_Box', 'Overlay_Widget', 'Tab_Box',
+		'ListCtrl_Box', 'Bitmap_List_Box', 'Undo_List', 'Undo', 'Textstyle_Data',
+		'Textstyle_Data_Box', 'Source_Box', 'Target_Box', 'SDR_Attribute', 'Spiral',
+		'Parabola', 'Billboard_Box', 'Texture_Box', 'Bitmap_Fill_Box', 'Date_Time_Box',
+		'HyperLink_Box', 'Uid', 'Attributes', 'Symbol_Box', 'Chainage_Box', 'Graph_Box',
+		'Attributes_Box', 'Equality_Info', 'Equality_Label', 'New_Select_Box', 'Polygon_Box',
+		'New_XYZ_Box', 'Vector2', 'Vector3', 'Vector4', 'Matrix3', 'Matrix4', 'GridCtrl_Box',
+		'XML_Document', 'XML_Node', 'Plot_Parameter_File', 'Connection', 'Select_Query',
+		'Database_Result', 'Insert_Query', 'Update_Query', 'Delete_Query', 'Manual_Query',
+		'Transaction', 'Query_Condition', 'Parameter_Collection', 'Manual_Condition',
+		'Tree_Box', 'Tree_Page', 'Colour_Message_Box', 'Unknown', 'Log_Line', 'Log_Box',
+		'Slider_Box', 'Function_Property_Collection', 'Curve', 'Integer64', 'Guid',
+		'Attribute_Blob', 'Attribute', 'Functions', 'Database_Results', 'Transactions',
+		'Dynamic_Integer64', 'Colour', 'Time', 'Drainage_Network', 'Integer_Set', 'List',
+		'Process_Handle', 'Real_Set', 'Selection', 'String', 'Text_Set', 'Time_Zone_Box',
+		'Time_Zone_Box_Box',
+	]);
 
 	const tryMatchFunctionSignatureAt = (i: number): boolean => {
 		let j = skipWhitespace(i);
-		for (const kw of typeKeywords) {
-			if (text.startsWith(kw, j) && !isIdentChar(text[j + kw.length] || '')) {
-				j += kw.length;
-				j = skipWhitespace(j);
-				if (!/[A-Za-z_]/.test(text[j] || '')) return false;
-				j++;
-				while (j < text.length && isIdentChar(text[j])) j++;
-				j = skipWhitespace(j);
-				return text[j] === '(';
-			}
-		}
-		return false;
+		// Read a potential type keyword
+		const kwStart = j;
+		while (j < text.length && isIdentChar(text[j])) j++;
+		if (j === kwStart) return false;
+		const kw = text.slice(kwStart, j);
+		if (!typeKeywords.has(kw)) return false;
+		j = skipWhitespace(j);
+		// Must be followed by an identifier (function name)
+		if (!/[A-Za-z_0-9]/.test(text[j] || '')) return false;
+		j++;
+		while (j < text.length && isIdentChar(text[j])) j++;
+		j = skipWhitespace(j);
+		return text[j] === '(';
 	};
 
 	const lineHasRealCode = (i: number): boolean => {
@@ -224,6 +286,13 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 		}
 
 		if (!lineHasRealCode(i)) {
+			continue;
+		}
+
+		// If we're awaiting a function body (saw a signature but haven't
+		// seen the opening '{' yet), don't start a wrapper — the upcoming
+		// '{' belongs to the function definition, not a script block.
+		if (awaitingFunctionBody) {
 			continue;
 		}
 

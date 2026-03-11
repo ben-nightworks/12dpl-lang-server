@@ -26,6 +26,7 @@ import {
 
 import {
 	Validator,
+	type IncludeFileVariable,
 	type KnownSymbols
 } from './antlr/validator';
 
@@ -164,6 +165,28 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	const uri = textDocument.uri;
 	const docFsPath = fileUriToFsPath(uri);
 
+	// Collect variables from include files
+	const includeFileVariables: IncludeFileVariable[] = [];
+	try {
+		const includeFiles = await includesProvider.getIncludeFilesForUri(textDocument.uri);
+		for (const filePath of includeFiles) {
+			const index = documentSymbols.getIndexForFsPath(filePath);
+			if (index) {
+				// Extract just the filename for display
+				const fileName = filePath.split(/[\\/]/).pop() || filePath;
+				for (const varName of Object.keys(index.variables)) {
+					includeFileVariables.push({ name: varName, sourceFile: fileName, kind: 'variable' });
+				}
+				for (const funcName of Object.keys(index.functions)) {
+					includeFileVariables.push({ name: funcName, sourceFile: fileName, kind: 'function' });
+				}
+			}
+		}
+	} catch {
+		// Best-effort: continue validation without include file variables
+	}
+
+	const includeDiagnostics: Diagnostic[] = Validator.ValidateWithIncludes(text, includeFileVariables);
 	// Collect known symbols from document, include files, and built-in prototypes
 	const knownSymbols: KnownSymbols = {
 		functions: new Set<string>(),
@@ -216,10 +239,10 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 		}
 	}
 
-	const diagnostics: Diagnostic[] = Validator.ValidateWithSymbols(text, knownSymbols);
+	const symbolDiagnostics: Diagnostic[] = Validator.ValidateWithSymbols(text, knownSymbols);
 	
 	// Send the computed diagnostics to VSCode.
-	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics: [...includeDiagnostics, ...symbolDiagnostics] });
 }
 
 registerCompletionProvider({ connection, documents, documentSymbols, includesProvider });

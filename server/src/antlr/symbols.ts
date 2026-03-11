@@ -261,6 +261,16 @@ export function collectDocumentSymbolIndex(documentText: string): DocumentSymbol
 			index.variables[info.name] = info;
 		};
 
+		// Track whether we are inside a real (non-wrapper) function.
+		// Variables/parameters inside real functions are local and should
+		// NOT be exported as global symbols.
+		let inRealFunction = false;
+
+		// Track whether we are inside a declaration statement.
+		// Parameters in declarations (forward declarations / prototypes)
+		// should NOT be collected as global variables.
+		let inDeclaration = false;
+
 		const collectFromInitDeclarator = (initDecl: any, declaredType: string | undefined) => {
 			const declarator = initDecl?.declarator?.();
 			const direct = declarator?.directDeclarator?.();
@@ -301,51 +311,73 @@ export function collectDocumentSymbolIndex(documentText: string): DocumentSymbol
 				const name = extractIdentifierFromDeclarator(decl);
 				const idNode = extractIdentifierNodeFromDeclarator(decl);
 				const returnType = getDeclarationSpecifiersText(ctx?.declarationSpecifiers?.());
+				const isWrapper = name?.startsWith(GENERATED_WRAPPER_PREFIX) ?? false;
 				if (name) {
 					const params = getFunctionParamsFromDirectDeclarator(direct);
 					const signature = buildFunctionSignature(name, returnType, params);
 					const range = rangeFromIdentifierNode(idNode, name);
 					addFunction({ name, returnType, params, signature, range });
 				}
-				return visitor.visitChildren(ctx);
+				const wasInRealFunction = inRealFunction;
+				if (!isWrapper) {
+					inRealFunction = true;
+				}
+				visitor.visitChildren(ctx);
+				inRealFunction = wasInRealFunction;
+				return undefined;
 			},
 			visitDeclaration(ctx: any) {
 				const declaredType = getDeclarationSpecifiersText(ctx?.declarationSpecifiers?.());
 				const list = ctx?.initDeclaratorList?.();
-				try {
-					for (const initDecl of list?.initDeclarator_list?.() ?? []) {
-						collectFromInitDeclarator(initDecl, declaredType);
+				if (!inRealFunction) {
+					try {
+						for (const initDecl of list?.initDeclarator_list?.() ?? []) {
+							collectFromInitDeclarator(initDecl, declaredType);
+						}
+					} catch {
+						// ignore
 					}
-				} catch {
-					// ignore
 				}
-				return visitor.visitChildren(ctx);
+				const wasInDeclaration = inDeclaration;
+				inDeclaration = true;
+				const result = visitor.visitChildren(ctx);
+				inDeclaration = wasInDeclaration;
+				return result;
 			},
 			visitForDeclaration(ctx: any) {
-				const declaredType = getDeclarationSpecifiersText(ctx?.declarationSpecifiers?.());
-				const list = ctx?.initDeclaratorList?.();
-				try {
-					for (const initDecl of list?.initDeclarator_list?.() ?? []) {
-						const declarator = initDecl?.declarator?.();
-						const name = extractIdentifierFromDeclarator(declarator ?? null);
-						if (name) {
-							const idNode = extractIdentifierNodeFromDeclarator(declarator ?? null);
-							const range = rangeFromIdentifierNode(idNode, name);
-							addVariable({ name, type: declaredType, range });
+				// Only collect for-loop variables when in the wrapper function,
+				// not inside real user-defined functions (those are local vars).
+				if (!inRealFunction) {
+					const declaredType = getDeclarationSpecifiersText(ctx?.declarationSpecifiers?.());
+					const list = ctx?.initDeclaratorList?.();
+					try {
+						for (const initDecl of list?.initDeclarator_list?.() ?? []) {
+							const declarator = initDecl?.declarator?.();
+							const name = extractIdentifierFromDeclarator(declarator ?? null);
+							if (name) {
+								const idNode = extractIdentifierNodeFromDeclarator(declarator ?? null);
+								const range = rangeFromIdentifierNode(idNode, name);
+								addVariable({ name, type: declaredType, range });
+							}
 						}
+					} catch {
+						// ignore
 					}
-				} catch {
-					// ignore
 				}
 				return visitor.visitChildren(ctx);
 			},
 			visitParameterDeclaration(ctx: any) {
-				const name = safeTokenText(ctx?.Identifier?.());
-				const type = getDeclarationSpecifiersText(ctx?.declarationSpecifiers?.());
-				if (name) {
-					const idNode = ctx?.Identifier?.();
-					const range = rangeFromIdentifierNode(idNode, name);
-					addVariable({ name, type, range });
+				// Only collect parameters as global variables when in the wrapper function,
+				// not inside real user-defined functions (those are local params).
+				// Also skip parameters inside declarations (forward declarations / prototypes).
+				if (!inRealFunction && !inDeclaration) {
+					const name = safeTokenText(ctx?.Identifier?.());
+					const type = getDeclarationSpecifiersText(ctx?.declarationSpecifiers?.());
+					if (name) {
+						const idNode = ctx?.Identifier?.();
+						const range = rangeFromIdentifierNode(idNode, name);
+						addVariable({ name, type, range });
+					}
 				}
 				return visitor.visitChildren(ctx);
 			},

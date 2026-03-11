@@ -23,6 +23,22 @@ class DiagnosticErrorListener extends ErrorListener<any> {
 	}
 }
 
+/** Information about a declared variable for re-declaration detection. */
+interface DeclaredVariable {
+	name: string;
+	line: number;
+	column: number;
+	scopeDepth: number;
+	isFunction: boolean;
+}
+
+/** Information about a symbol declared in an include file. */
+export interface IncludeFileVariable {
+	name: string;
+	sourceFile: string;
+	kind: 'variable' | 'function';
+}
+
 /** Known symbols from document and include files, passed in from the server. */
 export interface KnownSymbols {
 	/** Function names (lowercase) */
@@ -59,6 +75,8 @@ interface SwitchCaseMismatch {
 	caseType: string;
 }
 
+// ─── Shared utility helpers ─────────────────────────────────────────────────
+
 function safeTokenText(node: any): string | null {
 	const text = node?.symbol?.text ?? node?.getText?.();
 	return typeof text === 'string' ? text : null;
@@ -73,6 +91,357 @@ function safeTokenColumn(node: any): number | null {
 	const column = node?.symbol?.column;
 	return typeof column === 'number' ? column : null;
 }
+
+/** Walk a declarator tree down to find the leaf Identifier. */
+function extractIdentifierFromDeclarator(ctx: any): { name: string; line: number; column: number } | null {
+	let cur: any = ctx;
+	while (cur) {
+		try {
+			const direct = cur.directDeclarator?.();
+			if (direct) {
+				cur = direct;
+				continue;
+			}
+		} catch {
+			// ignore
+		}
+		try {
+			const idNode = cur.Identifier?.();
+			const text = safeTokenText(idNode);
+			const line = safeTokenLine(idNode);
+			const column = safeTokenColumn(idNode);
+			if (text && line !== null && column !== null) {
+				return { name: text, line, column };
+			}
+		} catch {
+			// ignore
+		}
+		break;
+	}
+	return null;
+}
+
+// ─── validateRedeclarations ─────────────────────────────────────────────────
+//     Scoped re-declaration detection with include-file checks.
+
+/**
+ * Validates for variable re-declarations within the same scope.
+ * @param tree The parse tree to validate
+ * @param includeFileVariables Variables declared in include files (optional)
+ */
+function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVariable[]): Diagnostic[] {
+	const diagnostics: Diagnostic[] = [];
+	
+	// Map of symbol name (lowercase) -> { sourceFile, kind } for symbols from include files
+	const includeVars = new Map<string, { sourceFile: string; kind: 'variable' | 'function' }>();
+	if (includeFileVariables) {
+		for (const v of includeFileVariables) {
+			includeVars.set(v.name.toLowerCase(), { sourceFile: v.sourceFile, kind: v.kind });
+		}
+	}
+	
+	// Track global variables (declared outside any named function)
+	// These are variables in the wrapper function or top-level blocks
+	const globalVariables = new Map<string, DeclaredVariable>();
+	
+	// Map of scope ID -> Map of variable name -> declaration info
+	// Scope ID is a string like "0" for global, "0.1" for first function, etc.
+	const scopeVariables = new Map<string, Map<string, DeclaredVariable>>();
+	
+	let scopeDepth = 0;
+	let scopeCounter = 0;
+	const scopeStack: string[] = ['global'];
+	
+	// Track if we're in the generated wrapper function vs a real function
+	let inWrapperFunction = false;
+	let inRealFunction = false;
+	
+	const getCurrentScopeId = () => scopeStack[scopeStack.length - 1];
+	
+	const enterScope = () => {
+		scopeDepth++;
+		scopeCounter++;
+		const newScopeId = `${getCurrentScopeId()}.${scopeCounter}`;
+		scopeStack.push(newScopeId);
+		scopeVariables.set(newScopeId, new Map());
+	};
+	
+	const exitScope = () => {
+		scopeStack.pop();
+		scopeDepth--;
+	};
+	
+	// Initialize global scope
+	scopeVariables.set('global', new Map());
+
+	/** Check if a declarator represents a function (has parentheses). */
+	const isFunctionDeclarator = (declarator: any): boolean => {
+		try {
+			const direct = declarator?.directDeclarator?.();
+			if (direct?.parameterTypeList?.() != null) return true;
+			// Also check for empty parens: `void foo();` uses the
+			// `directDeclarator '(' identifierList? ')'` rule with no identifierList,
+			// so parameterTypeList is null but LeftParen is present.
+			if (direct?.LeftParen?.() != null) return true;
+			return false;
+		} catch {
+			return false;
+		}
+	};
+
+	const checkAndAddDeclaration = (info: { name: string; line: number; column: number }, isFunction: boolean = false) => {
+		const scopeId = getCurrentScopeId();
+		const scopeVars = scopeVariables.get(scopeId);
+		if (!scopeVars) return;
+		
+		const lowerName = info.name.toLowerCase();
+		
+		// First check for re-declaration in the same scope (always an error)
+		const existing = scopeVars.get(lowerName);
+		if (existing) {
+			// Allow function overloading: multiple functions with the same name
+			// but different parameter signatures are valid in 12dpl.
+			if (existing.isFunction && isFunction) {
+				return;
+			}
+			// Re-declaration in same scope!
+			diagnostics.push({
+				severity: DiagnosticSeverity.Error,
+				range: {
+					start: { line: info.line - 1, character: info.column },
+					end: { line: info.line - 1, character: info.column + info.name.length }
+				},
+				message: `Variable '${info.name}' is already declared in this scope (first declared at line ${existing.line})`
+			});
+			return;
+		}
+		
+		// Check if symbol shadows one from an include file (error - cannot override)
+		const includeEntry = includeVars.get(lowerName);
+		if (includeEntry) {
+			const kindLabel = includeEntry.kind === 'function' ? 'Function' : 'Variable';
+			diagnostics.push({
+				severity: DiagnosticSeverity.Error,
+				range: {
+					start: { line: info.line - 1, character: info.column },
+					end: { line: info.line - 1, character: info.column + info.name.length }
+				},
+				message: `${kindLabel} '${info.name}' is already declared in included file '${includeEntry.sourceFile}'`
+			});
+			return;
+		}
+		
+		// Check if variable shadows a global variable from the same file (warning)
+		// Only check when we're inside a real function (not the wrapper)
+		if (inRealFunction) {
+			const globalVar = globalVariables.get(lowerName);
+			if (globalVar) {
+				diagnostics.push({
+					severity: DiagnosticSeverity.Warning,
+					range: {
+						start: { line: info.line - 1, character: info.column },
+						end: { line: info.line - 1, character: info.column + info.name.length }
+					},
+					message: `Variable '${info.name}' shadows a global variable declared at line ${globalVar.line}`
+				});
+			}
+		}
+		
+		// Check if variable shadows a variable from an outer scope in the same file (warning)
+		for (let i = scopeStack.length - 2; i >= 0; i--) {
+			const outerScopeId = scopeStack[i];
+			const outerScopeVars = scopeVariables.get(outerScopeId);
+			if (outerScopeVars) {
+				const outerVar = outerScopeVars.get(lowerName);
+				if (outerVar) {
+					diagnostics.push({
+						severity: DiagnosticSeverity.Warning,
+						range: {
+							start: { line: info.line - 1, character: info.column },
+							end: { line: info.line - 1, character: info.column + info.name.length }
+						},
+						message: `Variable '${info.name}' shadows a variable declared at line ${outerVar.line}`
+					});
+					break; // Only report the closest shadowed variable
+				}
+			}
+		}
+		
+		// Track global variables (declared in wrapper function or its nested blocks)
+		if (inWrapperFunction && !inRealFunction) {
+			globalVariables.set(lowerName, { ...info, scopeDepth, isFunction });
+		}
+		
+		// Add the variable to the current scope
+		scopeVars.set(lowerName, { ...info, scopeDepth, isFunction });
+	};
+
+	// Track if we're in a function definition to avoid double-scoping
+	let inFunctionBody = false;
+	// Track if we're inside a declaration statement (prototypes live here;
+	// parameters in declarations should NOT be registered as variables)
+	let inDeclaration = false;
+	
+	// Helper to check if a function is the generated wrapper
+	const isWrapperFunction = (ctx: any): boolean => {
+		try {
+			const decl = ctx?.declarator?.();
+			const direct = decl?.directDeclarator?.();
+			let cur: any = direct;
+			while (cur) {
+				const idNode = cur.Identifier?.();
+				const idText = safeTokenText(idNode);
+				if (idText && idText.startsWith('__12dpl__script__')) {
+					return true;
+				}
+				cur = cur.directDeclarator?.() ?? null;
+			}
+		} catch {
+			// ignore
+		}
+		return false;
+	};
+
+	const visitor: any = {
+		visitTerminal(_node: any) {
+			return undefined;
+		},
+		visitErrorNode(_node: any) {
+			return undefined;
+		},
+		visitChildren(ctx: any) {
+			const children: any[] = ctx?.children ?? [];
+			for (const child of children) {
+				if (child && typeof child.accept === 'function') {
+					child.accept(visitor);
+				}
+			}
+			return undefined;
+		},
+		visitFunctionDefinition(ctx: any) {
+			const isWrapper = isWrapperFunction(ctx);
+			const wasInWrapperFunction = inWrapperFunction;
+			const wasInRealFunction = inRealFunction;
+			if (isWrapper) {
+				inWrapperFunction = true;
+			} else {
+				inRealFunction = true;
+			}
+			
+			enterScope();
+			inFunctionBody = true;
+			visitor.visitChildren(ctx);
+			inFunctionBody = false;
+			exitScope();
+			
+			inWrapperFunction = wasInWrapperFunction;
+			inRealFunction = wasInRealFunction;
+			return undefined;
+		},
+		visitCompoundStatement(ctx: any) {
+			// Don't create a new scope for the function body compound statement
+			// (parameters and local vars should share the same scope)
+			if (inFunctionBody) {
+				inFunctionBody = false; // Reset flag, nested blocks should create scopes
+				visitor.visitChildren(ctx);
+				return undefined;
+			}
+			// Enter a new scope for other compound statements (blocks)
+			enterScope();
+			visitor.visitChildren(ctx);
+			exitScope();
+			return undefined;
+		},
+		visitIterationStatement(ctx: any) {
+			// For loops create their own scope for the loop variable
+			// Check if this is a for loop with a forCondition containing forDeclaration
+			try {
+				const forToken = ctx?.For?.();
+				if (forToken) {
+					// This is a for loop - create a scope for the loop variable
+					enterScope();
+					visitor.visitChildren(ctx);
+					exitScope();
+					return undefined;
+				}
+			} catch {
+				// ignore
+			}
+			// For while/do-while, just visit children normally
+			return visitor.visitChildren(ctx);
+		},
+		visitDeclaration(ctx: any) {
+			// Collect declared variables
+			const list = ctx?.initDeclaratorList?.();
+			try {
+				for (const initDecl of list?.initDeclarator_list?.() ?? []) {
+					const declarator = initDecl?.declarator?.();
+					const info = extractIdentifierFromDeclarator(declarator);
+					if (info) {
+						const isFunc = isFunctionDeclarator(declarator);
+						checkAndAddDeclaration(info, isFunc);
+					}
+				}
+			} catch {
+				// ignore
+			}
+			// Mark that we're inside a declaration so that visitParameterDeclaration
+			// can skip prototype parameters (e.g. `Integer create_rgb(Integer r, Integer g, Integer b);`)
+			const wasInDeclaration = inDeclaration;
+			inDeclaration = true;
+			const result = visitor.visitChildren(ctx);
+			inDeclaration = wasInDeclaration;
+			return result;
+		},
+		visitForDeclaration(ctx: any) {
+			// Collect for-loop declared variables
+			const list = ctx?.initDeclaratorList?.();
+			try {
+				for (const initDecl of list?.initDeclarator_list?.() ?? []) {
+					const declarator = initDecl?.declarator?.();
+					const info = extractIdentifierFromDeclarator(declarator);
+					if (info) {
+						checkAndAddDeclaration(info);
+					}
+				}
+			} catch {
+				// ignore
+			}
+			return visitor.visitChildren(ctx);
+		},
+		visitParameterDeclaration(ctx: any) {
+			// Skip parameters inside declarations (function prototypes),
+			// e.g. `Integer create_rgb(Integer r, Integer g, Integer b);`
+			// Only collect parameters for actual function definitions.
+			if (inDeclaration) {
+				return visitor.visitChildren(ctx);
+			}
+			try {
+				const idNode = ctx?.Identifier?.();
+				const text = safeTokenText(idNode);
+				const line = safeTokenLine(idNode);
+				const column = safeTokenColumn(idNode);
+				if (text && line !== null && column !== null) {
+					checkAndAddDeclaration({ name: text, line, column });
+				}
+			} catch {
+				// ignore
+			}
+			return visitor.visitChildren(ctx);
+		}
+	};
+
+	try {
+		tree.accept(visitor);
+	} catch {
+		// If traversal fails, return empty diagnostics
+	}
+
+	return diagnostics;
+}
+
+// ─── validateUndeclaredIdentifiers ──────────────────────────────────────────
+//     Undeclared-identifier detection + switch/case type mismatch checks.
 
 /**
  * Performs semantic validation on a parsed AST to detect undeclared identifiers
@@ -99,34 +468,6 @@ function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymbols): D
 		} catch {
 			return undefined;
 		}
-	};
-
-	const extractIdentifierFromDeclarator = (ctx: any): { name: string; line: number; column: number } | null => {
-		let cur: any = ctx;
-		while (cur) {
-			try {
-				const direct = cur.directDeclarator?.();
-				if (direct) {
-					cur = direct;
-					continue;
-				}
-			} catch {
-				// ignore
-			}
-			try {
-				const idNode = cur.Identifier?.();
-				const text = safeTokenText(idNode);
-				const line = safeTokenLine(idNode);
-				const column = safeTokenColumn(idNode);
-				if (text && line !== null && column !== null) {
-					return { name: text, line, column };
-				}
-			} catch {
-				// ignore
-			}
-			break;
-		}
-		return null;
 	};
 
 	// Helper to recursively find and validate case labels in a switch body
@@ -456,7 +797,7 @@ function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymbols): D
 		
 		// Identifier is not declared - emit diagnostic
 		diagnostics.push({
-			severity: DiagnosticSeverity.Error,
+			severity: DiagnosticSeverity.Warning,
 			range: {
 				start: { line: usage.line - 1, character: usage.column },
 				end: { line: usage.line - 1, character: usage.column + usage.name.length }
@@ -468,7 +809,7 @@ function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymbols): D
 	// Add switch/case type mismatch diagnostics
 	for (const mismatch of switchCaseMismatches) {
 		diagnostics.push({
-			severity: DiagnosticSeverity.Error,
+			severity: DiagnosticSeverity.Warning,
 			range: {
 				start: { line: mismatch.caseLine - 1, character: mismatch.caseColumn },
 				end: { line: mismatch.caseLine - 1, character: mismatch.caseColumn + mismatch.caseLength }
@@ -480,22 +821,62 @@ function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymbols): D
 	return diagnostics;
 }
 
+// ─── Validator class ────────────────────────────────────────────────────────
+
 export class Validator {
 	/**
 	 * Parses the given document text and returns diagnostics for any syntax errors
-	 * and semantic issues (like undeclared identifiers on the RHS).
+	 * and semantic issues (like variable re-declarations).
 	 *
 	 * This is used for real-time validation (squiggles) in the editor.
 	 * Note: This basic version doesn't check undeclared identifiers - use ValidateWithSymbols for that.
 	 */
 	static Validate(documentText: string): Diagnostic[] {
-		// Call ValidateWithSymbols with empty known symbols
-		// This means only syntax errors will be detected, not undeclared identifiers
-		return Validator.ValidateWithSymbols(documentText, {
-			functions: new Set(),
-			variables: new Set(),
-			defines: new Set()
-		});
+		return [...Validator.ValidateWithIncludes(documentText, []), ...Validator.ValidateWithSymbols(documentText, { functions: new Set(), variables: new Set(), defines: new Set() })];
+	}
+
+	/**
+	 * Parses the given document text and returns diagnostics for any syntax errors
+	 * and semantic issues (like variable re-declarations), including checks against
+	 * variables declared in include files.
+	 *
+	 * @param documentText The document text to validate
+	 * @param includeFileVariables Variables declared in include files
+	 */
+	static ValidateWithIncludes(documentText: string, includeFileVariables: IncludeFileVariable[]): Diagnostic[] {
+		const diagnostics: Diagnostic[] = [];
+
+		try {
+			const { lexer, parser } = createLexerAndParser(documentText);
+
+			const errorListener = new DiagnosticErrorListener();
+			lexer.removeErrorListeners();
+			parser.removeErrorListeners();
+			parser.addErrorListener(errorListener);
+
+			const tree = parser.compilationUnit();
+			const syntaxDiagnostics = errorListener.diagnostics;
+			
+			// Only run semantic validation if there are no syntax errors
+			if (syntaxDiagnostics.length === 0) {
+				const redeclarationDiagnostics = validateRedeclarations(tree, includeFileVariables);
+				return [...syntaxDiagnostics, ...redeclarationDiagnostics];
+			}
+			
+			return syntaxDiagnostics;
+		} catch (error: any) {
+			// Catch any unexpected errors during parsing
+			console.error('Validation error:', error);
+			diagnostics.push({
+				severity: DiagnosticSeverity.Warning,
+				range: {
+					start: { line: 0, character: 0 },
+					end: { line: 0, character: 1 }
+				},
+				message: error?.message || 'Parser error occurred'
+			});
+			return diagnostics;
+		}
 	}
 
 	/**
@@ -517,7 +898,6 @@ export class Validator {
 			parser.addErrorListener(errorListener);
 
 			const tree = parser.compilationUnit();
-			diagnostics.push(...errorListener.diagnostics);
 
 			// Check for deprecated functions
 			const deprecationDiagnostics = checkDeprecatedFunctions(parser);
@@ -536,7 +916,6 @@ export class Validator {
 		} catch (error: any) {
 			// Catch any unexpected errors during parsing
 			console.error('Validation error:', error);
-			// Return the actual error message instead of generic message
 			diagnostics.push({
 				severity: DiagnosticSeverity.Warning,
 				range: {
@@ -548,5 +927,4 @@ export class Validator {
 			return diagnostics;
 		}
 	}
-
 }
