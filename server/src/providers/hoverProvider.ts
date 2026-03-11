@@ -3,14 +3,14 @@ import type { Connection, HoverParams } from 'vscode-languageserver/node';
 import type { TextDocuments } from 'vscode-languageserver/node';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 
-import { collectRecursiveIncludeFiles, fileUriToFsPath } from '../includes.js';
+import { fileUriToFsPath } from '../util/includes.js';
 
-import { prototypesLoader } from '../prototypes.js';
-import { typeDocumentation } from '../documentation.js';
+import { prototypesLoader } from '../util/prototypes.js';
+import { typeDocumentation } from '../util/typeDocumentation.js';
 import type { DocumentSymbolStore } from './documentSymbols.js';
-import { getWordAtPosition } from './utils.js';
-import { parseDefinesFromText, type DefineSymbolInfo } from './defines.js';
-import type { FunctionSymbolInfo, VariableSymbolInfo } from '../symbols.js';
+import { getWordAtPosition } from '../util/utils.js';
+import { parseDefinesFromText, type DefineSymbolInfo } from '../util/defines.js';
+import type { FunctionSymbolInfo, VariableSymbolInfo } from '../antlr/symbols.js';
 
 type IncludeSymbolHoverInfo =
 	| { kind: 'function'; signature: string; definedInFsPath: string }
@@ -31,12 +31,16 @@ export function registerHoverProvider(opts: {
 	connection: Connection;
 	documents: TextDocuments<TextDocument>;
 	documentSymbols: DocumentSymbolStore;
+	includesProvider: { getIncludeFilesForUri(uri: string): Promise<string[]> };
 }): void {
-	const { connection, documents, documentSymbols } = opts;
+	const { connection, documents, documentSymbols, includesProvider } = opts;
+
+	// Include paths will be fetched per-document (using `scopeUri`) to ensure
+	// we receive resource-scoped settings (workspace + folder + user).
 	const includeHoverCache: Map<string, IncludeHoverCacheEntry> = new Map();
 	const defineHoverCache: Map<string, DefineHoverCacheEntry> = new Map();
 
-	const getIncludeSymbolHoverInfo = (uri: string, name: string): IncludeSymbolHoverInfo | null => {
+	const getIncludeSymbolHoverInfo = async (uri: string, name: string): Promise<IncludeSymbolHoverInfo | null> => {
 		const doc = documents.get(uri);
 		if (!doc) return null;
 
@@ -48,11 +52,7 @@ export function registerHoverProvider(opts: {
 		const docFsPath = fileUriToFsPath(uri);
 		if (!docFsPath) return null;
 
-		const includeFiles = collectRecursiveIncludeFiles(
-			docFsPath,
-			(fsPath) => documentSymbols.getTextForFsPath(fsPath),
-			{ maxFiles: 500 }
-		);
+		const includeFiles = await includesProvider.getIncludeFilesForUri(uri);
 
 		const byName = new Map<string, IncludeSymbolHoverInfo>();
 		for (const includeFsPath of includeFiles) {
@@ -82,7 +82,7 @@ export function registerHoverProvider(opts: {
 		return byName.get(name) ?? null;
 	};
 
-	const getDefineHoverInfo = (uri: string, name: string): DefineSymbolInfo | null => {
+		const getDefineHoverInfo = async (uri: string, name: string): Promise<DefineSymbolInfo | null> => {
 		const doc = documents.get(uri);
 		if (!doc) return null;
 
@@ -101,12 +101,8 @@ export function registerHoverProvider(opts: {
 			if (!byName.has(d.name)) byName.set(d.name, d);
 		}
 
-		// Included defines
-		const includeFiles = collectRecursiveIncludeFiles(
-			docFsPath,
-			(fsPath) => documentSymbols.getTextForFsPath(fsPath),
-			{ maxFiles: 500 }
-		);
+		// Included defines (use includesProvider to get cached list)
+		const includeFiles = await includesProvider.getIncludeFilesForUri(uri);
 		for (const includeFsPath of includeFiles) {
 			const text = documentSymbols.getTextForFsPath(includeFsPath);
 			if (text == null) continue;
@@ -119,7 +115,7 @@ export function registerHoverProvider(opts: {
 		return byName.get(name) ?? null;
 	};
 
-	connection.onHover((textDocumentPositionParams: HoverParams) => {
+	connection.onHover(async (textDocumentPositionParams: HoverParams) => {
 		try {
 			const textDocument = documents.get(textDocumentPositionParams.textDocument.uri);
 			if (!textDocument) return null;
@@ -172,7 +168,7 @@ export function registerHoverProvider(opts: {
 			}
 
 			// Check if it's a #define macro (local or from includes)
-			const def = getDefineHoverInfo(textDocument.uri, word);
+			const def = await getDefineHoverInfo(textDocument.uri, word);
 			if (def) {
 				const sig = def.params && def.params.length
 					? `#define ${def.name}(${def.params.join(', ')})${def.value ? ` ${def.value}` : ''}`
@@ -186,7 +182,7 @@ export function registerHoverProvider(opts: {
 			}
 
 			// Check included files for symbols
-			const includeSymbol = getIncludeSymbolHoverInfo(textDocument.uri, word);
+			const includeSymbol = await getIncludeSymbolHoverInfo(textDocument.uri, word);
 			if (includeSymbol) {
 				if (includeSymbol.kind === 'function') {
 					return {

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { prototypesLoader } from "../server/src/prototypes.ts";
+import { prototypesLoader } from "../server/src/util/prototypes.ts";
 
 describe("prototypesLoader", () => {
 	test("loads prototypes and can resolve common functions", async () => {

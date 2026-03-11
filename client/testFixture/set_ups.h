@@ -4,7 +4,9 @@
 // --------------------------------------------------------------------------
 // colour conversion stuff
 // --------------------------------------------------------------------------
-
+{
+  Text prog_name = "TEST";
+}
 Integer create_rgb(Integer r,Integer g,Integer b)
 // --------------------------------------------------------------------------
 // --------------------------------------------------------------------------
@@ -476,12 +478,12 @@ Integer get_rgb(Integer colour,Integer &r,Integer &g,Integer &b)
 #define Diameter_large_character 216
 #define Diameter_small_character 248
 
-#define Degrees_text             "°"
-#define Squared_text             "²"
-#define Cubed_text               "³"
-#define Middle_dot_text          "·"
-#define Diameter_small_text      "ø"
-#define Diameter_large_text      "Ø"
+#define Degrees_text             "ï¿½"
+#define Squared_text             "ï¿½"
+#define Cubed_text               "ï¿½"
+#define Middle_dot_text          "ï¿½"
+#define Diameter_small_text      "ï¿½"
+#define Diameter_large_text      "ï¿½"
 
 // definitions for last parameter of Shell_execute
 

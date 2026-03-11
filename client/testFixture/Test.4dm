@@ -15,9 +15,17 @@
 // any order in the panel.
 //----------------------------------------------------------
 void get_hip_info(Element align,Integer hip,Integer &type,
-Real xval[],Real yval[],Real lengths[])
+Real xval[],Real yval[],Real lengths[]);
 
+Widget Cast(Widget &widget)
+{
+return widget;
+};
 
+void My_function(Text_Text_Map map)
+{
+    Vector4_Guid_Multimap guid_map;
+};
 // -----------------------------------------------------------
 //
 

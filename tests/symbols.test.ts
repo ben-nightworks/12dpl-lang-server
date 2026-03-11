@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { collectDocumentSymbolNames, collectDocumentSymbolIndex } from '../server/src/symbols.ts';
+import { collectDocumentSymbolNames, collectDocumentSymbolIndex } from '../server/src/antlr/symbols.ts';
 
 describe('collectDocumentSymbolNames', () => {
 	test('collects variables, parameters, and functions', () => {
@@ -19,9 +19,10 @@ void bar();
 		expect(functions).toContain('bar');
 
 		expect(variables).toContain('count');
-		expect(variables).toContain('a');
-		expect(variables).toContain('b');
-		expect(variables).toContain('local');
+		// a, b, local are inside function foo — they should NOT appear as global variables
+		expect(variables).not.toContain('a');
+		expect(variables).not.toContain('b');
+		expect(variables).not.toContain('local');
 	});
 
 	test('extracts types for variables and full function signatures', () => {
@@ -36,10 +37,11 @@ void bar();
 
 		const index = collectDocumentSymbolIndex(src);
 		expect(index.variables.count.type).toBe('Integer');
-		expect(index.variables.local.type).toBe('Integer');
-		expect(index.variables.a.type).toBe('Integer');
-		expect(index.variables.b.type).toBe('Integer');
-		expect(index.variables.c.type).toBe('Real');
+		// local, a, b, c are inside function foo — not in global index
+		expect(index.variables.local).toBeUndefined();
+		expect(index.variables.a).toBeUndefined();
+		expect(index.variables.b).toBeUndefined();
+		expect(index.variables.c).toBeUndefined();
 
 		expect(index.functions.foo.signature).toBe('void foo(Integer a, Integer &b, Real c[])');
 		expect(index.functions.bar.signature).toBe('void bar()');
@@ -64,5 +66,68 @@ x = 1;
 		for (const fn of functions) {
 			expect(fn.startsWith('__12dpl__script__')).toBe(false);
 		}
+	});
+
+	test('does not leak forward declaration parameters as global variables', () => {
+		const src = `
+void forward_declaration(Integer x);
+Integer create_rgb(Integer r, Integer g, Integer b);
+`;
+
+		const index = collectDocumentSymbolIndex(src);
+
+		// Forward declarations should register as functions
+		expect(index.functions.forward_declaration).toBeDefined();
+		expect(index.functions.create_rgb).toBeDefined();
+
+		// Parameters should NOT appear as global variables
+		expect(index.variables.x).toBeUndefined();
+		expect(index.variables.r).toBeUndefined();
+		expect(index.variables.g).toBeUndefined();
+		expect(index.variables.b).toBeUndefined();
+	});
+
+	test('still exports script-level variables alongside forward declarations', () => {
+		const src = `
+Integer count = 5;
+void forward_declaration(Integer x);
+Text name = "test";
+`;
+
+		const index = collectDocumentSymbolIndex(src);
+
+		// Functions registered
+		expect(index.functions.forward_declaration).toBeDefined();
+
+		// Script-level variables exported
+		expect(index.variables.count).toBeDefined();
+		expect(index.variables.name).toBeDefined();
+
+		// Forward declaration parameter NOT exported
+		expect(index.variables.x).toBeUndefined();
+	});
+
+	test('does not leak parameters from overloaded forward declarations', () => {
+		const src = `
+Integer count = 0;
+void process();
+void process(Integer x);
+void process(Integer x, Integer y);
+Integer other_var = 5;
+`;
+
+		const index = collectDocumentSymbolIndex(src);
+
+		// Overloaded function registered
+		expect(index.functions.process).toBeDefined();
+
+		// Script-level variables exported
+		expect(index.variables.count).toBeDefined();
+		expect(index.variables.other_var).toBeDefined();
+
+		// Parameters from ALL overloads must NOT leak
+		expect(index.variables.x).toBeUndefined();
+		expect(index.variables.y).toBeUndefined();
+		expect(index.variables.z).toBeUndefined();
 	});
 });

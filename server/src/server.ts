@@ -17,8 +17,7 @@ import {
 	InitializeParams,
 	DidChangeConfigurationNotification,
 	TextDocumentSyncKind,
-	InitializeResult,
-	Location
+	InitializeResult
 } from 'vscode-languageserver/node';
 
 import {
@@ -26,29 +25,23 @@ import {
 } from 'vscode-languageserver-textdocument';
 
 import {
-	Validator
-} from './validator.js';
-
-import {
-	collectRecursiveIncludeFiles,
-	fileUriToFsPath,
-	fsPathToFileUri
-} from './includes.js';
+	Validator,
+	type IncludeFileVariable,
+	type KnownSymbols
+} from './antlr/validator';
 
 import {
 	prototypesLoader
-} from './prototypes.js';
+} from './util/prototypes';
 
-import {
-	SymbolRange
-} from './symbols.js';
-
-import { DocumentSymbolStore } from './providers/documentSymbols.js';
-import { registerCompletionProvider } from './providers/completionProvider.js';
-import { registerHoverProvider } from './providers/hoverProvider.js';
-import { registerFormattingProvider } from './providers/formattingProvider.js';
-import { getWordAtPosition } from './providers/utils.js';
-import { parseDefinesFromText } from './providers/defines.js';
+import { parseDefinesFromText } from './util/defines';
+import { fileUriToFsPath } from './util/includes';
+import { DocumentSymbolStore } from './providers/documentSymbols';
+import { registerCompletionProvider } from './providers/completionProvider';
+import { registerDefinitionProvider } from './providers/definitionProvider';
+import { registerHoverProvider } from './providers/hoverProvider';
+import { registerFormattingProvider } from './providers/formattingProvider';
+import { registerIncludesProvider } from './providers/includesProvider';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -59,9 +52,11 @@ const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 
 const documentSymbols = new DocumentSymbolStore(documents);
 
+// Set defaults for capabilities as a starting point
 let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
 let hasDiagnosticRelatedInformationCapability = false;
+
 connection.onInitialize((params: InitializeParams) => {
 	const capabilities = params.capabilities;
 
@@ -84,8 +79,7 @@ connection.onInitialize((params: InitializeParams) => {
 			textDocumentSync: TextDocumentSyncKind.Full,
 			// Tell the client that this server supports code completion.
 			completionProvider: {
-				resolveProvider: true,
-				triggerCharacters: ['.', '#']
+				resolveProvider: true
 			},
 			// Tell the client that this server supports hover.
 			hoverProvider: true,
@@ -148,26 +142,16 @@ connection.onDidChangeConfiguration(change => {
 	documents.all().forEach(validateTextDocument);
 });
 
-function getDocumentSettings(resource: string): Thenable<ServerSettings> {
-	if (!hasConfigurationCapability) {
-		return Promise.resolve(globalSettings);
-	}
-	let result = documentSettings.get(resource);
-	if (!result) {
-		result = connection.workspace.getConfiguration({
-			scopeUri: resource,
-			section: 'langServer'
-		});
-		documentSettings.set(resource, result);
-	}
-	return result;
-}
-
 // Only keep settings for open documents
 documents.onDidClose(e => {
 	documentSettings.delete(e.document.uri);
 	documentSymbols.clearForUri(e.document.uri);
+	connection.sendDiagnostics({ uri: e.document.uri, diagnostics: [] });
 });
+
+// Register providers
+// Register a single shared includes provider and pass it to other providers.
+const includesProvider = registerIncludesProvider({ connection, documents, documentSymbols });
 
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
@@ -176,84 +160,94 @@ documents.onDidChangeContent(change => {
 	validateTextDocument(change.document);
 });
 
-connection.onDefinition((params) => {
-	const doc = documents.get(params.textDocument.uri);
-	if (!doc) return null;
+async function validateTextDocument(textDocument: TextDocument): Promise<void> {
+	const text = textDocument.getText();
+	const uri = textDocument.uri;
+	const docFsPath = fileUriToFsPath(uri);
 
-	const word = getWordAtPosition(doc, params.position);
-	if (!word) return null;
-
-	// Prefer current document symbol (function or variable)
-	const local = documentSymbols.getSymbolInfo(doc.uri, word);
-	if (local?.range) {
-		return Location.create(doc.uri, local.range as any);
+	// Collect variables from include files
+	const includeFileVariables: IncludeFileVariable[] = [];
+	try {
+		const includeFiles = await includesProvider.getIncludeFilesForUri(textDocument.uri);
+		for (const filePath of includeFiles) {
+			const index = documentSymbols.getIndexForFsPath(filePath);
+			if (index) {
+				// Extract just the filename for display
+				const fileName = filePath.split(/[\\/]/).pop() || filePath;
+				for (const varName of Object.keys(index.variables)) {
+					includeFileVariables.push({ name: varName, sourceFile: fileName, kind: 'variable' });
+				}
+				for (const funcName of Object.keys(index.functions)) {
+					includeFileVariables.push({ name: funcName, sourceFile: fileName, kind: 'function' });
+				}
+			}
+		}
+	} catch {
+		// Best-effort: continue validation without include file variables
 	}
 
-	// Prefer local #define
-	const docPath = fileUriToFsPath(doc.uri);
-	if (!docPath) return null;
-	for (const d of parseDefinesFromText(doc.getText(), docPath)) {
-		if (d.name === word && d.range) {
-			return Location.create(doc.uri, d.range as any);
+	const includeDiagnostics: Diagnostic[] = Validator.ValidateWithIncludes(text, includeFileVariables);
+	// Collect known symbols from document, include files, and built-in prototypes
+	const knownSymbols: KnownSymbols = {
+		functions: new Set<string>(),
+		variables: new Set<string>(),
+		defines: new Set<string>()
+	};
+
+	// Add built-in function prototypes (loaded asynchronously on startup)
+	for (const name of prototypesLoader.getAllNames()) {
+		knownSymbols.functions.add(name.toLowerCase());
+	}
+
+	// Get the document's symbol index (already cached by documentSymbols)
+	const docIndex = docFsPath ? documentSymbols.getIndexForFsPath(docFsPath) : null;
+	if (docIndex) {
+		for (const fn of Object.keys(docIndex.functions)) {
+			knownSymbols.functions.add(fn.toLowerCase());
+		}
+		for (const v of Object.keys(docIndex.variables)) {
+			knownSymbols.variables.add(v.toLowerCase());
 		}
 	}
 
-	const readText = (fsPath: string): string | null => documentSymbols.getTextForFsPath(fsPath);
+	// Add defines from the document itself
+	if (docFsPath) {
+		for (const def of parseDefinesFromText(text, docFsPath)) {
+			knownSymbols.defines.add(def.name.toLowerCase());
+		}
+	}
 
-	const includeFiles = collectRecursiveIncludeFiles(docPath, readText, { maxFiles: 500 });
-	const results: Location[] = [];
-	const seen = new Set<string>();
+	// Get include files and add their symbols
+	const includeFiles = await includesProvider.getIncludeFilesForUri(uri);
+	for (const includeFsPath of includeFiles) {
+		const idx = documentSymbols.getIndexForFsPath(includeFsPath);
+		if (idx) {
+			for (const fn of Object.keys(idx.functions)) {
+				knownSymbols.functions.add(fn.toLowerCase());
+			}
+			for (const v of Object.keys(idx.variables)) {
+				knownSymbols.variables.add(v.toLowerCase());
+			}
+		}
 
-	const pushLocation = (candidateFsPath: string, range: SymbolRange) => {
-		const uri = fsPathToFileUri(candidateFsPath);
-		const key = `${uri}:${range.start.line}:${range.start.character}:${range.end.line}:${range.end.character}`;
-		if (seen.has(key)) return;
-		seen.add(key);
-		results.push(Location.create(uri, range as any));
-	};
-
-	for (const candidate of includeFiles) {
-		const idx = documentSymbols.getIndexForFsPath(candidate);
-		if (!idx) continue;
-		const fn = (idx.functions as any)[word];
-		if (fn?.range) pushLocation(candidate, fn.range);
-		const v = (idx.variables as any)[word];
-		if (v?.range) pushLocation(candidate, v.range);
-
-		// Also resolve #define macros in included files
-		const text = readText(candidate);
-		if (text != null) {
-			for (const d of parseDefinesFromText(text, candidate)) {
-				if (d.name === word && d.range) {
-					pushLocation(candidate, d.range);
-					break;
-				}
+		// Add defines from include files
+		const includeText = documentSymbols.getTextForFsPath(includeFsPath);
+		if (includeText) {
+			for (const def of parseDefinesFromText(includeText, includeFsPath)) {
+				knownSymbols.defines.add(def.name.toLowerCase());
 			}
 		}
 	}
 
-	return results.length ? results : null;
-});
-
-async function validateTextDocument(textDocument: TextDocument): Promise<void> {
-	// In this simple example we get the settings for every validate run.
-	const settings = await getDocumentSettings(textDocument.uri);
-	
-	const text = textDocument.getText();
-
-	const diagnostics: Diagnostic[] = Validator.Validate(text);
+	const symbolDiagnostics: Diagnostic[] = Validator.ValidateWithSymbols(text, knownSymbols);
 	
 	// Send the computed diagnostics to VSCode.
-	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics: [...includeDiagnostics, ...symbolDiagnostics] });
 }
 
-connection.onDidChangeWatchedFiles(_change => {
-	// Monitored files have change in VSCode
-	connection.console.log('We received an file change event');
-});
-
-registerCompletionProvider({ connection, documents, documentSymbols });
-registerHoverProvider({ connection, documents, documentSymbols });
+registerCompletionProvider({ connection, documents, documentSymbols, includesProvider });
+registerDefinitionProvider({ connection, documents, documentSymbols, includesProvider });
+registerHoverProvider({ connection, documents, documentSymbols, includesProvider });
 registerFormattingProvider({ connection, documents });
 
 // Make the text document manager listen on the connection

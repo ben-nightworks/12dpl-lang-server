@@ -6,9 +6,9 @@ import type { TextDocument } from 'vscode-languageserver-textdocument';
 
 import * as fs from 'fs';
 
-import { canonicalizeFsPath, fileUriToFsPath } from '../includes.js';
-import { collectDocumentSymbolIndex, type FunctionSymbolInfo, type VariableSymbolInfo, type SymbolRange } from '../symbols.js';
-import { buildFunctionCallSnippet } from './utils.js';
+import { canonicalizeFsPath, fileUriToFsPath } from '../util/includes.js';
+import { collectDocumentSymbolIndex, type FunctionSymbolInfo, type VariableSymbolInfo, type SymbolRange } from '../antlr/symbols.js';
+import { buildFunctionCallSnippet } from '../util/utils.js';
 
 export type DocumentSymbolInfo = {
 	kind: 'function' | 'variable';
