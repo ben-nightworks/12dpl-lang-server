@@ -129,8 +129,9 @@ function extractIdentifierFromDeclarator(ctx: any): { name: string; line: number
  * @param tree The parse tree to validate
  * @param includeFileVariables Variables declared in include files (optional)
  */
-function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVariable[]): Diagnostic[] {
+function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVariable[], conditionalLines?: Set<number>): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];
+	const condLines = conditionalLines ?? new Set<number>();
 	
 	// Map of symbol name (lowercase) -> { sourceFile, kind } for symbols from include files
 	const includeVars = new Map<string, { sourceFile: string; kind: 'variable' | 'function' }>();
@@ -202,6 +203,11 @@ function validateRedeclarations(tree: any, includeFileVariables?: IncludeFileVar
 			// Allow function overloading: multiple functions with the same name
 			// but different parameter signatures are valid in 12dpl.
 			if (existing.isFunction && isFunction) {
+				return;
+			}
+			// If either declaration is inside a conditional #if block, suppress
+			// the error — the preprocessor ensures only one branch is active at runtime.
+			if (condLines.has(existing.line) || condLines.has(info.line)) {
 				return;
 			}
 			// Re-declaration in same scope!
@@ -847,7 +853,7 @@ export class Validator {
 		const diagnostics: Diagnostic[] = [];
 
 		try {
-			const { lexer, parser } = createLexerAndParser(documentText);
+			const { lexer, parser, conditionalLines } = createLexerAndParser(documentText);
 
 			const errorListener = new DiagnosticErrorListener();
 			lexer.removeErrorListeners();
@@ -859,7 +865,7 @@ export class Validator {
 			
 			// Only run semantic validation if there are no syntax errors
 			if (syntaxDiagnostics.length === 0) {
-				const redeclarationDiagnostics = validateRedeclarations(tree, includeFileVariables);
+				const redeclarationDiagnostics = validateRedeclarations(tree, includeFileVariables, conditionalLines);
 				return [...syntaxDiagnostics, ...redeclarationDiagnostics];
 			}
 			
