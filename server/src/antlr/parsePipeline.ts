@@ -8,6 +8,8 @@ export interface LexerAndParser {
 	lexer: proglang12dLexer;
 	parser: proglang12dParser;
 	transformedText: string;
+	/** 1-based line numbers that are inside conditional #if/#ifdef/#ifndef blocks (kept first branch). */
+	conditionalLines: Set<number>;
 }
 
 /**
@@ -15,7 +17,7 @@ export interface LexerAndParser {
  *
  * Keeps line numbers stable by replacing stripped lines with empty lines.
  */
-export function stripConditionalDirectives(documentText: string): string {
+export function stripConditionalDirectives(documentText: string): { text: string; conditionalLines: Set<number> } {
 	// The lexer has rules to skip some preprocessor directives, but real-world
 	// headers include macros containing '#'/'##' which can defeat simplistic lexer
 	// skipping and leak tokens into the parser.
@@ -26,13 +28,31 @@ export function stripConditionalDirectives(documentText: string): string {
 	//
 	// Additionally, content inside `#if 0` blocks is dead code and must be
 	// stripped entirely (not just the directive lines).
+	//
+	// For non-zero `#if`/`#ifdef`/`#ifndef` blocks, we keep only the first branch
+	// and strip `#else`/`#elif` branches to avoid false "already declared" errors
+	// when different branches declare the same variable.
 	const lines = documentText.split(/\r?\n/);
 	const out: string[] = [];
 	let inDirectiveContinuation = false;
-	// Track nested #if 0 blocks. When > 0, ALL lines are stripped.
-	let ifZeroDepth = 0;
+
+	// Stack tracks nested #if blocks.
+	// Each entry: 'if0' = inside #if 0 dead code, 'if-true' = in kept first branch, 'else' = in stripped #else/#elif branch
+	const ifStack: ('if0' | 'if-true' | 'else')[] = [];
+
+	/** 1-based line numbers inside conditional #if blocks (kept first branch). */
+	const conditionalLines = new Set<number>();
+	let lineNumber = 0;
+
+	/** Returns true if any entry in the stack means we should strip content. */
+	const shouldStripContent = () => ifStack.some(s => s === 'if0' || s === 'else');
+
+	/** Returns true if we are currently inside any conditional #if block (kept branch). */
+	const isInsideConditionalBlock = () => ifStack.some(s => s === 'if-true');
+
 	for (const line of lines) {
 		const trimmed = line.trimStart();
+		lineNumber++;
 
 		// Handle multi-line directive continuations (trailing backslash)
 		if (inDirectiveContinuation) {
@@ -43,22 +63,35 @@ export function stripConditionalDirectives(documentText: string): string {
 
 		// Check for preprocessor directive lines
 		if (trimmed.startsWith('#')) {
-			// Track #if 0 blocks to strip their contents
 			const directiveMatch = trimmed.match(/^#\s*(if|ifdef|ifndef|else|elif|endif)\b(.*)/);
 			if (directiveMatch) {
 				const directive = directiveMatch[1];
 				const rest = directiveMatch[2]?.trim() ?? '';
-				if (directive === 'if' && /^0\b/.test(rest)) {
-					ifZeroDepth++;
-				} else if ((directive === 'ifdef' || directive === 'ifndef' || directive === 'if') && ifZeroDepth > 0) {
-					// Nested #if inside an #if 0 block
-					ifZeroDepth++;
-				} else if (directive === 'endif' && ifZeroDepth > 0) {
-					ifZeroDepth--;
-				} else if ((directive === 'else' || directive === 'elif') && ifZeroDepth === 1) {
-					// #else/#elif at the same level as #if 0 means we're
-					// back to potentially live code (e.g. #if 0 ... #else ... #endif)
-					ifZeroDepth = 0;
+				if (directive === 'if' || directive === 'ifdef' || directive === 'ifndef') {
+					if (directive === 'if' && /^0\b/.test(rest)) {
+						ifStack.push('if0');
+					} else if (shouldStripContent()) {
+						// Nested #if inside already-stripped block — stays stripped
+						ifStack.push('if0');
+					} else {
+						ifStack.push('if-true');
+					}
+				} else if (directive === 'else' || directive === 'elif') {
+					if (ifStack.length > 0) {
+						const top = ifStack[ifStack.length - 1];
+						if (top === 'if0') {
+							// #else/#elif after #if 0 — content becomes live
+							ifStack[ifStack.length - 1] = 'if-true';
+						} else if (top === 'if-true') {
+							// #else/#elif after the kept first branch — strip this branch
+							ifStack[ifStack.length - 1] = 'else';
+						}
+						// If top === 'else', stay in 'else' (chained #elif after #else)
+					}
+				} else if (directive === 'endif') {
+					if (ifStack.length > 0) {
+						ifStack.pop();
+					}
 				}
 			}
 			out.push('');
@@ -66,15 +99,20 @@ export function stripConditionalDirectives(documentText: string): string {
 			continue;
 		}
 
-		// Inside #if 0 block — strip everything
-		if (ifZeroDepth > 0) {
+		// Inside stripped block — strip content
+		if (shouldStripContent()) {
 			out.push('');
 			continue;
 		}
 
+		// Track lines inside conditional blocks
+		if (isInsideConditionalBlock()) {
+			conditionalLines.add(lineNumber);
+		}
+
 		out.push(line);
 	}
-	return out.join('\n');
+	return { text: out.join('\n'), conditionalLines };
 }
 
 /**
@@ -328,14 +366,14 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
  *
  * This strips directive lines and wraps top-level script blocks.
  */
-export function prepareDocumentTextForParser(documentText: string): string {
-	const cleanedText = stripConditionalDirectives(documentText);
-	return wrapTopLevelScriptsPreservingLines(cleanedText);
+export function prepareDocumentTextForParser(documentText: string): { text: string; conditionalLines: Set<number> } {
+	const { text: cleanedText, conditionalLines } = stripConditionalDirectives(documentText);
+	return { text: wrapTopLevelScriptsPreservingLines(cleanedText), conditionalLines };
 }
 
 /** Creates and configures an ANTLR lexer/parser for a 12dPL document. */
 export function createLexerAndParser(documentText: string): LexerAndParser {
-	const transformedText = prepareDocumentTextForParser(documentText);
+	const { text: transformedText, conditionalLines } = prepareDocumentTextForParser(documentText);
 	const chars = new CharStream(transformedText);
 	const lexer = new proglang12dLexer(chars);
 	const tokens = new CommonTokenStream(lexer);
@@ -343,5 +381,5 @@ export function createLexerAndParser(documentText: string): LexerAndParser {
 	// Needed for traversals (e.g. symbol collection) that rely on ctx.children.
 	// antlr4 defaults can vary depending on runtime/build.
 	(parser as any).buildParseTrees = true;
-	return { lexer, parser, transformedText };
+	return { lexer, parser, transformedText, conditionalLines };
 }

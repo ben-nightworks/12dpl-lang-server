@@ -813,3 +813,125 @@ void main() {
 		expect(syntaxErrors.length).toBeGreaterThan(0);
 	});
 });
+
+describe("#if/#else branch handling", () => {
+	test("does not report redeclaration for same variable in #if/#else branches", () => {
+		const code = `
+void main() {
+#if VERSION_4D >= 1400
+	Panel panel = Create_panel("test", TRUE);
+#else
+	Panel panel = Create_panel("test");
+#endif
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		const redeclErrors = diagnostics.filter(d =>
+			d.message.includes("already declared")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("does not report redeclaration for #ifdef/#else branches", () => {
+		const code = `
+void main() {
+#ifdef SOME_FLAG
+	Integer breakline = 1;
+#else
+	Integer breakline = 2;
+#endif
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		const redeclErrors = diagnostics.filter(d =>
+			d.message.includes("already declared")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("still strips #if 0 dead code", () => {
+		const code = `
+void main() {
+#if 0
+	this is dead code and should not parse
+#endif
+	Integer x = 1;
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		const syntaxErrors = diagnostics.filter(d => d.severity === 1 /* Error */);
+		expect(syntaxErrors.length).toBe(0);
+	});
+
+	test("#if 0 with #else keeps the else branch", () => {
+		const code = `
+void main() {
+#if 0
+	Integer dead_var = 999;
+#else
+	Integer live_var = 1;
+#endif
+	Integer result = live_var + 1;
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		const syntaxErrors = diagnostics.filter(d => d.severity === 1 /* Error */);
+		expect(syntaxErrors.length).toBe(0);
+	});
+
+	test("handles nested #if inside #if/#else without false redeclarations", () => {
+		const code = `
+void main() {
+#if CONDITION_A
+	#if CONDITION_B
+		Integer val = 1;
+	#else
+		Integer val = 2;
+	#endif
+#else
+	Integer val = 3;
+#endif
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		const redeclErrors = diagnostics.filter(d =>
+			d.message.includes("already declared")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("does not report redeclaration when variable declared unconditionally then inside #if block", () => {
+		// Real-world pattern from fit_3pt_arcs_panel.4dm:
+		// Variable declared unconditionally, then re-declared inside a #if block.
+		// At runtime only one declaration exists (preprocessor either includes the block or not).
+		const code = `
+void process_elements() {
+	Integer breakline = 0;
+	Integer rv = 0;
+#if ALLOW_ONLY_LINE_STRINGS == 1
+	Integer breakline = 0;
+	rv = Get_breakline(breakline);
+#endif
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		const redeclErrors = diagnostics.filter(d =>
+			d.message.includes("already declared")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("still reports real redeclaration outside any #if block", () => {
+		const code = `
+void main() {
+	Integer x = 1;
+	Integer x = 2;
+}
+`;
+		const diagnostics = Validator.Validate(code);
+		const redeclErrors = diagnostics.filter(d =>
+			d.message.includes("already declared")
+		);
+		expect(redeclErrors.length).toBeGreaterThan(0);
+	});
+});
