@@ -1,5 +1,12 @@
 name: Run All Tests
 
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+      - pre-release
+
 jobs:
   build:
     name: build-app
