@@ -55,7 +55,7 @@ jobs:
           body: |
             # 12dPL Language Server v${{ steps.version.outputs.version }}
             
-            Production-ready 12dPL language server with:
+            12dPL language server with:
             - ▶️ Compile `.4dm` → `.4do` (Play button)
             - ✅ Auto-formatting on save (C++ style)
             - ✅ 90+ type documentation with hover support

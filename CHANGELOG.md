@@ -266,27 +266,31 @@ bun run test         # Run e2e tests
 
 ---
 
-## [v1.2.0] - (Date)
+## [v1.2.0] - (11/03/2026)
 
 ### New Features
 - Full clean up and re-structure of code
 	- Moved compile and formatting from extension.ts to feature modules to improve readability
-	- 
 - Include files are now cached to reduce queries to file system (includesProvider)
 - Added ability to use some VSCode variables in "inculudePaths" setting
+- Added basic MTF Snippet support
+- Added common language inserts as snippets
 
 ### Bug Fixes
 - Include paths now parse symbols from included header files using "includePaths" setting
 - Updated defaults for autoformatting
 - Updated text fixture launch path
 - Cleaned up files in the repo that should not have been tracked and updated gitignore
-- Time changed to built in type and removed function syntax highlighting. 
+- Time changed to built in type and removed function syntax highlighting. Added depreciation warning.
 - Fixed goto definition for include files
 - Fixed left over C style grammar in ANTLR file to remove syntax errors for valid 12dPL
+- Undeclared variables now trigger an error 
+- Added missing container types to syntax highlight and grammar
+- Added checks for redeclaration of variables 
 
 
 ### Overview
-General cleanup of all code, complete restructure and small bug fixes.
+General cleanup of all code, complete restructure and improvments to the validation.
 
 ---
 
