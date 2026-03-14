@@ -11,6 +11,8 @@ This is a **VS Code Language Server Protocol (LSP) extension** for **12dPL**, th
 
 ## Architecture
 
+All code changes should work towards the architecture defined in ARCHITECTURE.md.
+
 ### Client–Server Split
 
 The project follows standard LSP architecture with two packages:
