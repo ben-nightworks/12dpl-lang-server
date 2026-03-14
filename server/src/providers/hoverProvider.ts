@@ -3,117 +3,18 @@ import type { Connection, HoverParams } from 'vscode-languageserver/node';
 import type { TextDocuments } from 'vscode-languageserver/node';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 
-import { fileUriToFsPath } from '../util/includes.js';
-
-import { prototypesLoader } from '../util/prototypes.js';
-import { typeDocumentation } from '../util/typeDocumentation.js';
-import type { DocumentSymbolStore } from './documentSymbols.js';
-import { getWordAtPosition } from '../util/utils.js';
-import { parseDefinesFromText, type DefineSymbolInfo } from '../util/defines.js';
-import type { FunctionSymbolInfo, VariableSymbolInfo } from '../antlr/symbols.js';
-
-type IncludeSymbolHoverInfo =
-	| { kind: 'function'; signature: string; definedInFsPath: string }
-	| { kind: 'variable'; type?: string; name: string; definedInFsPath: string };
-
-type IncludeHoverCacheEntry = {
-	version: number;
-	byName: Map<string, IncludeSymbolHoverInfo>;
-};
-
-type DefineHoverCacheEntry = {
-	version: number;
-	byName: Map<string, DefineSymbolInfo>;
-};
+import type { SymbolResolver } from '../services/symbolResolver';
+import type { PrototypeService } from '../services/prototypeService';
+import { getWordAtPosition } from '../services/utils.js';
 
 /** Registers hover support for prototypes, types, symbols (local + includes), and `#define` macros. */
 export function registerHoverProvider(opts: {
 	connection: Connection;
 	documents: TextDocuments<TextDocument>;
-	documentSymbols: DocumentSymbolStore;
-	includesProvider: { getIncludeFilesForUri(uri: string): Promise<string[]> };
+	symbolResolver: SymbolResolver;
+	prototypeService: PrototypeService;
 }): void {
-	const { connection, documents, documentSymbols, includesProvider } = opts;
-
-	// Include paths will be fetched per-document (using `scopeUri`) to ensure
-	// we receive resource-scoped settings (workspace + folder + user).
-	const includeHoverCache: Map<string, IncludeHoverCacheEntry> = new Map();
-	const defineHoverCache: Map<string, DefineHoverCacheEntry> = new Map();
-
-	const getIncludeSymbolHoverInfo = async (uri: string, name: string): Promise<IncludeSymbolHoverInfo | null> => {
-		const doc = documents.get(uri);
-		if (!doc) return null;
-
-		const cached = includeHoverCache.get(uri);
-		if (cached && cached.version === doc.version) {
-			return cached.byName.get(name) ?? null;
-		}
-
-		const docFsPath = fileUriToFsPath(uri);
-		if (!docFsPath) return null;
-
-		const includeFiles = await includesProvider.getIncludeFilesForUri(uri);
-
-		const byName = new Map<string, IncludeSymbolHoverInfo>();
-		for (const includeFsPath of includeFiles) {
-			const idx = documentSymbols.getIndexForFsPath(includeFsPath);
-			if (!idx) continue;
-
-			for (const fn of Object.values(idx.functions) as FunctionSymbolInfo[]) {
-				if (byName.has(fn.name)) continue;
-				byName.set(fn.name, {
-					kind: 'function',
-					signature: fn.signature,
-					definedInFsPath: includeFsPath
-				});
-			}
-			for (const v of Object.values(idx.variables) as VariableSymbolInfo[]) {
-				if (byName.has(v.name)) continue;
-				byName.set(v.name, {
-					kind: 'variable',
-					name: v.name,
-					type: v.type,
-					definedInFsPath: includeFsPath
-				});
-			}
-		}
-
-		includeHoverCache.set(uri, { version: doc.version, byName });
-		return byName.get(name) ?? null;
-	};
-
-		const getDefineHoverInfo = async (uri: string, name: string): Promise<DefineSymbolInfo | null> => {
-		const doc = documents.get(uri);
-		if (!doc) return null;
-
-		const cached = defineHoverCache.get(uri);
-		if (cached && cached.version === doc.version) {
-			return cached.byName.get(name) ?? null;
-		}
-
-		const docFsPath = fileUriToFsPath(uri);
-		if (!docFsPath) return null;
-
-		const byName = new Map<string, DefineSymbolInfo>();
-
-		// Local defines
-		for (const d of parseDefinesFromText(doc.getText(), docFsPath)) {
-			if (!byName.has(d.name)) byName.set(d.name, d);
-		}
-
-		// Included defines (use includesProvider to get cached list)
-		const includeFiles = await includesProvider.getIncludeFilesForUri(uri);
-		for (const includeFsPath of includeFiles) {
-			const text = documentSymbols.getTextForFsPath(includeFsPath);
-			if (text == null) continue;
-			for (const d of parseDefinesFromText(text, includeFsPath)) {
-				if (!byName.has(d.name)) byName.set(d.name, d);
-			}
-		}
-
-		defineHoverCache.set(uri, { version: doc.version, byName });
-		return byName.get(name) ?? null;
-	};
+	const { connection, documents, symbolResolver, prototypeService } = opts;
 
 	connection.onHover(async (textDocumentPositionParams: HoverParams) => {
 		try {
@@ -123,90 +24,82 @@ export function registerHoverProvider(opts: {
 			const word = getWordAtPosition(textDocument, textDocumentPositionParams.position);
 			if (!word) return null;
 
-			// Check if it's a prototype
-			const prototype = prototypesLoader.getPrototype(word);
-			if (prototype) {
-				const signature = prototypesLoader.getPrototypeSignature(word);
-				return {
-					contents: [
-						{ language: '12dpl', value: signature || word },
-						prototype.description || 'No description available'
-					]
-				};
-			}
+			const symbol = await symbolResolver.resolve(
+				textDocumentPositionParams.textDocument.uri,
+				word,
+				textDocumentPositionParams.position
+			);
+			if (!symbol) return null;
 
-			// Check if it's a documented type
-			if (typeDocumentation[word]) {
-				return {
-					contents: {
-						kind: 'markdown',
-						value: typeDocumentation[word]
+			switch (symbol.source) {
+				case 'prototype': {
+					// Use enriched documentation when available
+					const proto = prototypeService.getPrototype(word);
+					if (proto) {
+						return {
+							contents: {
+								kind: 'markdown',
+								value: prototypeService.generateDocumentation(proto)
+							}
+						};
 					}
-				};
-			}
+					return {
+						contents: [
+							{ language: '12dpl', value: symbol.prototypeSignature || word },
+							symbol.prototypeDescription || 'No description available'
+						]
+					};
+				}
 
-			// Check if it's a document symbol (variable/function)
-			const docSymbol = documentSymbols.getSymbolInfo(textDocument.uri, word);
-			if (docSymbol) {
-				if (docSymbol.kind === 'function' && docSymbol.signature) {
+				case 'type':
 					return {
 						contents: {
 							kind: 'markdown',
-							value: `\n\n\`\`\`12dpl\n${docSymbol.signature}\n\`\`\`\n`
+							value: symbol.typeDoc || `**Type:** ${word}`
 						}
 					};
-				}
-				if (docSymbol.kind === 'variable') {
-					const line = docSymbol.type ? `${docSymbol.type} ${word}` : word;
+
+				case 'define': {
+					const sig = symbol.defineParams?.length
+						? `#define ${symbol.name}(${symbol.defineParams.join(', ')})${symbol.defineValue ? ` ${symbol.defineValue}` : ''}`
+						: `#define ${symbol.name}${symbol.defineValue ? ` ${symbol.defineValue}` : ''}`;
+					const definedIn = symbol.fsPath ? `\n\nDefined in: ${symbol.fsPath}` : '';
 					return {
 						contents: {
 							kind: 'markdown',
-							value: `\n\n\`\`\`12dpl\n${line}\n\`\`\`\n`
+							value: `**Preprocessor Macro**\n\n\`\`\`12dpl\n${sig}\n\`\`\`${definedIn}`
 						}
 					};
 				}
-			}
 
-			// Check if it's a #define macro (local or from includes)
-			const def = await getDefineHoverInfo(textDocument.uri, word);
-			if (def) {
-				const sig = def.params && def.params.length
-					? `#define ${def.name}(${def.params.join(', ')})${def.value ? ` ${def.value}` : ''}`
-					: `#define ${def.name}${def.value ? ` ${def.value}` : ''}`;
-				return {
-					contents: {
-						kind: 'markdown',
-						value: `**Preprocessor Macro**\n\n\`\`\`12dpl\n${sig}\n\`\`\`\n\nDefined in: ${def.definedInFsPath}`
+				case 'document':
+				case 'include': {
+					const definedIn = symbol.source === 'include' && symbol.fsPath
+						? `\n\nDefined in: ${symbol.fsPath}` : '';
+					if (symbol.kind === 'function' && symbol.signature) {
+						return {
+							contents: {
+								kind: 'markdown',
+								value: `\n\n\`\`\`12dpl\n${symbol.signature}\n\`\`\`\n${definedIn}`
+							}
+						};
 					}
-				};
-			}
+					if (symbol.kind === 'variable') {
+						const line = symbol.type ? `${symbol.type} ${word}` : word;
+						return {
+							contents: {
+								kind: 'markdown',
+								value: `\n\n\`\`\`12dpl\n${line}\n\`\`\`\n${definedIn}`
+							}
+						};
+					}
+					break;
+				}
 
-			// Check included files for symbols
-			const includeSymbol = await getIncludeSymbolHoverInfo(textDocument.uri, word);
-			if (includeSymbol) {
-				if (includeSymbol.kind === 'function') {
+				case 'keyword':
 					return {
-						contents: {
-							kind: 'markdown',
-							value: `\n\n\`\`\`12dpl\n${includeSymbol.signature}\n\`\`\`\n\nDefined in: ${includeSymbol.definedInFsPath}`
-						}
+						contents: `**Keyword:** ${word}`
 					};
-				}
-				const line = includeSymbol.type ? `${includeSymbol.type} ${includeSymbol.name}` : includeSymbol.name;
-				return {
-					contents: {
-						kind: 'markdown',
-						value: `\n\n\`\`\`12dpl\n${line}\n\`\`\`\n\nDefined in: ${includeSymbol.definedInFsPath}`
-					}
-				};
-			}
-
-			// Check if it's a keyword
-			const keywords = ['if', 'else', 'while', 'for', 'return', 'void', 'int', 'double'];
-			if (keywords.includes(word.toLowerCase())) {
-				return {
-					contents: `**Keyword:** ${word}`
-				};
 			}
 
 			return null;

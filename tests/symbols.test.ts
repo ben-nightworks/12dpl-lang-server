@@ -1,5 +1,22 @@
 import { describe, expect, test } from 'bun:test';
-import { collectDocumentSymbolNames, collectDocumentSymbolIndex } from '../server/src/antlr/symbols.ts';
+import { parse } from '../server/src/core/parsePipeline';
+import { collectSymbolTable, deriveViews, toLegacyIndex } from '../server/src/core/symbolCollector';
+import type { DocumentSymbolIndex } from '../server/src/core/types';
+
+function collectDocumentSymbolIndex(text: string): DocumentSymbolIndex {
+	const result = parse(text);
+	const table = collectSymbolTable(result, text);
+	const views = deriveViews(table.root);
+	return toLegacyIndex(views);
+}
+
+function collectDocumentSymbolNames(text: string): { functions: string[]; variables: string[] } {
+	const index = collectDocumentSymbolIndex(text);
+	return {
+		functions: Object.keys(index.functions),
+		variables: Object.keys(index.variables),
+	};
+}
 
 describe('collectDocumentSymbolNames', () => {
 	test('collects variables, parameters, and functions', () => {

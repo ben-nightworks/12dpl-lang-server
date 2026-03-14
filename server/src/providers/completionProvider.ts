@@ -11,15 +11,13 @@ import type { TextDocument } from 'vscode-languageserver-textdocument';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { prototypesLoader } from '../util/prototypes.js';
-import { typeDocumentation } from '../util/typeDocumentation.js';
-import type { DocumentSymbolStore } from './documentSymbols.js';
-import { fileUriToFsPath } from '../util/includes.js';
-import { buildFunctionCallSnippet, fuzzyScore, getWordAtPosition } from '../util/utils.js';
-import { parseDefinesFromText } from '../util/defines.js';
-import type { FunctionSymbolInfo, VariableSymbolInfo } from '../antlr/symbols.js';
-
-type IncludeCompletionCacheEntry = { version: number; items: CompletionItem[] };
+import type { DocumentService } from '../services/documentService';
+import type { IncludeService } from '../services/includeService';
+import type { PrototypeService } from '../services/prototypeService';
+import { typeDocumentation } from '../data/typeDocumentation.js';
+import { fileUriToFsPath } from '../services/includeUtils.js';
+import { buildFunctionCallSnippet, fuzzyScore, getWordAtPosition } from '../services/utils.js';
+import type { SymbolDeclaration } from '../core/types';
 
 type IncludePathContext = {
 	startCharacter: number;
@@ -117,19 +115,40 @@ function buildDefineSnippet(name: string, params: string[] | undefined): { inser
 	return { insertText: `${name}(${placeholders})$0`, insertTextFormat: InsertTextFormat.Snippet };
 }
 
+function defineToCompletionItem(def: SymbolDeclaration): CompletionItem {
+	const { insertText, insertTextFormat } = buildDefineSnippet(def.name, def.defineParams);
+	const sig = def.defineParams?.length
+		? `#define ${def.name}(${def.defineParams.join(', ')})${def.value ? ` ${def.value}` : ''}`
+		: `#define ${def.name}${def.value ? ` ${def.value}` : ''}`;
+	return {
+		label: def.name,
+		kind: def.defineParams?.length ? CompletionItemKind.Function : CompletionItemKind.Constant,
+		detail: sig,
+		insertTextFormat,
+		insertText,
+		data: {
+			source: 'define',
+			kind: def.defineParams?.length ? 'function' : 'object',
+			name: def.name,
+			params: def.defineParams,
+			value: def.value,
+			definedInFsPath: def.definedInFsPath
+		}
+	};
+}
+
 export function registerCompletionProvider(opts: {
 	connection: Connection;
 	documents: TextDocuments<TextDocument>;
-	documentSymbols: DocumentSymbolStore;
-	includesProvider: { getIncludeFilesForUri(uri: string): Promise<string[]> };
+	documentService: DocumentService;
+	includeService: IncludeService;
+	prototypeService: PrototypeService;
 }): void {
-	// Include paths will be fetched per-document using `scopeUri` so resource-scoped
-	// settings (user/workspace/folder) are respected.
 	/**
 	 * NOTE: This provider intentionally returns a fully-ranked completion list.
 	 * VS Code will still apply some client-side heuristics, so we set `filterText`/`sortText` when fuzzing.
 	 */
-	const { connection, documents, documentSymbols } = opts;
+	const { connection, documents, documentService, includeService, prototypeService } = opts;
 
 	const getLabelText = (item: CompletionItem): string => {
 		return typeof item.label === 'string' ? item.label : String(item.label);
@@ -137,130 +156,6 @@ export function registerCompletionProvider(opts: {
 
 	const getSymbolName = (item: CompletionItem): string => {
 		return (typeof item.filterText === 'string' && item.filterText.length) ? item.filterText : getLabelText(item);
-	};
-	const includeCompletionsCache: Map<string, IncludeCompletionCacheEntry> = new Map();
-	const defineCompletionsCache: Map<string, IncludeCompletionCacheEntry> = new Map();
-	const includesProvider = opts.includesProvider;
-
-	const getIncludeFilesForUri = async (uri: string): Promise<string[]> => {
-		return includesProvider.getIncludeFilesForUri(uri);
-	};
-
-	const getIncludeCompletionItems = async (uri: string): Promise<CompletionItem[]> => {
-		const doc = documents.get(uri);
-		if (!doc) return [];
-
-		const cached = includeCompletionsCache.get(uri);
-		if (cached && cached.version === doc.version) return cached.items;
-
-		const includeFiles = await getIncludeFilesForUri(uri);
-
-		const items: CompletionItem[] = [];
-		const byLabel = new Set<string>();
-
-		for (const includeFsPath of includeFiles) {
-			const idx = documentSymbols.getIndexForFsPath(includeFsPath);
-			if (!idx) continue;
-
-			for (const fn of Object.values(idx.functions) as FunctionSymbolInfo[]) {
-				if (byLabel.has(fn.name)) continue;
-				byLabel.add(fn.name);
-				const callSig = typeof fn.signature === 'string' ? (fn.signature.match(/\([^)]*\)\s*$/)?.[0] ?? '') : '';
-				const displayLabel = callSig ? `${fn.name} ${callSig}` : fn.name;
-				items.push({
-					label: displayLabel,
-					kind: CompletionItemKind.Function,
-					detail: fn.signature,
-					filterText: fn.name,
-					insertTextFormat: InsertTextFormat.Snippet,
-					insertText: buildFunctionCallSnippet(fn.name, fn.params),
-					data: { source: 'include', kind: 'function', signature: fn.signature }
-				});
-			}
-
-			for (const v of Object.values(idx.variables) as VariableSymbolInfo[]) {
-				if (byLabel.has(v.name)) continue;
-				byLabel.add(v.name);
-				items.push({
-					label: v.name,
-					kind: CompletionItemKind.Variable,
-					detail: v.type ? `${v.type} ${v.name}` : 'Variable (include)',
-					data: { source: 'include', kind: 'variable', type: v.type }
-				});
-			}
-		}
-
-		includeCompletionsCache.set(uri, { version: doc.version, items });
-		return items;
-	};
-
-	const getDefineCompletionItems = async (uri: string): Promise<CompletionItem[]> => {
-		const doc = documents.get(uri);
-		if (!doc) return [];
-
-		const cached = defineCompletionsCache.get(uri);
-		if (cached && cached.version === doc.version) return cached.items;
-
-		const docFsPath = fileUriToFsPath(uri);
-		if (!docFsPath) return [];
-
-		const items: CompletionItem[] = [];
-		const seen = new Set<string>();
-
-		// Local defines first.
-		for (const def of parseDefinesFromText(doc.getText(), docFsPath)) {
-			if (seen.has(def.name)) continue;
-			seen.add(def.name);
-			const { insertText, insertTextFormat } = buildDefineSnippet(def.name, def.params);
-			items.push({
-				label: def.name,
-				kind: def.params?.length ? CompletionItemKind.Function : CompletionItemKind.Constant,
-				detail: def.params?.length
-					? `#define ${def.name}(${def.params.join(', ')})${def.value ? ` ${def.value}` : ''}`
-					: `#define ${def.name}${def.value ? ` ${def.value}` : ''}`,
-				insertTextFormat,
-				insertText,
-				data: {
-					source: 'define',
-					kind: def.params?.length ? 'function' : 'object',
-					name: def.name,
-					params: def.params,
-					value: def.value,
-					definedInFsPath: def.definedInFsPath
-				}
-			});
-		}
-
-		// Then defines from includes.
-		for (const includeFsPath of await getIncludeFilesForUri(uri)) {
-			const text = documentSymbols.getTextForFsPath(includeFsPath);
-			if (text == null) continue;
-			for (const def of parseDefinesFromText(text, includeFsPath)) {
-				if (seen.has(def.name)) continue;
-				seen.add(def.name);
-				const { insertText, insertTextFormat } = buildDefineSnippet(def.name, def.params);
-				items.push({
-					label: def.name,
-					kind: def.params?.length ? CompletionItemKind.Function : CompletionItemKind.Constant,
-					detail: def.params?.length
-						? `#define ${def.name}(${def.params.join(', ')})${def.value ? ` ${def.value}` : ''}`
-						: `#define ${def.name}${def.value ? ` ${def.value}` : ''}`,
-					insertTextFormat,
-					insertText,
-					data: {
-						source: 'define',
-						kind: def.params?.length ? 'function' : 'object',
-						name: def.name,
-						params: def.params,
-						value: def.value,
-						definedInFsPath: def.definedInFsPath
-					}
-				});
-			}
-		}
-
-		defineCompletionsCache.set(uri, { version: doc.version, items });
-		return items;
 	};
 
 	connection.onCompletion(async (textDocumentPosition: TextDocumentPositionParams): Promise<CompletionItem[]> => {
@@ -284,12 +179,77 @@ export function registerCompletionProvider(opts: {
 
 		const query = doc ? (getWordAtPosition(doc, textDocumentPosition.position) ?? '') : '';
 
-		const symbolItems = documentSymbols.getCompletionItems(textDocumentPosition.textDocument.uri);
-		const defineItems = await getDefineCompletionItems(textDocumentPosition.textDocument.uri);
-		const includeItems = await getIncludeCompletionItems(textDocumentPosition.textDocument.uri);
+		const uri = textDocumentPosition.textDocument.uri;
 
-		// Get completions from loaded prototypes
-		const prototypeItems = prototypesLoader.getCompletionItems();
+		// 1. Document symbols from DerivedViews
+		const symbolItems: CompletionItem[] = [];
+		const views = documentService.getDerivedViews(uri);
+		if (views) {
+			for (const [, decls] of views.exportedFunctions) {
+				const fn = decls[0];
+				const callSig = typeof fn.signature === 'string' ? (fn.signature.match(/\([^)]*\)\s*$/)?.[0] ?? '') : '';
+				const displayLabel = callSig ? `${fn.name} ${callSig}` : fn.name;
+				symbolItems.push({
+					label: displayLabel,
+					kind: CompletionItemKind.Function,
+					detail: fn.signature,
+					filterText: fn.name,
+					insertTextFormat: InsertTextFormat.Snippet,
+					insertText: buildFunctionCallSnippet(fn.name, fn.params),
+					data: { source: 'document', kind: 'function', signature: fn.signature }
+				});
+			}
+			for (const [, v] of views.exportedVariables) {
+				symbolItems.push({
+					label: v.name,
+					kind: CompletionItemKind.Variable,
+					detail: v.type ? `${v.type} ${v.name}` : 'Variable',
+					data: { source: 'document', kind: 'variable', type: v.type }
+				});
+			}
+		}
+
+		// 2. Defines (document + includes)
+		const defineItems: CompletionItem[] = [];
+		const seenDefines = new Set<string>();
+		for (const def of documentService.getDefines(uri)) {
+			if (seenDefines.has(def.name)) continue;
+			seenDefines.add(def.name);
+			defineItems.push(defineToCompletionItem(def));
+		}
+		for (const def of await includeService.getIncludeDefines(uri)) {
+			if (seenDefines.has(def.name)) continue;
+			seenDefines.add(def.name);
+			defineItems.push(defineToCompletionItem(def));
+		}
+
+		// 3. Include symbols
+		const includeItems: CompletionItem[] = [];
+		const includeSymbols = await includeService.getIncludeSymbols(uri);
+		for (const [, fn] of includeSymbols.functions) {
+			const callSig = typeof fn.signature === 'string' ? (fn.signature.match(/\([^)]*\)\s*$/)?.[0] ?? '') : '';
+			const displayLabel = callSig ? `${fn.name} ${callSig}` : fn.name;
+			includeItems.push({
+				label: displayLabel,
+				kind: CompletionItemKind.Function,
+				detail: fn.signature,
+				filterText: fn.name,
+				insertTextFormat: InsertTextFormat.Snippet,
+				insertText: buildFunctionCallSnippet(fn.name, fn.params),
+				data: { source: 'include', kind: 'function', signature: fn.signature }
+			});
+		}
+		for (const [, v] of includeSymbols.variables) {
+			includeItems.push({
+				label: v.name,
+				kind: CompletionItemKind.Variable,
+				detail: v.type ? `${v.type} ${v.name}` : 'Variable (include)',
+				data: { source: 'include', kind: 'variable', type: v.type }
+			});
+		}
+
+		// 4. Prototypes (pre-built by PrototypeService)
+		const prototypeItems = prototypeService.getCompletionItems();
 
 		// Combine with keyword completions
 		const keywordItems: CompletionItem[] = [
@@ -454,11 +414,11 @@ export function registerCompletionProvider(opts: {
 		}
 
 		// Try to get documentation from prototypes
-		const prototype = prototypesLoader.getPrototype(getSymbolName(item));
+		const prototype = prototypeService.getPrototype(getSymbolName(item));
 		if (prototype) {
 			item.documentation = {
 				kind: 'markdown',
-				value: prototypesLoader.generateDocumentation(prototype)
+				value: prototypeService.generateDocumentation(prototype)
 			};
 			return item;
 		}

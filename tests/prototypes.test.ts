@@ -1,22 +1,23 @@
 import { describe, expect, test } from "bun:test";
-import { prototypesLoader } from "../server/src/util/prototypes.ts";
+import { PrototypeService } from "../server/src/services/prototypeService.ts";
 
-describe("prototypesLoader", () => {
+describe("PrototypeService", () => {
 	test("loads prototypes and can resolve common functions", async () => {
-		await prototypesLoader.load();
-		const proto = prototypesLoader.getPrototype("Sin");
+		const service = new PrototypeService();
+		await service.ready;
+		const proto = service.getPrototype("Sin");
 		expect(proto).toBeDefined();
 		expect(proto?.name).toBe("Sin");
 
-		const sig = prototypesLoader.getPrototypeSignature("Sin");
+		const sig = service.getPrototypeSignature("Sin");
 		expect(typeof sig).toBe("string");
 		expect(sig?.includes("Sin(")).toBe(true);
 
-		const items = prototypesLoader.getCompletionItems();
+		const items = service.getCompletionItems();
 		expect(items.length).toBeGreaterThan(1000);
 
 		// Overloads: ensure at least one well-known overloaded function yields >1 signatures.
-		const overloads = prototypesLoader.getPrototypes("Set_data");
+		const overloads = service.getPrototypes("Set_data");
 		expect(overloads.length).toBeGreaterThan(1);
 
 		// And ensure completion returns distinct items for those overloads.
