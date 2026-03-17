@@ -9,19 +9,16 @@ import type { DocumentService } from './documentService';
 import { collectRecursiveIncludeFiles, fileUriToFsPath } from './includeUtils';
 import { parseDefines } from '../core/symbolCollector';
 import type {
-	DocumentSymbolIndex,
 	SymbolDeclaration,
-	FunctionSymbolInfo,
-	VariableSymbolInfo,
 	IncludeFileVariable,
 } from '../core/types';
 import type { TextDocuments } from 'vscode-languageserver/node';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 
-/** Aggregated symbols across all transitive includes. */
+/** Aggregated symbols across all transitive includes, using the unified SymbolDeclaration type. */
 export interface AggregatedSymbols {
-	functions: Map<string, FunctionSymbolInfo>;
-	variables: Map<string, VariableSymbolInfo>;
+	functions: Map<string, SymbolDeclaration[]>;
+	variables: Map<string, SymbolDeclaration>;
 }
 
 type CacheEntry = { version: number; files: string[] };
@@ -72,17 +69,17 @@ export class IncludeService {
 	/** Aggregated symbol index across all transitive includes. */
 	async getIncludeSymbols(uri: string): Promise<AggregatedSymbols> {
 		const files = await this.getIncludeFiles(uri);
-		const functions = new Map<string, FunctionSymbolInfo>();
-		const variables = new Map<string, VariableSymbolInfo>();
+		const functions = new Map<string, SymbolDeclaration[]>();
+		const variables = new Map<string, SymbolDeclaration>();
 
 		for (const fsPath of files) {
-			const index = this.documentService.getIndexForFsPath(fsPath);
-			if (!index) continue;
-			for (const [name, fn] of Object.entries(index.functions)) {
-				if (!functions.has(name)) functions.set(name, fn);
+			const views = this.documentService.getDerivedViewsForFsPath(fsPath);
+			if (!views) continue;
+			for (const [name, decls] of views.exportedFunctions) {
+				if (!functions.has(name)) functions.set(name, decls);
 			}
-			for (const [name, v] of Object.entries(index.variables)) {
-				if (!variables.has(name)) variables.set(name, v);
+			for (const [name, decl] of views.exportedVariables) {
+				if (!variables.has(name)) variables.set(name, decl);
 			}
 		}
 
@@ -113,14 +110,14 @@ export class IncludeService {
 		const result: IncludeFileVariable[] = [];
 
 		for (const filePath of files) {
-			const index = this.documentService.getIndexForFsPath(filePath);
-			if (!index) continue;
+			const views = this.documentService.getDerivedViewsForFsPath(filePath);
+			if (!views) continue;
 			const fileName = filePath.split(/[\\/]/).pop() || filePath;
-			for (const varName of Object.keys(index.variables)) {
-				result.push({ name: varName, sourceFile: fileName, kind: 'variable' });
+			for (const name of views.exportedVariables.keys()) {
+				result.push({ name, sourceFile: fileName, kind: 'variable' });
 			}
-			for (const funcName of Object.keys(index.functions)) {
-				result.push({ name: funcName, sourceFile: fileName, kind: 'function' });
+			for (const name of views.exportedFunctions.keys()) {
+				result.push({ name, sourceFile: fileName, kind: 'function' });
 			}
 		}
 		return result;

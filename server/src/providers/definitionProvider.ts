@@ -3,7 +3,7 @@ import type { TextDocuments } from 'vscode-languageserver/node';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 
 import { fsPathToFileUri } from '../services/includeUtils.js';
-import { getWordAtPosition } from '../services/utils.js';
+import { getWordAtPosition } from '../core/utils.js';
 import type { SymbolResolver } from '../services/symbolResolver';
 import { Location } from 'vscode-languageserver/node';
 

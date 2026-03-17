@@ -86,31 +86,16 @@ export class SymbolResolver {
 
 		// 3. Include symbols (functions + variables)
 		const includeSymbols = await this.includeService.getIncludeSymbols(uri);
-		const inclFn = includeSymbols.functions.get(name);
-		if (inclFn) {
+		const inclFnDecls = includeSymbols.functions.get(name);
+		if (inclFnDecls && inclFnDecls.length > 0) {
+			const inclFn = inclFnDecls[0];
 			const incFsPath = await this.findIncludeFsPathForSymbol(uri, name);
-			return {
-				name: inclFn.name,
-				source: 'include',
-				kind: 'function',
-				signature: inclFn.signature,
-				params: inclFn.params,
-				type: inclFn.returnType,
-				range: inclFn.range,
-				fsPath: incFsPath,
-			};
+			return this.declarationToResolved(inclFn, 'include', undefined, incFsPath);
 		}
 		const inclVar = includeSymbols.variables.get(name);
 		if (inclVar) {
 			const incFsPath = await this.findIncludeFsPathForSymbol(uri, name);
-			return {
-				name: inclVar.name,
-				source: 'include',
-				kind: 'variable',
-				type: inclVar.type,
-				range: inclVar.range,
-				fsPath: incFsPath,
-			};
+			return this.declarationToResolved(inclVar, 'include', undefined, incFsPath);
 		}
 
 		// 4. Include defines
@@ -189,25 +174,12 @@ export class SymbolResolver {
 
 		// 3. Include symbols
 		const includeSymbols = await this.includeService.getIncludeSymbols(uri);
-		for (const [, fn] of includeSymbols.functions) {
-			add({
-				name: fn.name,
-				source: 'include',
-				kind: 'function',
-				signature: fn.signature,
-				params: fn.params,
-				type: fn.returnType,
-				range: fn.range,
-			});
+		for (const [, decls] of includeSymbols.functions) {
+			const fn = decls[0];
+			if (fn) add(this.declarationToResolved(fn, 'include'));
 		}
-		for (const [, v] of includeSymbols.variables) {
-			add({
-				name: v.name,
-				source: 'include',
-				kind: 'variable',
-				type: v.type,
-				range: v.range,
-			});
+		for (const [, decl] of includeSymbols.variables) {
+			add(this.declarationToResolved(decl, 'include'));
 		}
 
 		// 4. Include defines
@@ -249,9 +221,9 @@ export class SymbolResolver {
 	private async findIncludeFsPathForSymbol(uri: string, name: string): Promise<string | undefined> {
 		const files = await this.includeService.getIncludeFiles(uri);
 		for (const fp of files) {
-			const index = this.documentService.getIndexForFsPath(fp);
-			if (!index) continue;
-			if ((index.functions as any)[name] || (index.variables as any)[name]) {
+			const views = this.documentService.getDerivedViewsForFsPath(fp);
+			if (!views) continue;
+			if (views.exportedFunctions.has(name) || views.exportedVariables.has(name)) {
 				return fp;
 			}
 		}

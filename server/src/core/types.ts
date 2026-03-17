@@ -101,36 +101,3 @@ export interface KnownSymbols {
 	variables: Set<string>;
 	defines: Set<string>;
 }
-
-// ─── Legacy compatibility aliases ───────────────────────────────────────────
-
-/** @deprecated Use SymbolDeclaration with kind === 'function' instead */
-export interface FunctionSymbolInfo {
-	name: string;
-	returnType?: string;
-	params: ParameterSymbolInfo[];
-	signature: string;
-	range?: SymbolRange;
-}
-
-/** @deprecated Use SymbolDeclaration with kind === 'variable' instead */
-export interface VariableSymbolInfo {
-	name: string;
-	type?: string;
-	range?: SymbolRange;
-}
-
-/** @deprecated Use DerivedSymbolViews instead */
-export interface DocumentSymbolIndex {
-	functions: Record<string, FunctionSymbolInfo>;
-	variables: Record<string, VariableSymbolInfo>;
-}
-
-/** @deprecated Use SymbolDeclaration with kind === 'define' instead */
-export interface DefineSymbolInfo {
-	name: string;
-	params?: string[];
-	value?: string;
-	definedInFsPath: string;
-	range?: SymbolRange;
-}

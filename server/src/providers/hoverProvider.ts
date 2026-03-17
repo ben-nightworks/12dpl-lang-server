@@ -5,7 +5,7 @@ import type { TextDocument } from 'vscode-languageserver-textdocument';
 
 import type { SymbolResolver } from '../services/symbolResolver';
 import type { PrototypeService } from '../services/prototypeService';
-import { getWordAtPosition } from '../services/utils.js';
+import { getWordAtPosition } from '../core/utils.js';
 
 /** Registers hover support for prototypes, types, symbols (local + includes), and `#define` macros. */
 export function registerHoverProvider(opts: {

@@ -5,7 +5,7 @@
  * No LSP or I/O dependencies.
  */
 
-import type { ParseResult, SymbolTable, ScopeNode, SymbolDeclaration, ParameterSymbolInfo, SymbolRange, DerivedSymbolViews, DocumentSymbolIndex, FunctionSymbolInfo, VariableSymbolInfo } from './types';
+import type { ParseResult, SymbolTable, ScopeNode, SymbolDeclaration, ParameterSymbolInfo, SymbolRange, DerivedSymbolViews } from './types';
 import type { DirectDeclaratorContext, DeclaratorContext } from '../antlr/src/proglang12dParser';
 
 const GENERATED_WRAPPER_PREFIX = '__12dpl__script__';
@@ -509,36 +509,4 @@ export function deriveViews(root: ScopeNode): DerivedSymbolViews {
 	collectAllFunctions(root);
 
 	return { exportedFunctions, exportedVariables, allFunctions };
-}
-
-// ─── Legacy compatibility ───────────────────────────────────────────────────
-
-/**
- * Converts derived views into the legacy DocumentSymbolIndex format.
- * Used for backward compatibility with existing provider code during migration.
- */
-export function toLegacyIndex(views: DerivedSymbolViews): DocumentSymbolIndex {
-	const functions: Record<string, FunctionSymbolInfo> = {};
-	const variables: Record<string, VariableSymbolInfo> = {};
-
-	for (const [name, decls] of views.exportedFunctions) {
-		const d = decls[0];
-		functions[name] = {
-			name: d.name,
-			returnType: d.returnType,
-			params: d.params ?? [],
-			signature: d.signature ?? d.name,
-			range: d.range,
-		};
-	}
-
-	for (const [name, d] of views.exportedVariables) {
-		variables[name] = {
-			name: d.name,
-			type: d.type,
-			range: d.range,
-		};
-	}
-
-	return { functions, variables };
 }

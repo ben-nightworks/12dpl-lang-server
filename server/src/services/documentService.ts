@@ -7,13 +7,12 @@
 
 import * as fs from 'fs';
 import { parse } from '../core/parsePipeline';
-import { collectSymbolTable, deriveViews, toLegacyIndex, parseDefines } from '../core/symbolCollector';
+import { collectSymbolTable, deriveViews, parseDefines } from '../core/symbolCollector';
 import { canonicalizeFsPath, fileUriToFsPath } from './includeUtils';
 import type {
 	ParseResult,
 	SymbolTable,
 	DerivedSymbolViews,
-	DocumentSymbolIndex,
 	SymbolDeclaration,
 } from '../core/types';
 import type { TextDocuments } from 'vscode-languageserver/node';
@@ -82,12 +81,6 @@ export class DocumentService {
 		return this.documentState.get(uri)?.text ?? null;
 	}
 
-	/** Returns the legacy DocumentSymbolIndex, for backward-compat during migration. */
-	getLegacyIndex(uri: string): DocumentSymbolIndex | null {
-		const views = this.getDerivedViews(uri);
-		return views ? toLegacyIndex(views) : null;
-	}
-
 	/** Returns defines for an open document. */
 	getDefines(uri: string): SymbolDeclaration[] {
 		this.ensureUpToDate(uri);
@@ -108,11 +101,6 @@ export class DocumentService {
 		return this.ensureHeaderLoaded(fsPath)?.text ?? null;
 	}
 
-	getHeaderLegacyIndex(fsPath: string): DocumentSymbolIndex | null {
-		const views = this.getHeaderDerivedViews(fsPath);
-		return views ? toLegacyIndex(views) : null;
-	}
-
 	getHeaderDefines(fsPath: string): SymbolDeclaration[] {
 		return this.ensureHeaderLoaded(fsPath)?.symbolTable.defines ?? [];
 	}
@@ -126,11 +114,11 @@ export class DocumentService {
 		try { return fs.readFileSync(fsPath, 'utf-8'); } catch { return null; }
 	}
 
-	/** Returns the legacy index for an open document or a cached on-disk header. */
-	getIndexForFsPath(fsPath: string): DocumentSymbolIndex | null {
-		const openIndex = this.getIndexForOpenDocumentFsPath(fsPath);
-		if (openIndex) return openIndex;
-		return this.getHeaderLegacyIndex(fsPath);
+	/** Returns derived views for an open document or a cached on-disk header. */
+	getDerivedViewsForFsPath(fsPath: string): DerivedSymbolViews | null {
+		const openViews = this.getDerivedViewsForOpenDocumentFsPath(fsPath);
+		if (openViews) return openViews;
+		return this.getHeaderDerivedViews(fsPath);
 	}
 
 	/** Returns defines for a file (open doc by fsPath, or on-disk). */
@@ -209,12 +197,12 @@ export class DocumentService {
 		return null;
 	}
 
-	private getIndexForOpenDocumentFsPath(fsPath: string): DocumentSymbolIndex | null {
+	private getDerivedViewsForOpenDocumentFsPath(fsPath: string): DerivedSymbolViews | null {
 		const target = canonicalizeFsPath(fsPath);
 		for (const d of this.documents.all()) {
 			const p = fileUriToFsPath(d.uri);
 			if (!p) continue;
-			if (canonicalizeFsPath(p) === target) return this.getLegacyIndex(d.uri);
+			if (canonicalizeFsPath(p) === target) return this.getDerivedViews(d.uri);
 		}
 		return null;
 	}

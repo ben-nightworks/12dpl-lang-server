@@ -2,9 +2,9 @@ import { describe, expect, test } from "bun:test";
 import * as fs from "fs";
 import * as path from "path";
 import { parse } from "../server/src/core/parsePipeline";
-import { collectSymbolTable, deriveViews, toLegacyIndex } from "../server/src/core/symbolCollector";
+import { collectSymbolTable, deriveViews } from "../server/src/core/symbolCollector";
 import { validateRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls } from "../server/src/core/validators";
-import type { IncludeFileVariable, KnownSymbols, DocumentSymbolIndex } from "../server/src/core/types";
+import type { IncludeFileVariable, KnownSymbols, DerivedSymbolViews } from "../server/src/core/types";
 
 // The core validators return vscode-languageserver Diagnostic objects.
 // We use `any` here to avoid importing the LSP package from the test runner.
@@ -45,11 +45,10 @@ function ValidateWithSymbols(text: string, knownSymbols: KnownSymbols): Diagnost
 	return diagnostics;
 }
 
-function collectDocumentSymbolIndex(text: string): DocumentSymbolIndex {
+function collectDerivedViews(text: string): DerivedSymbolViews {
 	const result = parse(text);
 	const table = collectSymbolTable(result, text);
-	const views = deriveViews(table.root);
-	return toLegacyIndex(views);
+	return deriveViews(table.root);
 }
 
 function repoRoot(): string {
@@ -272,14 +271,14 @@ void main() {
 		].join('\n');
 
 		// Step 1: Collect symbols from header (same as server.ts does)
-		const headerIndex = collectDocumentSymbolIndex(headerCode);
+		const headerViews = collectDerivedViews(headerCode);
 
 		// Step 2: Build includeFileVariables the same way server.ts does
 		const includeFileVariables: IncludeFileVariable[] = [];
-		for (const varName of Object.keys(headerIndex.variables)) {
+		for (const varName of headerViews.exportedVariables.keys()) {
 			includeFileVariables.push({ name: varName, sourceFile: 'header.h', kind: 'variable' });
 		}
-		for (const funcName of Object.keys(headerIndex.functions)) {
+		for (const funcName of headerViews.exportedFunctions.keys()) {
 			includeFileVariables.push({ name: funcName, sourceFile: 'header.h', kind: 'function' });
 		}
 
@@ -289,10 +288,10 @@ void main() {
 			variables: new Set<string>(),
 			defines: new Set<string>()
 		};
-		for (const fn of Object.keys(headerIndex.functions)) {
+		for (const fn of headerViews.exportedFunctions.keys()) {
 			knownSymbols.functions.add(fn.toLowerCase());
 		}
-		for (const v of Object.keys(headerIndex.variables)) {
+		for (const v of headerViews.exportedVariables.keys()) {
 			knownSymbols.variables.add(v.toLowerCase());
 		}
 

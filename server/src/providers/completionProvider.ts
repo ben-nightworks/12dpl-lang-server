@@ -16,7 +16,7 @@ import type { IncludeService } from '../services/includeService';
 import type { PrototypeService } from '../services/prototypeService';
 import { typeDocumentation } from '../data/typeDocumentation.js';
 import { fileUriToFsPath } from '../services/includeUtils.js';
-import { buildFunctionCallSnippet, fuzzyScore, getWordAtPosition } from '../services/utils.js';
+import { buildFunctionCallSnippet, fuzzyScore, getWordAtPosition } from '../core/utils.js';
 import type { SymbolDeclaration } from '../core/types';
 
 type IncludePathContext = {
@@ -226,7 +226,9 @@ export function registerCompletionProvider(opts: {
 		// 3. Include symbols
 		const includeItems: CompletionItem[] = [];
 		const includeSymbols = await includeService.getIncludeSymbols(uri);
-		for (const [, fn] of includeSymbols.functions) {
+		for (const [, decls] of includeSymbols.functions) {
+			const fn = decls[0];
+			if (!fn) continue;
 			const callSig = typeof fn.signature === 'string' ? (fn.signature.match(/\([^)]*\)\s*$/)?.[0] ?? '') : '';
 			const displayLabel = callSig ? `${fn.name} ${callSig}` : fn.name;
 			includeItems.push({

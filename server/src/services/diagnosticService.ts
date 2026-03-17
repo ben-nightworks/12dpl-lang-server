@@ -10,8 +10,6 @@ import type { DocumentService } from './documentService';
 import type { IncludeService } from './includeService';
 import type { PrototypeService } from './prototypeService';
 import { validateRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls } from '../core/validators';
-import { parseDefines } from '../core/symbolCollector';
-import { fileUriToFsPath } from './includeUtils';
 import type { KnownSymbols } from '../core/types';
 
 export class DiagnosticService {
@@ -80,13 +78,12 @@ export class DiagnosticService {
 		}
 
 		// Document symbols
-		const docFsPath = fileUriToFsPath(uri);
-		const docIndex = docFsPath ? this.documentService.getIndexForFsPath(docFsPath) : null;
-		if (docIndex) {
-			for (const fn of Object.keys(docIndex.functions)) {
+		const docViews = this.documentService.getDerivedViews(uri);
+		if (docViews) {
+			for (const fn of docViews.exportedFunctions.keys()) {
 				knownSymbols.functions.add(fn.toLowerCase());
 			}
-			for (const v of Object.keys(docIndex.variables)) {
+			for (const v of docViews.exportedVariables.keys()) {
 				knownSymbols.variables.add(v.toLowerCase());
 			}
 		}
@@ -100,12 +97,12 @@ export class DiagnosticService {
 		// Include file symbols and defines
 		const includeFiles = await this.includeService.getIncludeFiles(uri);
 		for (const includeFsPath of includeFiles) {
-			const idx = this.documentService.getIndexForFsPath(includeFsPath);
-			if (idx) {
-				for (const fn of Object.keys(idx.functions)) {
+			const views = this.documentService.getDerivedViewsForFsPath(includeFsPath);
+			if (views) {
+				for (const fn of views.exportedFunctions.keys()) {
 					knownSymbols.functions.add(fn.toLowerCase());
 				}
-				for (const v of Object.keys(idx.variables)) {
+				for (const v of views.exportedVariables.keys()) {
 					knownSymbols.variables.add(v.toLowerCase());
 				}
 			}

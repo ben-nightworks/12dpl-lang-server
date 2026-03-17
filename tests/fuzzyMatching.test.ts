@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { fuzzyScore } from '../server/src/services/utils.ts';
+import { fuzzyScore } from '../server/src/core/utils.ts';
 
 describe('fuzzyScore', () => {
 	test('returns null for empty query', () => {

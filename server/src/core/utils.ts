@@ -1,6 +1,6 @@
 import type { Position } from 'vscode-languageserver/node';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
-import type { ParameterSymbolInfo } from '../core/types';
+import type { ParameterSymbolInfo } from './types';
 
 /**
  * Returns the identifier-like word under the given position.
