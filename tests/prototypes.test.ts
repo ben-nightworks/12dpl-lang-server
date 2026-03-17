@@ -16,12 +16,15 @@ describe("PrototypeService", () => {
 		const items = service.getCompletionItems();
 		expect(items.length).toBeGreaterThan(1000);
 
-		// Overloads: ensure at least one well-known overloaded function yields >1 signatures.
+		// Overloads: ensure at least one well-known overloaded function has multiple prototypes.
 		const overloads = service.getPrototypes("Set_data");
 		expect(overloads.length).toBeGreaterThan(1);
 
-		// And ensure completion returns distinct items for those overloads.
+		// Completion items now group overloads into a single item with a count in labelDetails.
 		const overloadItems = items.filter(i => (i as any).filterText === "Set_data");
-		expect(overloadItems.length).toBeGreaterThan(1);
+		expect(overloadItems.length).toBe(1);
+		// The grouped item should show "+N overloads" in labelDetails
+		const groupedItem = overloadItems[0];
+		expect((groupedItem as any).labelDetails?.detail).toContain("overloads");
 	});
 });

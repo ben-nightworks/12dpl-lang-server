@@ -61,30 +61,23 @@ export class PrototypeService {
 				return (a.id ?? 0) - (b.id ?? 0);
 			});
 
-			const isOverloaded = overloads.length > 1;
-			for (const func of overloads) {
-				const label = isOverloaded ? this.generateOverloadLabel(func) : func.name;
-				const sortText = isOverloaded
-					? `${nameKey} ${String(func.parameters?.length ?? 0).padStart(3, '0')} ${String(func.id ?? 0).padStart(6, '0')}`
-					: nameKey;
+			const primaryFunc = overloads[0];
+			const overloadCount = overloads.length;
 
-				this.completionItems.push({
-					label,
-					kind: CompletionItemKind.Function,
-					detail: this.generateSignature(func),
-					insertText: this.generateSnippet(func),
-					insertTextFormat: InsertTextFormat.Snippet,
-					filterText: func.name,
-					sortText,
-					data: { source: 'prototype', name: func.name, id: func.id }
-				});
-			}
+			const detailText = this.generateSignature(primaryFunc);
+			const labelDetail: { detail: string } | undefined = overloadCount > 1 ? { detail: `+${overloadCount - 1} overloads` } : undefined;
+
+			this.completionItems.push({
+				label: primaryFunc.name,
+				labelDetails: labelDetail,
+				kind: CompletionItemKind.Function,
+				detail: detailText,
+				insertText: this.generateSnippet(primaryFunc),
+				insertTextFormat: InsertTextFormat.Snippet,
+				filterText: primaryFunc.name,
+				data: { source: 'prototype', name: primaryFunc.name, id: primaryFunc.id }
+			} as any);
 		}
-	}
-
-	private generateOverloadLabel(func: FunctionData): string {
-		const params = func.parameters?.map(p => `${p.type} ${p.name}`.trim()).join(', ') ?? '';
-		return `${func.name}(${params})`;
 	}
 
 	private generateSnippet(func: FunctionData): string {

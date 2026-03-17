@@ -469,6 +469,7 @@ export function deriveViews(root: ScopeNode): DerivedSymbolViews {
 	// Exported symbols come from:
 	// - Declarations in the global scope
 	// - Declarations in wrapper function scopes (which act as global)
+	// - Variables in block scopes under wrapper functions (global variables)
 	function collectExported(scope: ScopeNode) {
 		for (const decl of scope.declarations) {
 			if (isGeneratedWrapperFunctionName(decl.name)) continue;
@@ -481,6 +482,13 @@ export function deriveViews(root: ScopeNode): DerivedSymbolViews {
 				if (!exportedVariables.has(decl.name)) {
 					exportedVariables.set(decl.name, decl);
 				}
+			}
+		}
+		
+		// Recursively collect from block children (e.g., global variable blocks inside wrapper functions)
+		for (const child of scope.children) {
+			if (child.kind === 'block') {
+				collectExported(child);
 			}
 		}
 	}

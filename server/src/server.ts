@@ -171,7 +171,7 @@ documents.onDidChangeContent(change => {
 
 // ─── Register providers ─────────────────────────────────────────────────────
 
-registerCompletionProvider({ connection, documents, documentService, includeService, prototypeService });
+registerCompletionProvider({ connection, documents, documentService, includeService, prototypeService, symbolResolver });
 registerDefinitionProvider({ connection, documents, symbolResolver });
 registerHoverProvider({ connection, documents, symbolResolver, prototypeService });
 registerFormattingProvider({ connection, documents });

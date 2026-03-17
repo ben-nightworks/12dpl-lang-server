@@ -14,9 +14,11 @@ import * as path from 'path';
 import type { DocumentService } from '../services/documentService';
 import type { IncludeService } from '../services/includeService';
 import type { PrototypeService } from '../services/prototypeService';
+import type { SymbolResolver, ResolvedSymbol } from '../services/symbolResolver';
 import { typeDocumentation } from '../data/typeDocumentation.js';
 import { fileUriToFsPath } from '../services/includeUtils.js';
 import { buildFunctionCallSnippet, fuzzyScore, getWordAtPosition } from '../core/utils.js';
+import { visibleSymbolsAt } from '../core/symbolCollector.js';
 import type { SymbolDeclaration } from '../core/types';
 
 type IncludePathContext = {
@@ -137,18 +139,55 @@ function defineToCompletionItem(def: SymbolDeclaration): CompletionItem {
 	};
 }
 
+function resolvedSymbolToCompletionItem(sym: ResolvedSymbol): CompletionItem {
+	const isFn = sym.kind === 'function' || sym.kind === 'parameter';
+	
+	// For functions: add call signature to label
+	let label = sym.name;
+	if (sym.kind === 'function' && sym.signature) {
+		const callSig = sym.signature.match(/\([^)]*\)\s*$/)?.[0] ?? '';
+		if (callSig) label = `${sym.name} ${callSig}`;
+	}
+
+	const item: CompletionItem = {
+		label,
+		kind: sym.kind === 'function' ? CompletionItemKind.Function
+			: sym.kind === 'parameter' ? CompletionItemKind.Variable
+			: sym.kind === 'variable' ? CompletionItemKind.Variable
+			: CompletionItemKind.Text,
+		detail: sym.kind === 'function' ? sym.signature
+			: sym.kind === 'variable' || sym.kind === 'parameter' ? (sym.type ? `${sym.type} ${sym.name}` : sym.name)
+			: undefined,
+		filterText: sym.name,
+		data: {
+			source: sym.source,
+			kind: sym.kind,
+			signature: sym.signature,
+			type: sym.type
+		}
+	};
+
+	if (isFn && sym.params) {
+		item.insertTextFormat = InsertTextFormat.Snippet;
+		item.insertText = buildFunctionCallSnippet(sym.name, sym.params);
+	}
+
+	return item;
+}
+
 export function registerCompletionProvider(opts: {
 	connection: Connection;
 	documents: TextDocuments<TextDocument>;
 	documentService: DocumentService;
 	includeService: IncludeService;
 	prototypeService: PrototypeService;
+	symbolResolver: SymbolResolver;
 }): void {
 	/**
 	 * NOTE: This provider intentionally returns a fully-ranked completion list.
 	 * VS Code will still apply some client-side heuristics, so we set `filterText`/`sortText` when fuzzing.
 	 */
-	const { connection, documents, documentService, includeService, prototypeService } = opts;
+	const { connection, documents, documentService, includeService, prototypeService, symbolResolver } = opts;
 
 	const getLabelText = (item: CompletionItem): string => {
 		return typeof item.label === 'string' ? item.label : String(item.label);
@@ -181,31 +220,88 @@ export function registerCompletionProvider(opts: {
 
 		const uri = textDocumentPosition.textDocument.uri;
 
-		// 1. Document symbols from DerivedViews
+		// 1. Document symbols - combines local variables AND global functions/variables with overloads grouped
 		const symbolItems: CompletionItem[] = [];
 		const views = documentService.getDerivedViews(uri);
-		if (views) {
-			for (const [, decls] of views.exportedFunctions) {
-				const fn = decls[0];
-				const callSig = typeof fn.signature === 'string' ? (fn.signature.match(/\([^)]*\)\s*$/)?.[0] ?? '') : '';
-				const displayLabel = callSig ? `${fn.name} ${callSig}` : fn.name;
-				symbolItems.push({
-					label: displayLabel,
-					kind: CompletionItemKind.Function,
-					detail: fn.signature,
-					filterText: fn.name,
-					insertTextFormat: InsertTextFormat.Snippet,
-					insertText: buildFunctionCallSnippet(fn.name, fn.params),
-					data: { source: 'document', kind: 'function', signature: fn.signature }
-				});
+		const symbolTable = documentService.getSymbolTable(uri);
+		
+		// Get local/scoped symbols at cursor position
+		const localSymbols = symbolTable ? visibleSymbolsAt(symbolTable.root, textDocumentPosition.position) : [];
+		const localNames = new Set(localSymbols.map((s: SymbolDeclaration) => s.name.toLowerCase()));
+		
+		// Group all functions (locals + globals) by name to handle overloads
+		const functionsByName = new Map<string, SymbolDeclaration[]>();
+		
+		// Add local functions
+		for (const sym of localSymbols) {
+			if (!sym.name.startsWith('__12dpl__script__') && sym.kind === 'function') {
+				const key = sym.name.toLowerCase();
+				if (!functionsByName.has(key)) {
+					functionsByName.set(key, []);
+				}
+				functionsByName.get(key)!.push(sym);
 			}
+		}
+		
+		// Add global functions (from derived views)
+		if (views && views.exportedFunctions.size > 0) {
+			for (const [, decls] of views.exportedFunctions) {
+				if (decls.length > 0) {
+					const key = decls[0].name.toLowerCase();
+					// Only add if not already in local scope
+					if (!functionsByName.has(key)) {
+						functionsByName.set(key, decls);
+					}
+				}
+			}
+		}
+		
+		// Create completion items for grouped functions
+		for (const [, funcs] of functionsByName) {
+			const primaryFn = funcs[0];
+			const overloadCount = funcs.length;
+			const callSig = typeof primaryFn.signature === 'string' ? (primaryFn.signature.match(/\([^)]*\)\s*$/)?.[0] ?? '') : '';
+			
+const detailText = primaryFn.signature ?? '';
+			
+			symbolItems.push({
+				label: primaryFn.name,
+				labelDetails: callSig && overloadCount === 1 ? { detail: callSig } : 
+					       overloadCount > 1 ? { detail: `+${overloadCount - 1} overloads` } : undefined,
+				kind: CompletionItemKind.Function,
+				detail: detailText,
+				filterText: primaryFn.name,
+				insertTextFormat: InsertTextFormat.Snippet,
+				insertText: buildFunctionCallSnippet(primaryFn.name, primaryFn.params),
+				data: { source: 'document', kind: 'function', signature: primaryFn.signature }
+			} as any);
+		}
+		
+		// Add local variables (non-functions)
+		for (const sym of localSymbols) {
+			if (!sym.name.startsWith('__12dpl__script__') && sym.kind !== 'function') {
+				symbolItems.push(resolvedSymbolToCompletionItem({
+					name: sym.name,
+					kind: sym.kind,
+					source: 'document',
+					type: sym.type,
+					signature: sym.signature,
+					params: sym.params
+				}));
+			}
+		}
+		
+		// Add global variables (skip if shadowed by local)
+		if (views && views.exportedVariables.size > 0) {
 			for (const [, v] of views.exportedVariables) {
-				symbolItems.push({
-					label: v.name,
-					kind: CompletionItemKind.Variable,
-					detail: v.type ? `${v.type} ${v.name}` : 'Variable',
-					data: { source: 'document', kind: 'variable', type: v.type }
-				});
+				if (!localNames.has(v.name.toLowerCase())) {
+					symbolItems.push({
+						label: v.name,
+						kind: CompletionItemKind.Variable,
+						detail: v.type ? `${v.type} ${v.name}` : 'Variable',
+						data: { source: 'document', kind: 'variable', type: v.type }
+					});
+				}
 			}
 		}
 
@@ -227,19 +323,26 @@ export function registerCompletionProvider(opts: {
 		const includeItems: CompletionItem[] = [];
 		const includeSymbols = await includeService.getIncludeSymbols(uri);
 		for (const [, decls] of includeSymbols.functions) {
-			const fn = decls[0];
-			if (!fn) continue;
-			const callSig = typeof fn.signature === 'string' ? (fn.signature.match(/\([^)]*\)\s*$/)?.[0] ?? '') : '';
-			const displayLabel = callSig ? `${fn.name} ${callSig}` : fn.name;
+			// Group overloads - show one item with overload count
+			const primaryFn = decls[0];
+			if (!primaryFn) continue;
+			
+			const overloadCount = decls.length;
+			const callSig = typeof primaryFn.signature === 'string' ? (primaryFn.signature.match(/\([^)]*\)\s*$/)?.[0] ?? '') : '';
+			
+const detailText = primaryFn.signature ?? '';
+			
 			includeItems.push({
-				label: displayLabel,
+				label: primaryFn.name,
+				labelDetails: callSig && overloadCount === 1 ? { detail: callSig } : 
+					       overloadCount > 1 ? { detail: `+${overloadCount - 1} overloads` } : undefined,
 				kind: CompletionItemKind.Function,
-				detail: fn.signature,
-				filterText: fn.name,
+				detail: detailText,
+				filterText: primaryFn.name,
 				insertTextFormat: InsertTextFormat.Snippet,
-				insertText: buildFunctionCallSnippet(fn.name, fn.params),
-				data: { source: 'include', kind: 'function', signature: fn.signature }
-			});
+				insertText: buildFunctionCallSnippet(primaryFn.name, primaryFn.params),
+				data: { source: 'include', kind: 'function', signature: primaryFn.signature }
+			} as any);
 		}
 		for (const [, v] of includeSymbols.variables) {
 			includeItems.push({
@@ -309,13 +412,13 @@ export function registerCompletionProvider(opts: {
 			data: type
 		}));
 
-		// De-dupe by label while preserving priority (document symbols first).
+		// De-dupe by symbol name (overloads are now grouped, so no need for signature-based dedup)
 		const seen = new Set<string>();
 		const out: CompletionItem[] = [];
 		for (const originalItem of [...symbolItems, ...defineItems, ...includeItems, ...keywordItems, ...typeItems, ...prototypeItems]) {
-			const key = getSymbolName(originalItem);
-			if (seen.has(key)) continue;
-			seen.add(key);
+			const symbolName = getSymbolName(originalItem);
+			if (seen.has(symbolName)) continue;
+			seen.add(symbolName);
 			// Clone to avoid mutating cached/shared items (e.g. prototypes).
 			out.push({ ...originalItem });
 		}
