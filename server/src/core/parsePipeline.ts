@@ -1,16 +1,15 @@
+/**
+ * Core parse pipeline — preprocesses raw source text and produces a ParseResult.
+ *
+ * Wraps the existing ANTLR pipeline functions into a single `parse()` entry point.
+ * No LSP or I/O dependencies.
+ */
+
 import { CharStream, CommonTokenStream } from 'antlr4';
-
-import proglang12dLexer from './src/proglang12dLexer';
-import proglang12dParser from './src/proglang12dParser';
-
-/** The lexer/parser pair used by validation and symbol extraction. */
-export interface LexerAndParser {
-	lexer: proglang12dLexer;
-	parser: proglang12dParser;
-	transformedText: string;
-	/** 1-based line numbers that are inside conditional #if/#ifdef/#ifndef blocks (kept first branch). */
-	conditionalLines: Set<number>;
-}
+import type { ErrorListener, RecognitionException } from 'antlr4';
+import proglang12dLexer from '../antlr/src/proglang12dLexer';
+import proglang12dParser from '../antlr/src/proglang12dParser';
+import type { ParseResult, SyntaxError } from './types';
 
 /**
  * Removes conditional/preprocessor directive lines before parsing.
@@ -18,20 +17,6 @@ export interface LexerAndParser {
  * Keeps line numbers stable by replacing stripped lines with empty lines.
  */
 export function stripConditionalDirectives(documentText: string): { text: string; conditionalLines: Set<number> } {
-	// The lexer has rules to skip some preprocessor directives, but real-world
-	// headers include macros containing '#'/'##' which can defeat simplistic lexer
-	// skipping and leak tokens into the parser.
-	//
-	// For parsing/validation, we treat ALL preprocessor directive lines as non-code,
-	// including multi-line continuations with a trailing '\\'. We preserve
-	// line numbers by replacing stripped lines with empty lines.
-	//
-	// Additionally, content inside `#if 0` blocks is dead code and must be
-	// stripped entirely (not just the directive lines).
-	//
-	// For non-zero `#if`/`#ifdef`/`#ifndef` blocks, we keep only the first branch
-	// and strip `#else`/`#elif` branches to avoid false "already declared" errors
-	// when different branches declare the same variable.
 	const lines = documentText.split(/\r?\n/);
 	const out: string[] = [];
 	let inDirectiveContinuation = false;
@@ -121,10 +106,6 @@ export function stripConditionalDirectives(documentText: string): { text: string
  * Inserts tokens without adding newlines to preserve line mapping.
  */
 export function wrapTopLevelScriptsPreservingLines(documentText: string): string {
-	// Wrap any top-level “script” segments (blocks/statements outside functions)
-	// in implicit functions so the compilationUnit grammar can parse them.
-	//
-	// We only *insert* tokens (no newlines) to keep line numbers stable.
 	const text = documentText;
 	const insertions = new Map<number, string>();
 
@@ -179,14 +160,12 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 
 	const tryMatchFunctionSignatureAt = (i: number): boolean => {
 		let j = skipWhitespace(i);
-		// Read a potential type keyword
 		const kwStart = j;
 		while (j < text.length && isIdentChar(text[j])) j++;
 		if (j === kwStart) return false;
 		const kw = text.slice(kwStart, j);
 		if (!typeKeywords.has(kw)) return false;
 		j = skipWhitespace(j);
-		// Must be followed by an identifier (function name)
 		if (!/[A-Za-z_0-9]/.test(text[j] || '')) return false;
 		j++;
 		while (j < text.length && isIdentChar(text[j])) j++;
@@ -199,8 +178,6 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 		const ch = text[j] || '';
 		const next = text[j + 1] || '';
 		if (!ch) return false;
-		// Preprocessor-like directives (e.g. #define/#include) are handled by the lexer
-		// and should not trigger implicit script wrapping.
 		if (ch === '#') return false;
 		if (ch === '/' && (next === '/' || next === '*')) return false;
 		if (ch === '\r' || ch === '\n') return false;
@@ -251,17 +228,13 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 			continue;
 		}
 
-		// Track brace depth to know when we're at the top-level.
 		if (ch === '{') {
-			// If we recently saw a function signature at top-level, this '{' is the function body.
 			if (braceDepth === 0 && parenDepth === 0 && bracketDepth === 0 && awaitingFunctionBody) {
 				awaitingFunctionBody = false;
 				braceDepth++;
 				continue;
 			}
 
-			// If this is a top-level block at the start of a line, open a wrapper *before*
-			// consuming the '{' so the wrapper encloses the block.
 			if (
 				braceDepth === 0 &&
 				parenDepth === 0 &&
@@ -284,7 +257,6 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 			continue;
 		}
 		if (ch === ';' && braceDepth === 0 && parenDepth === 0 && bracketDepth === 0 && awaitingFunctionBody) {
-			// Likely a prototype declaration ended; no body is coming.
 			awaitingFunctionBody = false;
 			continue;
 		}
@@ -313,7 +285,6 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 			continue;
 		}
 
-		// At top-level line start: decide whether to open/close a wrapper.
 		if (tryMatchFunctionSignatureAt(i)) {
 			if (inScriptWrapper) {
 				insertions.set(i, (insertions.get(i) || '') + '}');
@@ -327,9 +298,6 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 			continue;
 		}
 
-		// If we're awaiting a function body (saw a signature but haven't
-		// seen the opening '{' yet), don't start a wrapper — the upcoming
-		// '{' belongs to the function definition, not a script block.
 		if (awaitingFunctionBody) {
 			continue;
 		}
@@ -360,26 +328,54 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 	return out;
 }
 
+class SyntaxErrorListener implements ErrorListener<any> {
+	public errors: SyntaxError[] = [];
 
-/**
- * Normalizes raw source text into something the ANTLR grammar can parse reliably.
- *
- * This strips directive lines and wraps top-level script blocks.
- */
-export function prepareDocumentTextForParser(documentText: string): { text: string; conditionalLines: Set<number> } {
-	const { text: cleanedText, conditionalLines } = stripConditionalDirectives(documentText);
-	return { text: wrapTopLevelScriptsPreservingLines(cleanedText), conditionalLines };
+	syntaxError(
+		_recognizer: any,
+		_offendingSymbol: any,
+		line: number,
+		column: number,
+		msg: string,
+		_e: RecognitionException | undefined
+	): void {
+		this.errors.push({ line, column, message: msg });
+	}
+
+	// Required by ANTLR's ProxyErrorListener during ambiguity resolution
+	reportAmbiguity(): void { /* no-op */ }
+	reportAttemptingFullContext(): void { /* no-op */ }
+	reportContextSensitivity(): void { /* no-op */ }
 }
 
-/** Creates and configures an ANTLR lexer/parser for a 12dPL document. */
-export function createLexerAndParser(documentText: string): LexerAndParser {
-	const { text: transformedText, conditionalLines } = prepareDocumentTextForParser(documentText);
+/**
+ * Parses a raw 12dPL document into a `ParseResult`.
+ *
+ * Performs preprocessing (strip conditionals, wrap scripts) then ANTLR lexing/parsing.
+ * The returned result is the single artifact all downstream consumers share.
+ */
+export function parse(documentText: string): ParseResult {
+	const { text: strippedText, conditionalLines } = stripConditionalDirectives(documentText);
+	const transformedText = wrapTopLevelScriptsPreservingLines(strippedText);
+
 	const chars = new CharStream(transformedText);
 	const lexer = new proglang12dLexer(chars);
 	const tokens = new CommonTokenStream(lexer);
 	const parser = new proglang12dParser(tokens);
-	// Needed for traversals (e.g. symbol collection) that rely on ctx.children.
-	// antlr4 defaults can vary depending on runtime/build.
 	(parser as any).buildParseTrees = true;
-	return { lexer, parser, transformedText, conditionalLines };
+
+	const errorListener = new SyntaxErrorListener();
+	lexer.removeErrorListeners();
+	parser.removeErrorListeners();
+	parser.addErrorListener(errorListener);
+
+	const tree = parser.compilationUnit();
+
+	return {
+		tree,
+		tokens,
+		transformedText,
+		conditionalLines,
+		syntaxErrors: errorListener.errors,
+	};
 }

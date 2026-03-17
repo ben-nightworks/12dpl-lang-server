@@ -1,9 +1,55 @@
 import { describe, expect, test } from "bun:test";
 import * as fs from "fs";
 import * as path from "path";
-import { Validator } from "../server/src/antlr/validator.ts";
-import { collectDocumentSymbolIndex } from "../server/src/antlr/symbols.ts";
-import type { IncludeFileVariable, KnownSymbols } from "../server/src/antlr/validator.ts";
+import { parse } from "../server/src/core/parsePipeline";
+import { collectSymbolTable, deriveViews } from "../server/src/core/symbolCollector";
+import { validateRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls } from "../server/src/core/validators";
+import type { IncludeFileVariable, KnownSymbols, DerivedSymbolViews } from "../server/src/core/types";
+
+// The core validators return vscode-languageserver Diagnostic objects.
+// We use `any` here to avoid importing the LSP package from the test runner.
+type Diagnostic = { severity: number; range: any; message: string; [key: string]: any };
+
+// ─── Thin helpers that replicate the old Validator class API ────────────────
+
+function syntaxDiagnostics(result: ReturnType<typeof parse>): Diagnostic[] {
+	return result.syntaxErrors.map(err => ({
+		severity: 1 /* Error */,
+		range: {
+			start: { line: err.line - 1, character: err.column },
+			end: { line: err.line - 1, character: err.column + 1 }
+		},
+		message: err.message
+	}));
+}
+
+function Validate(text: string): Diagnostic[] {
+	return [...ValidateWithIncludes(text, []), ...ValidateWithSymbols(text, { functions: new Set(), variables: new Set(), defines: new Set() })];
+}
+
+function ValidateWithIncludes(text: string, includeFileVariables: IncludeFileVariable[]): Diagnostic[] {
+	const result = parse(text);
+	const synErrs = syntaxDiagnostics(result);
+	if (synErrs.length === 0) {
+		return [...synErrs, ...validateRedeclarations(result.tree, includeFileVariables, result.conditionalLines)];
+	}
+	return synErrs;
+}
+
+function ValidateWithSymbols(text: string, knownSymbols: KnownSymbols): Diagnostic[] {
+	const result = parse(text);
+	const diagnostics: Diagnostic[] = [];
+	diagnostics.push(...validateDeprecatedCalls(result));
+	diagnostics.push(...syntaxDiagnostics(result));
+	diagnostics.push(...validateUndeclaredIdentifiers(result.tree, knownSymbols));
+	return diagnostics;
+}
+
+function collectDerivedViews(text: string): DerivedSymbolViews {
+	const result = parse(text);
+	const table = collectSymbolTable(result, text);
+	return deriveViews(table.root);
+}
 
 function repoRoot(): string {
 	// tests/* lives one level below repo root
@@ -17,7 +63,7 @@ function readFixture(relPath: string): string {
 describe("Validator.Validate", () => {
 	test("parses the large fixture without crashing", () => {
 		const text = readFixture("client/testFixture/Test.4dm");
-		const diagnostics = Validator.Validate(text);
+		const diagnostics = Validate(text);
 		expect(Array.isArray(diagnostics)).toBe(true);
 		// This is a real-world macro; it should ideally be clean.
 		// If this starts failing, it indicates a grammar/regression in the parser.
@@ -26,7 +72,7 @@ describe("Validator.Validate", () => {
 
 	test("handles preprocessor directives and top-level blocks", () => {
 		const text = readFixture("client/testFixture/Test2.4dm");
-		const diagnostics = Validator.Validate(text);
+		const diagnostics = Validate(text);
 		// Test2.4dm has intentional re-declarations marked as "SHOULD BE ERROR"
 		// - program_name is declared twice at lines 16-17
 		const syntaxErrors = diagnostics.filter(d => 
@@ -36,7 +82,7 @@ describe("Validator.Validate", () => {
 	});
 
 	test("reports an error for clearly invalid input", () => {
-		const diagnostics = Validator.Validate("void main( {\n");
+		const diagnostics = Validate("void main( {\n");
 		expect(diagnostics.length).toBeGreaterThan(0);
 	});
 });
@@ -49,7 +95,7 @@ void main() {
     Integer x = 2;
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const redeclErrors = diagnostics.filter(d => 
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
@@ -66,7 +112,7 @@ void main() {
     }
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const redeclErrors = diagnostics.filter(d => 
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
@@ -83,7 +129,7 @@ void func2() {
     Integer x = 2;
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const redeclErrors = diagnostics.filter(d => 
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
@@ -96,7 +142,7 @@ void myFunc(Integer x) {
     Integer x = 5;
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const redeclErrors = diagnostics.filter(d => 
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
@@ -112,7 +158,7 @@ void main() {
     Integer b = 4;
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const redeclErrors = diagnostics.filter(d => 
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
@@ -127,7 +173,7 @@ void main() {
     }
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		// for-loop creates its own scope, so this should be allowed
 		const redeclErrors = diagnostics.filter(d => 
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
@@ -142,7 +188,7 @@ void main() {
     Integer other_var = 1;
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		// "Time test();" is a function prototype, not a variable declaration.
 		// Its parameters should not be treated as variable declarations,
 		// but the prototype name itself is still registered as a declaration.
@@ -162,7 +208,7 @@ void main() {
 		const includeVars = [
 			{ name: "myVar", sourceFile: "common.h", kind: 'variable' as const }
 		];
-		const diagnostics = Validator.ValidateWithIncludes(code, includeVars);
+		const diagnostics = ValidateWithIncludes(code, includeVars);
 		const redeclErrors = diagnostics.filter(d => 
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
@@ -180,7 +226,7 @@ void main() {
 		const includeVars = [
 			{ name: "myvar", sourceFile: "utils.h", kind: 'variable' as const }
 		];
-		const diagnostics = Validator.ValidateWithIncludes(code, includeVars);
+		const diagnostics = ValidateWithIncludes(code, includeVars);
 		const redeclErrors = diagnostics.filter(d => 
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
@@ -197,7 +243,7 @@ void main() {
     Text prog_name = "Local";
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const shadowWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("shadows")
 		);
@@ -207,7 +253,7 @@ void main() {
 
 	test("allows overloaded forward declarations in same file", () => {
 		const text = readFixture("client/testFixture/Test7.4dm");
-		const diagnostics = Validator.Validate(text);
+		const diagnostics = Validate(text);
 		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
@@ -225,14 +271,14 @@ void main() {
 		].join('\n');
 
 		// Step 1: Collect symbols from header (same as server.ts does)
-		const headerIndex = collectDocumentSymbolIndex(headerCode);
+		const headerViews = collectDerivedViews(headerCode);
 
 		// Step 2: Build includeFileVariables the same way server.ts does
 		const includeFileVariables: IncludeFileVariable[] = [];
-		for (const varName of Object.keys(headerIndex.variables)) {
+		for (const varName of headerViews.exportedVariables.keys()) {
 			includeFileVariables.push({ name: varName, sourceFile: 'header.h', kind: 'variable' });
 		}
-		for (const funcName of Object.keys(headerIndex.functions)) {
+		for (const funcName of headerViews.exportedFunctions.keys()) {
 			includeFileVariables.push({ name: funcName, sourceFile: 'header.h', kind: 'function' });
 		}
 
@@ -242,10 +288,10 @@ void main() {
 			variables: new Set<string>(),
 			defines: new Set<string>()
 		};
-		for (const fn of Object.keys(headerIndex.functions)) {
+		for (const fn of headerViews.exportedFunctions.keys()) {
 			knownSymbols.functions.add(fn.toLowerCase());
 		}
-		for (const v of Object.keys(headerIndex.variables)) {
+		for (const v of headerViews.exportedVariables.keys()) {
 			knownSymbols.variables.add(v.toLowerCase());
 		}
 
@@ -258,14 +304,14 @@ void main() {
 		].join('\n');
 
 		// ValidateWithIncludes: x and y should NOT be flagged as redeclarations
-		const includeDiagnostics = Validator.ValidateWithIncludes(mainCode, includeFileVariables);
+		const includeDiagnostics = ValidateWithIncludes(mainCode, includeFileVariables);
 		const redeclErrors = includeDiagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
 		expect(redeclErrors.length).toBe(0);
 
 		// ValidateWithSymbols: x and y should NOT be flagged as undeclared
-		const symbolDiagnostics = Validator.ValidateWithSymbols(mainCode, knownSymbols);
+		const symbolDiagnostics = ValidateWithSymbols(mainCode, knownSymbols);
 		const undeclaredWarnings = symbolDiagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("not declared")
 		);
@@ -280,7 +326,7 @@ void main() {
     Integer x = undeclaredVar;
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
 		expect(warnings.length).toBeGreaterThan(0);
 		expect(warnings.some(d => d.message.includes("undeclaredVar"))).toBe(true);
@@ -293,7 +339,7 @@ void main() {
     Integer x = y;
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
@@ -307,7 +353,7 @@ void main() {
     Integer y = x + undeclaredVar + 10;
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
 		expect(warnings.length).toBeGreaterThan(0);
 		expect(warnings.some(d => d.message.includes("undeclaredVar"))).toBe(true);
@@ -320,7 +366,7 @@ void myFunc(Integer param1, Real param2) {
     Real y = param2;
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
@@ -335,7 +381,7 @@ void main() {
     }
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
@@ -348,7 +394,7 @@ void main() {
     Integer x = someFunction(1, 2);
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		// Function calls should not be flagged as undeclared variables
 		const warnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("someFunction")
@@ -362,7 +408,7 @@ void main() {
     Integer x = undeclared1 + undeclared2;
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
 		expect(warnings.length).toBeGreaterThanOrEqual(2);
 		expect(warnings.some(d => d.message.includes("undeclared1"))).toBe(true);
@@ -385,7 +431,7 @@ void main() {
 			variables: new Set<string>(),
 			defines: new Set(['my_constant', 'another_macro'])
 		};
-		const diagnostics = Validator.ValidateWithSymbols(code, knownSymbols);
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
@@ -406,7 +452,7 @@ void main() {
 			variables: new Set<string>(),
 			defines: new Set(['true', 'false'])
 		};
-		const diagnostics = Validator.ValidateWithSymbols(code, knownSymbols);
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
@@ -428,7 +474,7 @@ void main() {
     }
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const typeMismatchWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("Case type mismatch")
 		);
@@ -452,7 +498,7 @@ void main() {
     }
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const typeMismatchWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("Case type mismatch")
 		);
@@ -476,7 +522,7 @@ void main() {
 			variables: new Set<string>(),
 			defines: new Set<string>()
 		};
-		const diagnostics = Validator.ValidateWithSymbols(code, knownSymbols);
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
@@ -496,7 +542,7 @@ void main() {
 			variables: new Set<string>(),
 			defines: new Set<string>()
 		};
-		const diagnostics = Validator.ValidateWithSymbols(code, knownSymbols);
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
@@ -519,7 +565,7 @@ void main() {
 			variables: new Set(['global_var_from_include', 'another_include_var']),
 			defines: new Set<string>()
 		};
-		const diagnostics = Validator.ValidateWithSymbols(code, knownSymbols);
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
@@ -539,7 +585,7 @@ void main() {
 			variables: new Set(['globalvar']),
 			defines: new Set<string>()
 		};
-		const diagnostics = Validator.ValidateWithSymbols(code, knownSymbols);
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
@@ -563,7 +609,7 @@ void main() {
 			variables: new Set<string>(),
 			defines: new Set(['max_value', 'min_value', 'pi_constant'])
 		};
-		const diagnostics = Validator.ValidateWithSymbols(code, knownSymbols);
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
@@ -583,7 +629,7 @@ void main() {
 			variables: new Set<string>(),
 			defines: new Set(['my_define'])
 		};
-		const diagnostics = Validator.ValidateWithSymbols(code, knownSymbols);
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
@@ -607,7 +653,7 @@ void main() {
 			variables: new Set(['global_var']),
 			defines: new Set(['define_constant'])
 		};
-		const diagnostics = Validator.ValidateWithSymbols(code, knownSymbols);
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
@@ -627,7 +673,7 @@ void main() {
 			variables: new Set(['known_var']),
 			defines: new Set<string>()
 		};
-		const diagnostics = Validator.ValidateWithSymbols(code, knownSymbols);
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
@@ -652,7 +698,7 @@ void main() {
 			variables: new Set<string>(),
 			defines: new Set<string>()
 		};
-		const diagnostics = Validator.ValidateWithSymbols(code, knownSymbols);
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
@@ -671,7 +717,7 @@ void process(Integer input_val, Text message) {
 			variables: new Set<string>(),
 			defines: new Set<string>()
 		};
-		const diagnostics = Validator.ValidateWithSymbols(code, knownSymbols);
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
@@ -694,7 +740,7 @@ void main() {
 			variables: new Set<string>(),
 			defines: new Set<string>()
 		};
-		const diagnostics = Validator.ValidateWithSymbols(code, knownSymbols);
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		// Should not crash and should recognize local declarations
 		expect(Array.isArray(diagnostics)).toBe(true);
 		const undeclaredWarnings = diagnostics.filter(d => 
@@ -719,7 +765,7 @@ void main() {
 			variables: manySymbols,
 			defines: new Set<string>()
 		};
-		const diagnostics = Validator.ValidateWithSymbols(code, knownSymbols);
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
@@ -737,7 +783,7 @@ void main() {
 			variables: new Set(['known_a', 'known_b', 'known_c', 'known_d']),
 			defines: new Set<string>()
 		};
-		const diagnostics = Validator.ValidateWithSymbols(code, knownSymbols);
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
@@ -755,7 +801,7 @@ void main() {
 			variables: new Set(['input_var', 'config_value']),
 			defines: new Set<string>()
 		};
-		const diagnostics = Validator.ValidateWithSymbols(code, knownSymbols);
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
@@ -773,7 +819,7 @@ void main() {
 			variables: new Set<string>(),
 			defines: new Set<string>()
 		};
-		const diagnostics = Validator.ValidateWithSymbols(code, knownSymbols);
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredWarnings = diagnostics.filter(d => 
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
@@ -793,7 +839,7 @@ void main() {
 }
 `;
 		// Using the basic Validate() method without symbols
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		expect(Array.isArray(diagnostics)).toBe(true);
 		// Local declarations should still work
 		const undeclaredWarnings = diagnostics.filter(d => 
@@ -808,7 +854,7 @@ void main() {
     Integer x = ;
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const syntaxErrors = diagnostics.filter(d => d.severity === 1 /* Error */);
 		expect(syntaxErrors.length).toBeGreaterThan(0);
 	});
@@ -825,7 +871,7 @@ void main() {
 #endif
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const redeclErrors = diagnostics.filter(d =>
 			d.message.includes("already declared")
 		);
@@ -842,7 +888,7 @@ void main() {
 #endif
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const redeclErrors = diagnostics.filter(d =>
 			d.message.includes("already declared")
 		);
@@ -858,7 +904,7 @@ void main() {
 	Integer x = 1;
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const syntaxErrors = diagnostics.filter(d => d.severity === 1 /* Error */);
 		expect(syntaxErrors.length).toBe(0);
 	});
@@ -874,7 +920,7 @@ void main() {
 	Integer result = live_var + 1;
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const syntaxErrors = diagnostics.filter(d => d.severity === 1 /* Error */);
 		expect(syntaxErrors.length).toBe(0);
 	});
@@ -893,7 +939,7 @@ void main() {
 #endif
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const redeclErrors = diagnostics.filter(d =>
 			d.message.includes("already declared")
 		);
@@ -914,7 +960,7 @@ void process_elements() {
 #endif
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const redeclErrors = diagnostics.filter(d =>
 			d.message.includes("already declared")
 		);
@@ -928,7 +974,7 @@ void main() {
 	Integer x = 2;
 }
 `;
-		const diagnostics = Validator.Validate(code);
+		const diagnostics = Validate(code);
 		const redeclErrors = diagnostics.filter(d =>
 			d.message.includes("already declared")
 		);
