@@ -9,8 +9,9 @@ import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver/node';
 import type { DocumentService } from './documentService';
 import type { IncludeService } from './includeService';
 import type { PrototypeService } from './prototypeService';
-import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls } from '../core/validators';
-import type { KnownSymbols } from '../core/types';
+import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls, validateFunctionArguments } from '../core/validators';
+import type { FunctionSignatureMap } from '../core/validators';
+import type { KnownSymbols, ParameterSymbolInfo } from '../core/types';
 
 export class DiagnosticService {
 	constructor(
@@ -63,6 +64,14 @@ export class DiagnosticService {
 				knownSymbols
 			);
 			diagnostics.push(...undeclaredDiagnostics);
+
+			// 3d. Function argument checking (issue #45)
+			const functionSignatures = await this.buildFunctionSignatures(uri);
+			const argDiagnostics = validateFunctionArguments(
+				parseResult.tree,
+				functionSignatures
+			);
+			diagnostics.push(...argDiagnostics);
 		}
 
 		return diagnostics;
@@ -117,5 +126,47 @@ export class DiagnosticService {
 		}
 
 		return knownSymbols;
+	}
+
+	/** Builds a map of function name → overload parameter lists for argument checking. */
+	private async buildFunctionSignatures(uri: string): Promise<FunctionSignatureMap> {
+		const signatures: FunctionSignatureMap = new Map();
+
+		const addOverloads = (name: string, params: ParameterSymbolInfo[]) => {
+			const existing = signatures.get(name);
+			if (existing) {
+				existing.push(params);
+			} else {
+				signatures.set(name, [params]);
+			}
+		};
+
+		// Built-in prototypes
+		for (const name of this.prototypeService.getAllNames()) {
+			const overloads = this.prototypeService.getPrototypes(name);
+			for (const overload of overloads) {
+				addOverloads(name, overload.parameters.map(p => ({
+					name: p.name,
+					type: p.type,
+				})));
+			}
+		}
+
+		// Include file functions
+		const includeFiles = await this.includeService.getIncludeFiles(uri);
+		for (const includeFsPath of includeFiles) {
+			const views = this.documentService.getDerivedViewsForFsPath(includeFsPath);
+			if (views) {
+				for (const [name, decls] of views.exportedFunctions) {
+					for (const decl of decls) {
+						if (decl.params) {
+							addOverloads(name, decl.params);
+						}
+					}
+				}
+			}
+		}
+
+		return signatures;
 	}
 }
