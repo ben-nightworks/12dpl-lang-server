@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { parse } from "../server/src/core/parsePipeline";
 import { collectSymbolTable, deriveViews } from "../server/src/core/symbolCollector";
-import { validateRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls } from "../server/src/core/validators";
+import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls } from "../server/src/core/validators";
 import type { IncludeFileVariable, KnownSymbols, DerivedSymbolViews } from "../server/src/core/types";
 
 // The core validators return vscode-languageserver Diagnostic objects.
@@ -31,7 +31,9 @@ function ValidateWithIncludes(text: string, includeFileVariables: IncludeFileVar
 	const result = parse(text);
 	const synErrs = syntaxDiagnostics(result);
 	if (synErrs.length === 0) {
-		return [...synErrs, ...validateRedeclarations(result.tree, includeFileVariables, result.conditionalLines)];
+		const varRedecl = validateVariableRedeclarations(result.tree, includeFileVariables, result.conditionalLines);
+		const funcRedecl = validateFunctionRedeclarations(result.tree, includeFileVariables);
+		return [...synErrs, ...varRedecl, ...funcRedecl];
 	}
 	return synErrs;
 }
@@ -316,6 +318,163 @@ void main() {
 			d.severity === 2 /* Warning */ && d.message.includes("not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
+	});
+});
+
+describe("Function redeclaration detection (issue #44)", () => {
+	test("reports error for redefining function with same signature", () => {
+		const code = `
+void greet() {
+    return;
+}
+
+void greet() {
+    return;
+}
+`;
+		const diagnostics = Validate(code);
+		const redeclErrors = diagnostics.filter(d => 
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		expect(redeclErrors.length).toBe(1);
+		expect(redeclErrors[0].message).toContain("greet");
+	});
+
+	test("allows function overloads with different parameter signatures", () => {
+		const code = `
+void process();
+
+void process(Integer x);
+
+void process(Integer x, Integer y);
+`;
+		const diagnostics = Validate(code);
+		const redeclErrors = diagnostics.filter(d => 
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("detects redefinition after overload declaration", () => {
+		const code = `
+void process() {
+    Integer a = 5;
+}
+
+void process(Integer x) {
+    Integer b = 10;
+}
+
+void process(Integer x) {
+    Integer c = 15;
+}
+`;
+		const diagnostics = Validate(code);
+		const redeclErrors = diagnostics.filter(d => 
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		// Should report redefinition of process(Integer x)
+		expect(redeclErrors.length).toBeGreaterThan(0);
+		expect(redeclErrors.some(e => e.message.includes("process"))).toBe(true);
+	});
+
+	test("allows functions with same name in different files (via includes)", () => {
+		const code = `
+void helper() {
+    Integer x = 1;
+}
+`;
+		// Simulate a function in an include file
+		const includeVars = [
+			{ name: "helper", sourceFile: "utils.h", kind: 'function' as const }
+		];
+		const diagnostics = ValidateWithIncludes(code, includeVars);
+		const redeclErrors = diagnostics.filter(d => 
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		// Should now report an error because helper is redefined from utils.h
+		expect(redeclErrors.length).toBe(1);
+		expect(redeclErrors[0].message).toContain("utils.h");
+	});
+
+	test("detects redefinition of function declared in header file", () => {
+		// Simulate functions from a header file
+		const includeVars = [
+			{ name: "initialize", sourceFile: "setup.h", kind: 'function' as const },
+			{ name: "cleanup", sourceFile: "setup.h", kind: 'function' as const }
+		];
+		
+		// Source file tries to redefine initialize
+		const code = `
+void initialize() {
+    Integer x = 1;
+}
+
+void main() {
+    initialize();
+}
+`;
+		const diagnostics = ValidateWithIncludes(code, includeVars);
+		const redeclErrors = diagnostics.filter(d => 
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		expect(redeclErrors.length).toBe(1);
+		expect(redeclErrors[0].message).toContain("setup.h");
+		expect(redeclErrors[0].message).toContain("initialize");
+	});
+
+	test("allows defining functions not in header files", () => {
+		// Simulate functions from a header file
+		const includeVars = [
+			{ name: "setup", sourceFile: "utils.h", kind: 'function' as const }
+		];
+		
+		// Source file defines a different function
+		const code = `
+void process() {
+    Integer x = 1;
+}
+
+void main() {
+    process();
+}
+`;
+		const diagnostics = ValidateWithIncludes(code, includeVars);
+		const redeclErrors = diagnostics.filter(d => 
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("case-insensitive redeclaration detection", () => {
+		const code = `
+void MyFunc() {
+    return;
+}
+
+void myfunc() {
+    return;
+}
+`;
+		const diagnostics = Validate(code);
+		const redeclErrors = diagnostics.filter(d => 
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		expect(redeclErrors.length).toBe(1);
+		expect(redeclErrors[0].message).toMatch(/MyFunc|myfunc/i);
+	});
+
+	test("multiple redeclarations are all reported", () => {
+		const code = `
+void func() { }
+void func() { }
+void func() { }
+`;
+		const diagnostics = Validate(code);
+		const redeclErrors = diagnostics.filter(d => 
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		expect(redeclErrors.length).toBe(2);
 	});
 });
 
