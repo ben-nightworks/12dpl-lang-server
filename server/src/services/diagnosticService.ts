@@ -9,7 +9,7 @@ import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver/node';
 import type { DocumentService } from './documentService';
 import type { IncludeService } from './includeService';
 import type { PrototypeService } from './prototypeService';
-import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls } from '../core/validators';
+import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls, validateReturnStatements } from '../core/validators';
 import type { KnownSymbols } from '../core/types';
 
 export class DiagnosticService {
@@ -63,6 +63,10 @@ export class DiagnosticService {
 				knownSymbols
 			);
 			diagnostics.push(...undeclaredDiagnostics);
+
+			// 3d. Return statement validation (issue #47)
+			const returnDiagnostics = validateReturnStatements(parseResult.tree);
+			diagnostics.push(...returnDiagnostics);
 		}
 
 		return diagnostics;
