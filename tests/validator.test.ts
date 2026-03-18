@@ -8,7 +8,7 @@ import type { IncludeFileVariable, KnownSymbols, DerivedSymbolViews } from "../s
 
 // The core validators return vscode-languageserver Diagnostic objects.
 // We use `any` here to avoid importing the LSP package from the test runner.
-type Diagnostic = { severity: number; range: any; message: string; [key: string]: any };
+type Diagnostic = { severity: number; range: any; message: string;[key: string]: any };
 
 // ─── Thin helpers that replicate the old Validator class API ────────────────
 
@@ -77,7 +77,7 @@ describe("Validator.Validate", () => {
 		const diagnostics = Validate(text);
 		// Test2.4dm has intentional re-declarations marked as "SHOULD BE ERROR"
 		// - program_name is declared twice at lines 16-17
-		const syntaxErrors = diagnostics.filter(d => 
+		const syntaxErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && !d.message.includes("already declared")
 		);
 		expect(syntaxErrors.length).toBe(0);
@@ -98,7 +98,7 @@ void main() {
 }
 `;
 		const diagnostics = Validate(code);
-		const redeclErrors = diagnostics.filter(d => 
+		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
 		expect(redeclErrors.length).toBe(1);
@@ -115,7 +115,7 @@ void main() {
 }
 `;
 		const diagnostics = Validate(code);
-		const redeclErrors = diagnostics.filter(d => 
+		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
 		expect(redeclErrors.length).toBe(0);
@@ -132,7 +132,7 @@ void func2() {
 }
 `;
 		const diagnostics = Validate(code);
-		const redeclErrors = diagnostics.filter(d => 
+		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
 		expect(redeclErrors.length).toBe(0);
@@ -145,7 +145,7 @@ void myFunc(Integer x) {
 }
 `;
 		const diagnostics = Validate(code);
-		const redeclErrors = diagnostics.filter(d => 
+		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
 		expect(redeclErrors.length).toBe(1);
@@ -161,7 +161,7 @@ void main() {
 }
 `;
 		const diagnostics = Validate(code);
-		const redeclErrors = diagnostics.filter(d => 
+		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
 		expect(redeclErrors.length).toBe(2);
@@ -177,7 +177,7 @@ void main() {
 `;
 		const diagnostics = Validate(code);
 		// for-loop creates its own scope, so this should be allowed
-		const redeclErrors = diagnostics.filter(d => 
+		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
 		expect(redeclErrors.length).toBe(0);
@@ -194,7 +194,7 @@ void main() {
 		// "Time test();" is a function prototype, not a variable declaration.
 		// Its parameters should not be treated as variable declarations,
 		// but the prototype name itself is still registered as a declaration.
-		const redeclErrors = diagnostics.filter(d => 
+		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
 		expect(redeclErrors.length).toBe(0);
@@ -211,7 +211,7 @@ void main() {
 			{ name: "myVar", sourceFile: "common.h", kind: 'variable' as const }
 		];
 		const diagnostics = ValidateWithIncludes(code, includeVars);
-		const redeclErrors = diagnostics.filter(d => 
+		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
 		expect(redeclErrors.length).toBe(1);
@@ -229,7 +229,7 @@ void main() {
 			{ name: "myvar", sourceFile: "utils.h", kind: 'variable' as const }
 		];
 		const diagnostics = ValidateWithIncludes(code, includeVars);
-		const redeclErrors = diagnostics.filter(d => 
+		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
 		expect(redeclErrors.length).toBe(1);
@@ -246,7 +246,7 @@ void main() {
 }
 `;
 		const diagnostics = Validate(code);
-		const shadowWarnings = diagnostics.filter(d => 
+		const shadowWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("shadows")
 		);
 		expect(shadowWarnings.length).toBe(1);
@@ -333,7 +333,7 @@ void greet() {
 }
 `;
 		const diagnostics = Validate(code);
-		const redeclErrors = diagnostics.filter(d => 
+		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already defined")
 		);
 		expect(redeclErrors.length).toBe(1);
@@ -349,7 +349,7 @@ void process(Integer x);
 void process(Integer x, Integer y);
 `;
 		const diagnostics = Validate(code);
-		const redeclErrors = diagnostics.filter(d => 
+		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already defined")
 		);
 		expect(redeclErrors.length).toBe(0);
@@ -370,7 +370,7 @@ void process(Integer x) {
 }
 `;
 		const diagnostics = Validate(code);
-		const redeclErrors = diagnostics.filter(d => 
+		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already defined")
 		);
 		// Should report redefinition of process(Integer x)
@@ -389,7 +389,7 @@ void helper() {
 			{ name: "helper", sourceFile: "utils.h", kind: 'function' as const }
 		];
 		const diagnostics = ValidateWithIncludes(code, includeVars);
-		const redeclErrors = diagnostics.filter(d => 
+		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already defined")
 		);
 		// Should now report an error because helper is redefined from utils.h
@@ -403,7 +403,7 @@ void helper() {
 			{ name: "initialize", sourceFile: "setup.h", kind: 'function' as const },
 			{ name: "cleanup", sourceFile: "setup.h", kind: 'function' as const }
 		];
-		
+
 		// Source file tries to redefine initialize
 		const code = `
 void initialize() {
@@ -415,7 +415,7 @@ void main() {
 }
 `;
 		const diagnostics = ValidateWithIncludes(code, includeVars);
-		const redeclErrors = diagnostics.filter(d => 
+		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already defined")
 		);
 		expect(redeclErrors.length).toBe(1);
@@ -428,7 +428,7 @@ void main() {
 		const includeVars = [
 			{ name: "setup", sourceFile: "utils.h", kind: 'function' as const }
 		];
-		
+
 		// Source file defines a different function
 		const code = `
 void process() {
@@ -440,7 +440,7 @@ void main() {
 }
 `;
 		const diagnostics = ValidateWithIncludes(code, includeVars);
-		const redeclErrors = diagnostics.filter(d => 
+		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already defined")
 		);
 		expect(redeclErrors.length).toBe(0);
@@ -457,7 +457,7 @@ void myfunc() {
 }
 `;
 		const diagnostics = Validate(code);
-		const redeclErrors = diagnostics.filter(d => 
+		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already defined")
 		);
 		expect(redeclErrors.length).toBe(1);
@@ -471,7 +471,7 @@ void func() { }
 void func() { }
 `;
 		const diagnostics = Validate(code);
-		const redeclErrors = diagnostics.filter(d => 
+		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already defined")
 		);
 		expect(redeclErrors.length).toBe(2);
@@ -499,7 +499,7 @@ void main() {
 }
 `;
 		const diagnostics = Validate(code);
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
@@ -526,7 +526,7 @@ void myFunc(Integer param1, Real param2) {
 }
 `;
 		const diagnostics = Validate(code);
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
@@ -541,7 +541,7 @@ void main() {
 }
 `;
 		const diagnostics = Validate(code);
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
@@ -555,7 +555,7 @@ void main() {
 `;
 		const diagnostics = Validate(code);
 		// Function calls should not be flagged as undeclared variables
-		const warnings = diagnostics.filter(d => 
+		const warnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("someFunction")
 		);
 		expect(warnings.length).toBe(0);
@@ -591,7 +591,7 @@ void main() {
 			defines: new Set(['my_constant', 'another_macro'])
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
@@ -612,7 +612,7 @@ void main() {
 			defines: new Set(['true', 'false'])
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
@@ -634,7 +634,7 @@ void main() {
 }
 `;
 		const diagnostics = Validate(code);
-		const typeMismatchWarnings = diagnostics.filter(d => 
+		const typeMismatchWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("Case type mismatch")
 		);
 		expect(typeMismatchWarnings.length).toBe(1);
@@ -658,7 +658,7 @@ void main() {
 }
 `;
 		const diagnostics = Validate(code);
-		const typeMismatchWarnings = diagnostics.filter(d => 
+		const typeMismatchWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("Case type mismatch")
 		);
 		expect(typeMismatchWarnings.length).toBe(0);
@@ -669,7 +669,7 @@ describe("KnownSymbols validation (PR #30 refactor)", () => {
 	// =========================================================================
 	// Known Functions Tests
 	// =========================================================================
-	
+
 	test("does not flag known function calls as undeclared", () => {
 		const code = `
 void main() {
@@ -682,7 +682,7 @@ void main() {
 			defines: new Set<string>()
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
@@ -702,7 +702,7 @@ void main() {
 			defines: new Set<string>()
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
@@ -711,7 +711,7 @@ void main() {
 	// =========================================================================
 	// Known Variables Tests
 	// =========================================================================
-	
+
 	test("does not flag known variables from includes as undeclared", () => {
 		const code = `
 void main() {
@@ -725,7 +725,7 @@ void main() {
 			defines: new Set<string>()
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
@@ -745,7 +745,7 @@ void main() {
 			defines: new Set<string>()
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
@@ -754,7 +754,7 @@ void main() {
 	// =========================================================================
 	// Known Defines Tests
 	// =========================================================================
-	
+
 	test("does not flag known defines from includes as undeclared", () => {
 		const code = `
 void main() {
@@ -769,7 +769,7 @@ void main() {
 			defines: new Set(['max_value', 'min_value', 'pi_constant'])
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
@@ -789,7 +789,7 @@ void main() {
 			defines: new Set(['my_define'])
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
@@ -798,7 +798,7 @@ void main() {
 	// =========================================================================
 	// Combined Symbol Sources Tests
 	// =========================================================================
-	
+
 	test("handles mixed sources: functions, variables, and defines", () => {
 		const code = `
 void main() {
@@ -833,7 +833,7 @@ void main() {
 			defines: new Set<string>()
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(1);
@@ -843,7 +843,7 @@ void main() {
 	// =========================================================================
 	// Local Declaration Priority Tests
 	// =========================================================================
-	
+
 	test("locally declared variables take precedence", () => {
 		const code = `
 void main() {
@@ -858,7 +858,7 @@ void main() {
 			defines: new Set<string>()
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
@@ -877,7 +877,7 @@ void process(Integer input_val, Text message) {
 			defines: new Set<string>()
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
@@ -886,7 +886,7 @@ void process(Integer input_val, Text message) {
 	// =========================================================================
 	// Edge Cases
 	// =========================================================================
-	
+
 	test("handles empty known symbols gracefully", () => {
 		const code = `
 void main() {
@@ -902,7 +902,7 @@ void main() {
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		// Should not crash and should recognize local declarations
 		expect(Array.isArray(diagnostics)).toBe(true);
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
@@ -925,7 +925,7 @@ void main() {
 			defines: new Set<string>()
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
@@ -943,7 +943,7 @@ void main() {
 			defines: new Set<string>()
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
@@ -961,7 +961,7 @@ void main() {
 			defines: new Set<string>()
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
@@ -979,7 +979,7 @@ void main() {
 			defines: new Set<string>()
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		// Should flag unknown_arg as undeclared
@@ -989,7 +989,7 @@ void main() {
 	// =========================================================================
 	// Backward Compatibility Tests
 	// =========================================================================
-	
+
 	test("Validate() method still works without symbols (backward compatibility)", () => {
 		const code = `
 void main() {
@@ -1001,7 +1001,7 @@ void main() {
 		const diagnostics = Validate(code);
 		expect(Array.isArray(diagnostics)).toBe(true);
 		// Local declarations should still work
-		const undeclaredWarnings = diagnostics.filter(d => 
+		const undeclaredWarnings = diagnostics.filter(d =>
 			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
 		);
 		expect(undeclaredWarnings.length).toBe(0);
@@ -1353,6 +1353,154 @@ void Do_thing(Integer x, Integer y)
 	});
 });
 
+describe("Function scope isolation (issue #43)", () => {
+	test("variables declared in one function are not visible in another function", () => {
+		// Issue #43: variables from one function shouldn't be accessible in another
+		const code = `
+void My_test_function()
+{
+    text some_text = "test";
+}
+
+void My_new_function()
+{
+    some_text = "bad";
+}
+`;
+		const diagnostics = Validate(code);
+		const undeclaredWarnings = diagnostics.filter(d =>
+			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
+		);
+		// Should have error for 'some_text' in My_new_function
+		expect(undeclaredWarnings.length).toBeGreaterThan(0);
+		const hasUndeclaredText = undeclaredWarnings.some(d => d.message.includes("some_text"));
+		expect(hasUndeclaredText).toBe(true);
+	});
+
+	test("variables declared in different functions should each be local to their scope", () => {
+		const code = `
+void functionA()
+{
+    Integer x = 10;
+}
+
+void functionB()
+{
+    Integer x = 20;
+}
+
+void main()
+{
+    x = 30;
+}
+`;
+		const diagnostics = Validate(code);
+		const undeclaredWarnings = diagnostics.filter(d =>
+			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
+		);
+		// x is not declared in main scope (should error)
+		expect(undeclaredWarnings.length).toBeGreaterThan(0);
+		const hasUndeclaredX = undeclaredWarnings.some(d => d.message.includes("'x'"));
+		expect(hasUndeclaredX).toBe(true);
+	});
+
+	test("global variables are visible in all functions", () => {
+		const code = `
+		{
+Integer global_counter = 0;
+	}
+void increment()
+{
+    global_counter = global_counter + 1;
+}
+
+void print_counter()
+{
+    Integer result = global_counter;
+}
+`;
+		const diagnostics = Validate(code);
+		const undeclaredWarnings = diagnostics.filter(d =>
+			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
+		);
+		// global_counter is declared globally, should be accessible
+		expect(undeclaredWarnings.length).toBe(0);
+	});
+
+	test("function parameters are local to their function", () => {
+		const code = `
+void process_value(Integer value)
+{
+    Integer result = value + 1;
+}
+
+void main()
+{
+    value = 10;
+}
+`;
+		const diagnostics = Validate(code);
+		const undeclaredWarnings = diagnostics.filter(d =>
+			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
+		);
+		// 'value' is not in main's scope
+		expect(undeclaredWarnings.length).toBeGreaterThan(0);
+		const hasUndeclaredValue = undeclaredWarnings.some(d => d.message.includes("value"));
+		expect(hasUndeclaredValue).toBe(true);
+	});
+
+	test("function-local variables do not leak across function boundaries", () => {
+		const code = `
+void first_func()
+{
+    text local_var = "first";
+}
+
+void second_func()
+{
+    text local_var = "second";
+}
+
+void third_func()
+{
+    first_func();
+    second_func();
+    local_var = "bad";
+}
+`;
+		const diagnostics = Validate(code);
+		const undeclaredWarnings = diagnostics.filter(d =>
+			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
+		);
+		// local_var is not visible in third_func
+		expect(undeclaredWarnings.length).toBeGreaterThan(0);
+		const hasUndeclaredLocal = undeclaredWarnings.some(d => d.message.includes("local_var"));
+		expect(hasUndeclaredLocal).toBe(true);
+	});
+
+	test("same variable name in different functions should not conflict", () => {
+		const code = `
+void func_a()
+{
+    Integer counter = 0;
+    counter = counter + 1;
+}
+
+void func_b()
+{
+    Integer counter = 100;
+    counter = counter + 1;
+}
+`;
+		const diagnostics = Validate(code);
+		// Both functions declare 'counter' locally - should be fine
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already declared")
+		);
+		// Should not have redeclaration errors between functions
+		expect(redeclErrors.length).toBe(0);
+	});
+});
 describe("Function scope isolation (issue #43)", () => {
 	test("variables declared in one function are not visible in another function", () => {
 		// Issue #43: variables from one function shouldn't be accessible in another
