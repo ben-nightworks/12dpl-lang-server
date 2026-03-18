@@ -814,11 +814,11 @@ void main() {
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredWarnings = diagnostics.filter(d => 
-			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
+			d.severity === 1 /* Error */ && d.message.includes("is not declared")
 		);
-		// local_declared is used before declaration in this simplified test
-		// The validator should still flag truly undeclared identifiers
-		expect(undeclaredWarnings.length).toBe(0);
+		// local_declared is used before its declaration, so it should be flagged
+		expect(undeclaredWarnings.length).toBe(1);
+		expect(undeclaredWarnings[0].message).toContain("local_declared");
 	});
 
 	test("still flags undeclared identifiers when known symbols provided", () => {
@@ -1138,5 +1138,154 @@ void main() {
 			d.message.includes("already declared")
 		);
 		expect(redeclErrors.length).toBeGreaterThan(0);
+	});
+});
+
+describe("Function scope isolation (issue #43)", () => {
+	test("variables declared in one function are not visible in another function", () => {
+		// Issue #43: variables from one function shouldn't be accessible in another
+		const code = `
+void My_test_function()
+{
+    text some_text = "test";
+}
+
+void My_new_function()
+{
+    some_text = "bad";
+}
+`;
+		const diagnostics = Validate(code);
+		const undeclaredWarnings = diagnostics.filter(d =>
+			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
+		);
+		// Should have error for 'some_text' in My_new_function
+		expect(undeclaredWarnings.length).toBeGreaterThan(0);
+		const hasUndeclaredText = undeclaredWarnings.some(d => d.message.includes("some_text"));
+		expect(hasUndeclaredText).toBe(true);
+	});
+
+	test("variables declared in different functions should each be local to their scope", () => {
+		const code = `
+void functionA()
+{
+    Integer x = 10;
+}
+
+void functionB()
+{
+    Integer x = 20;
+}
+
+void main()
+{
+    x = 30;
+}
+`;
+		const diagnostics = Validate(code);
+		const undeclaredWarnings = diagnostics.filter(d =>
+			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
+		);
+		// x is not declared in main scope (should error)
+		expect(undeclaredWarnings.length).toBeGreaterThan(0);
+		const hasUndeclaredX = undeclaredWarnings.some(d => d.message.includes("'x'"));
+		expect(hasUndeclaredX).toBe(true);
+	});
+
+	test("global variables are visible in all functions", () => {
+		const code = `
+		{
+Integer global_counter = 0;
+	}
+void increment()
+{
+    global_counter = global_counter + 1;
+}
+
+void print_counter()
+{
+    Integer result = global_counter;
+}
+`;
+		const diagnostics = Validate(code);
+		const undeclaredWarnings = diagnostics.filter(d =>
+			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
+		);
+		// global_counter is declared globally, should be accessible
+		expect(undeclaredWarnings.length).toBe(0);
+	});
+
+	test("function parameters are local to their function", () => {
+		const code = `
+void process_value(Integer value)
+{
+    Integer result = value + 1;
+}
+
+void main()
+{
+    value = 10;
+}
+`;
+		const diagnostics = Validate(code);
+		const undeclaredWarnings = diagnostics.filter(d =>
+			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
+		);
+		// 'value' is not in main's scope
+		expect(undeclaredWarnings.length).toBeGreaterThan(0);
+		const hasUndeclaredValue = undeclaredWarnings.some(d => d.message.includes("value"));
+		expect(hasUndeclaredValue).toBe(true);
+	});
+
+	test("function-local variables do not leak across function boundaries", () => {
+		const code = `
+void first_func()
+{
+    text local_var = "first";
+}
+
+void second_func()
+{
+    text local_var = "second";
+}
+
+void third_func()
+{
+    first_func();
+    second_func();
+    local_var = "bad";
+}
+`;
+		const diagnostics = Validate(code);
+		const undeclaredWarnings = diagnostics.filter(d =>
+			d.severity === 2 /* Warning */ && d.message.includes("is not declared")
+		);
+		// local_var is not visible in third_func
+		expect(undeclaredWarnings.length).toBeGreaterThan(0);
+		const hasUndeclaredLocal = undeclaredWarnings.some(d => d.message.includes("local_var"));
+		expect(hasUndeclaredLocal).toBe(true);
+	});
+
+	test("same variable name in different functions should not conflict", () => {
+		const code = `
+void func_a()
+{
+    Integer counter = 0;
+    counter = counter + 1;
+}
+
+void func_b()
+{
+    Integer counter = 100;
+    counter = counter + 1;
+}
+`;
+		const diagnostics = Validate(code);
+		// Both functions declare 'counter' locally - should be fine
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already declared")
+		);
+		// Should not have redeclaration errors between functions
+		expect(redeclErrors.length).toBe(0);
 	});
 });
