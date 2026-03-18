@@ -1,6 +1,8 @@
 /**
  * Function redeclaration validation — detects function redefinitions.
  * Issue #44: Functions defined twice not detected as errors
+ *
+ * Supports function overloading: same name with different parameter signatures is allowed.
  */
 
 import {
@@ -17,17 +19,46 @@ import {
 } from './validation.Common';
 
 /**
+ * Extracts a parameter type signature string from a function's directDeclarator.
+ * Returns a comma-separated list of parameter types (e.g. "Integer,Integer[],Real[]").
+ * Used to distinguish overloaded functions.
+ */
+function extractParamSignature(declaratorCtx: any): string {
+	try {
+		let cur = declaratorCtx?.directDeclarator?.() ?? declaratorCtx;
+		while (cur) {
+			try {
+				const pt = cur.parameterTypeList?.();
+				if (pt) {
+					const parts: string[] = [];
+					const plist = pt.parameterList?.();
+					for (const pd of plist?.parameterDeclaration_list?.() ?? []) {
+						const typeText = pd?.declarationSpecifiers?.()?.getText?.() ?? '';
+						const isArray = !!pd?.LeftBracket?.();
+						parts.push(typeText + (isArray ? '[]' : ''));
+					}
+					return parts.join(',');
+				}
+			} catch { /* ignore */ }
+			try { cur = cur.directDeclarator?.() ?? null; } catch { break; }
+		}
+	} catch { /* ignore */ }
+	return '';
+}
+
+/**
  * Validates that functions are not defined more than once.
- * Tracks function definitions and reports errors when the same function
- * is defined multiple times in the same scope or when a function is
- * redefined after being declared in an include file.
+ * Tracks function definitions by name AND parameter signature.
+ * Same name with different parameter types (overloading) is allowed.
+ * Same name with identical parameter types is reported as an error.
  */
 export function validateFunctionRedeclarations(
 	tree: any,
 	includeFileVariables: IncludeFileVariable[] = []
 ): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];
-	const definedFunctions = new Map<string, { line: number; column: number; name: string }>();
+	// Map from lowercase name → array of { signature, line, column, name }
+	const definedFunctions = new Map<string, { signature: string; line: number; column: number; name: string }[]>();
 
 	// Track functions from include files
 	const includeFunctions = new Map<string, { sourceFile: string }>();
@@ -52,17 +83,25 @@ export function validateFunctionRedeclarations(
 			if (!info) return visitor.visitChildren(ctx);
 
 			const lowerName = info.name.toLowerCase();
+			const paramSig = extractParamSignature(decl);
 			const existing = definedFunctions.get(lowerName);
 
 			if (existing) {
-				diagnostics.push({
-					severity: DiagnosticSeverity.Error,
-					range: {
-						start: { line: info.line - 1, character: info.column },
-						end: { line: info.line - 1, character: info.column + info.name.length }
-					},
-					message: `Function '${info.name}' is already defined at line ${existing.line}`
-				});
+				// Check if any existing definition has the same parameter signature
+				const duplicate = existing.find(e => e.signature === paramSig);
+				if (duplicate) {
+					diagnostics.push({
+						severity: DiagnosticSeverity.Error,
+						range: {
+							start: { line: info.line - 1, character: info.column },
+							end: { line: info.line - 1, character: info.column + info.name.length }
+						},
+						message: `Function '${info.name}' is already defined at line ${duplicate.line}`
+					});
+				} else {
+					// Different signature — this is a valid overload
+					existing.push({ signature: paramSig, line: info.line, column: info.column, name: info.name });
+				}
 			} else {
 				// Check if it conflicts with a function from an include file
 				const includeFunc = includeFunctions.get(lowerName);
@@ -76,7 +115,7 @@ export function validateFunctionRedeclarations(
 						message: `Function '${info.name}' is already defined in included file '${includeFunc.sourceFile}'`
 					});
 				} else {
-					definedFunctions.set(lowerName, { line: info.line, column: info.column, name: info.name });
+					definedFunctions.set(lowerName, [{ signature: paramSig, line: info.line, column: info.column, name: info.name }]);
 				}
 			}
 
