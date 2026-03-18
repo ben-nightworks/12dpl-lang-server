@@ -473,15 +473,14 @@ export function deriveViews(root: ScopeNode): DerivedSymbolViews {
 	function collectExported(scope: ScopeNode) {
 		for (const decl of scope.declarations) {
 			if (isGeneratedWrapperFunctionName(decl.name)) continue;
-			const key = decl.name.toLowerCase();
 
 			if (decl.kind === 'function') {
-				const existing = exportedFunctions.get(key);
+				const existing = exportedFunctions.get(decl.name);
 				if (existing) existing.push(decl);
-				else exportedFunctions.set(key, [decl]);
+				else exportedFunctions.set(decl.name, [decl]);
 			} else if (decl.kind === 'variable') {
-				if (!exportedVariables.has(key)) {
-					exportedVariables.set(key, decl);
+				if (!exportedVariables.has(decl.name)) {
+					exportedVariables.set(decl.name, decl);
 				}
 			}
 		}
@@ -506,10 +505,9 @@ export function deriveViews(root: ScopeNode): DerivedSymbolViews {
 	function collectAllFunctions(scope: ScopeNode) {
 		for (const decl of scope.declarations) {
 			if (decl.kind === 'function' && !isGeneratedWrapperFunctionName(decl.name)) {
-				const key = decl.name.toLowerCase();
-				const existing = allFunctions.get(key);
+				const existing = allFunctions.get(decl.name);
 				if (existing) existing.push(decl);
-				else allFunctions.set(key, [decl]);
+				else allFunctions.set(decl.name, [decl]);
 			}
 		}
 		for (const child of scope.children) {
