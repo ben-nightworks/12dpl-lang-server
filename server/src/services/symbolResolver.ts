@@ -86,15 +86,15 @@ export class SymbolResolver {
 
 		// 3. Include symbols (functions + variables)
 		const includeSymbols = await this.includeService.getIncludeSymbols(uri);
-		const inclFnDecls = includeSymbols.functions.get(lowerName);
+		const inclFnDecls = includeSymbols.functions.get(name);
 		if (inclFnDecls && inclFnDecls.length > 0) {
 			const inclFn = inclFnDecls[0];
-			const incFsPath = await this.findIncludeFsPathForSymbol(uri, lowerName);
+			const incFsPath = await this.findIncludeFsPathForSymbol(uri, name);
 			return this.declarationToResolved(inclFn, 'include', undefined, incFsPath);
 		}
-		const inclVar = includeSymbols.variables.get(lowerName);
+		const inclVar = includeSymbols.variables.get(name);
 		if (inclVar) {
-			const incFsPath = await this.findIncludeFsPathForSymbol(uri, lowerName);
+			const incFsPath = await this.findIncludeFsPathForSymbol(uri, name);
 			return this.declarationToResolved(inclVar, 'include', undefined, incFsPath);
 		}
 
@@ -174,16 +174,12 @@ export class SymbolResolver {
 
 		// 3. Include symbols
 		const includeSymbols = await this.includeService.getIncludeSymbols(uri);
-		for (const [name, decls] of includeSymbols.functions) {
+		for (const [, decls] of includeSymbols.functions) {
 			const fn = decls[0];
-			if (fn) {
-				const incFsPath = await this.findIncludeFsPathForSymbol(uri, name);
-				add(this.declarationToResolved(fn, 'include', undefined, incFsPath));
-			}
+			if (fn) add(this.declarationToResolved(fn, 'include'));
 		}
-		for (const [name, decl] of includeSymbols.variables) {
-			const incFsPath = await this.findIncludeFsPathForSymbol(uri, name);
-			add(this.declarationToResolved(decl, 'include', undefined, incFsPath));
+		for (const [, decl] of includeSymbols.variables) {
+			add(this.declarationToResolved(decl, 'include'));
 		}
 
 		// 4. Include defines
