@@ -1646,6 +1646,69 @@ void func_b()
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
 		// Should not have redeclaration errors between functions
+				expect(redeclErrors.length).toBe(0);
+	});
+});
+// ─── Function overload support (#44) ────────────────────────────────────────
+
+describe("Function overload support (#44)", () => {
+	test("allows overloaded functions with different parameter types", () => {
+		const code = `
+Integer Sort_array(Integer count, Integer index[], Integer data[])
+{
+	return 0;
+}
+
+Integer Sort_array(Integer count, Integer index[], Real data[])
+{
+	return 0;
+}
+
+Integer Sort_array(Integer count, Integer index[], Text data[])
+{
+	return 0;
+}
+`;
+		const diagnostics = Validate(code);
+		const redeclErrors = diagnostics.filter(d =>
+			d.message.includes("already defined")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("still reports exact duplicate function signatures", () => {
+		const code = `
+Integer Sort_array(Integer count, Integer index[], Integer data[])
+{
+	return 0;
+}
+
+Integer Sort_array(Integer count, Integer index[], Integer data[])
+{
+	return 0;
+}
+`;
+		const diagnostics = Validate(code);
+		const redeclErrors = diagnostics.filter(d =>
+			d.message.includes("already defined")
+		);
+		expect(redeclErrors.length).toBe(1);
+	});
+
+	test("allows overloads with different parameter counts", () => {
+		const code = `
+void Do_thing(Integer x)
+{
+}
+
+void Do_thing(Integer x, Integer y)
+{
+}
+`;
+		const diagnostics = Validate(code);
+		const redeclErrors = diagnostics.filter(d =>
+			d.message.includes("already defined")
+		);
 		expect(redeclErrors.length).toBe(0);
 	});
 });
