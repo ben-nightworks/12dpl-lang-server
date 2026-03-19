@@ -9,7 +9,7 @@ import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver/node';
 import type { DocumentService } from './documentService';
 import type { IncludeService } from './includeService';
 import type { PrototypeService } from './prototypeService';
-import { validateRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls } from '../core/validators';
+import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls } from '../core/validators';
 import type { KnownSymbols } from '../core/types';
 
 export class DiagnosticService {
@@ -43,16 +43,20 @@ export class DiagnosticService {
 
 		// 3. Semantic validation — only when zero syntax errors
 		if (parseResult.syntaxErrors.length === 0) {
-			// 3a. Redeclaration checking
+			// 3a. Variable redeclaration checking
 			const includeFileVariables = await this.includeService.getIncludeFileVariables(uri);
-			const redeclDiagnostics = validateRedeclarations(
+			const redeclDiagnostics = validateVariableRedeclarations(
 				parseResult.tree,
 				includeFileVariables,
 				parseResult.conditionalLines
 			);
 			diagnostics.push(...redeclDiagnostics);
 
-			// 3b. Undeclared identifier checking
+			// 3b. Function redeclaration checking (issue #44)
+			const funcRedeclDiagnostics = validateFunctionRedeclarations(parseResult.tree, includeFileVariables);
+			diagnostics.push(...funcRedeclDiagnostics);
+
+			// 3c. Undeclared identifier checking
 			const knownSymbols = await this.buildKnownSymbols(uri);
 			const undeclaredDiagnostics = validateUndeclaredIdentifiers(
 				parseResult.tree,
