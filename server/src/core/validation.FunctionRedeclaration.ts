@@ -35,7 +35,7 @@ function extractParamSignature(declaratorCtx: any): string {
 					for (const pd of plist?.parameterDeclaration_list?.() ?? []) {
 						const typeText = pd?.declarationSpecifiers?.()?.getText?.() ?? '';
 						const isArray = !!pd?.LeftBracket?.();
-						parts.push(typeText + (isArray ? '[]' : ''));
+						parts.push((typeText + (isArray ? '[]' : '')).toLowerCase());
 					}
 					return parts.join(',');
 				}
