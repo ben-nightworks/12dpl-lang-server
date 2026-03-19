@@ -84,18 +84,19 @@ export class SymbolResolver {
 			}
 		}
 
-		// 3. Include symbols (functions + variables)
+		// 3. Include symbols (functions + variables) — case-insensitive lookup
 		const includeSymbols = await this.includeService.getIncludeSymbols(uri);
-		const inclFnDecls = includeSymbols.functions.get(name);
-		if (inclFnDecls && inclFnDecls.length > 0) {
-			const inclFn = inclFnDecls[0];
-			const incFsPath = await this.findIncludeFsPathForSymbol(uri, name);
-			return this.declarationToResolved(inclFn, 'include', undefined, incFsPath);
+		for (const [key, decls] of includeSymbols.functions) {
+			if (key.toLowerCase() === lowerName && decls.length > 0) {
+				const incFsPath = await this.findIncludeFsPathForSymbol(uri, lowerName);
+				return this.declarationToResolved(decls[0], 'include', undefined, incFsPath);
+			}
 		}
-		const inclVar = includeSymbols.variables.get(name);
-		if (inclVar) {
-			const incFsPath = await this.findIncludeFsPathForSymbol(uri, name);
-			return this.declarationToResolved(inclVar, 'include', undefined, incFsPath);
+		for (const [key, decl] of includeSymbols.variables) {
+			if (key.toLowerCase() === lowerName) {
+				const incFsPath = await this.findIncludeFsPathForSymbol(uri, lowerName);
+				return this.declarationToResolved(decl, 'include', undefined, incFsPath);
+			}
 		}
 
 		// 4. Include defines
@@ -217,14 +218,18 @@ export class SymbolResolver {
 		};
 	}
 
-	/** Finds which include file defines a given symbol name. */
+	/** Finds which include file defines a given symbol name (case-insensitive). */
 	private async findIncludeFsPathForSymbol(uri: string, name: string): Promise<string | undefined> {
+		const lowerName = name.toLowerCase();
 		const files = await this.includeService.getIncludeFiles(uri);
 		for (const fp of files) {
 			const views = this.documentService.getDerivedViewsForFsPath(fp);
 			if (!views) continue;
-			if (views.exportedFunctions.has(name) || views.exportedVariables.has(name)) {
-				return fp;
+			for (const key of views.exportedFunctions.keys()) {
+				if (key.toLowerCase() === lowerName) return fp;
+			}
+			for (const key of views.exportedVariables.keys()) {
+				if (key.toLowerCase() === lowerName) return fp;
 			}
 		}
 		return undefined;
