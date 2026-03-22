@@ -145,17 +145,16 @@ function extractFunctionCallName(ctx: any): string | undefined {
 			if (children && children.length === 1) {
 				cur = children[0];
 			} else if (children && children.length > 0) {
-				// For postfix expressions, the first child might be the primary
-				// Try to find postfixExpression among children
+				// Try to find a postfixExpression child to descend into
+				let found = false;
 				for (const child of children) {
 					if (child?.constructor?.name?.includes?.('PostfixExpression')) {
 						cur = child;
+						found = true;
 						break;
 					}
 				}
-				// If we didn't find a postfix child, try the first child
-				if (cur === ctx) break;
-				if (cur === children[children.length - 1] && !cur?.constructor?.name?.includes?.('PostfixExpression')) break;
+				if (!found) break;
 			} else {
 				break;
 			}
