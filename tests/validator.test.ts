@@ -3,9 +3,8 @@ import * as fs from "fs";
 import * as path from "path";
 import { parse } from "../server/src/core/parsePipeline";
 import { collectSymbolTable, deriveViews } from "../server/src/core/symbolCollector";
-import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls, validateVoidFunctionReturnValues, FunctionSignatureMap, validateFunctionArguments } from "../server/src/core/validators";
+import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls, validateVoidFunctionReturnValues, FunctionSignatureMap, validateFunctionArguments, validateReturnStatements } from "../server/src/core/validators";
 import type { IncludeFileVariable, KnownSymbols, DerivedSymbolViews, ParameterSymbolInfo } from "../server/src/core/types";
-
 
 // The core validators return vscode-languageserver Diagnostic objects.
 // We use `any` here to avoid importing the LSP package from the test runner.
@@ -1757,5 +1756,185 @@ void main()
 		const diagnostics = ValidateFunctionArgs(code);
 		expect(diagnostics.length).toBe(1);
 		expect(diagnostics[0].message).toContain("mismatch");
+	});
+});
+
+// ─── Return value validation (#47) ──────────────────────────────────────────
+
+function ValidateReturnStatements(text: string): Diagnostic[] {
+	const result = parse(text);
+	const synErrs = syntaxDiagnostics(result);
+	if (synErrs.length > 0) return synErrs;
+	return validateReturnStatements(result.tree) as Diagnostic[];
+}
+
+describe("Return value validation (#47)", () => {
+	test("flags non-void function without return (issue example)", () => {
+		const code = `
+Integer My_check()
+{
+
+}
+`;
+		const diagnostics = ValidateReturnStatements(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].severity).toBe(1); // Error
+		expect(diagnostics[0].message).toContain("My_check");
+		expect(diagnostics[0].message).toContain("return");
+	});
+
+	test("allows non-void function with return statement", () => {
+		const code = `
+Integer My_check()
+{
+	return 0;
+}
+`;
+		const diagnostics = ValidateReturnStatements(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("allows void function without return", () => {
+		const code = `
+void Do_thing()
+{
+	Integer x = 1;
+}
+`;
+		const diagnostics = ValidateReturnStatements(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("flags void function returning a value", () => {
+		const code = `
+void Do_thing()
+{
+	return 42;
+}
+`;
+		const diagnostics = ValidateReturnStatements(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].severity).toBe(1); // Error
+		expect(diagnostics[0].message).toContain("Void");
+		expect(diagnostics[0].message).toContain("should not return a value");
+	});
+
+	test("allows void function with bare return", () => {
+		const code = `
+void Do_thing()
+{
+	return;
+}
+`;
+		const diagnostics = ValidateReturnStatements(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("flags non-void function with empty return", () => {
+		const code = `
+Integer My_func()
+{
+	return;
+}
+`;
+		const diagnostics = ValidateReturnStatements(code);
+		const msgs = diagnostics.map(d => d.message);
+		expect(msgs.some(m => m.includes("returns no value"))).toBe(true);
+		expect(diagnostics[0].severity).toBe(1); // Error
+	});
+
+	test("accepts if/else where both branches return", () => {
+		const code = `
+Integer My_func(Integer x)
+{
+	if (x > 0) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+`;
+		const diagnostics = ValidateReturnStatements(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("flags if without else as missing return", () => {
+		const code = `
+Integer My_func(Integer x)
+{
+	if (x > 0) {
+		return 1;
+	}
+}
+`;
+		const diagnostics = ValidateReturnStatements(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].severity).toBe(1); // Error
+		expect(diagnostics[0].message).toContain("does not end with a return");
+	});
+
+	test("flags return type mismatch — Text returned from Integer function", () => {
+		const code = `
+Integer My_func()
+{
+	return "hello";
+}
+`;
+		const diagnostics = ValidateReturnStatements(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].severity).toBe(1); // Error
+		expect(diagnostics[0].message).toContain("Text");
+		expect(diagnostics[0].message).toContain("Integer");
+	});
+
+	test("flags return type mismatch — variable of wrong type", () => {
+		const code = `
+Integer My_func()
+{
+	Text name;
+	return name;
+}
+`;
+		const diagnostics = ValidateReturnStatements(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].severity).toBe(1); // Error
+		expect(diagnostics[0].message).toContain("Text");
+		expect(diagnostics[0].message).toContain("Integer");
+	});
+
+	test("Integer/Real numeric interop is a warning, not an error", () => {
+		const code = `
+Real My_func()
+{
+	Integer x = 5;
+	return x;
+}
+`;
+		const diagnostics = ValidateReturnStatements(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].severity).toBe(2); // Warning
+		expect(diagnostics[0].message).toContain("Integer");
+		expect(diagnostics[0].message).toContain("Real");
+	});
+
+	test("does not flag script-level code (wrapper functions)", () => {
+		const code = `
+Integer x = 1;
+`;
+		const diagnostics = ValidateReturnStatements(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("checks return type from function parameter", () => {
+		const code = `
+Integer My_func(Text name)
+{
+	return name;
+}
+`;
+		const diagnostics = ValidateReturnStatements(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].severity).toBe(1); // Error
+		expect(diagnostics[0].message).toContain("Text");
 	});
 });
