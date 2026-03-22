@@ -1988,6 +1988,40 @@ void main()
 		const diagnostics = ValidateFunctionArgs(code);
 		expect(diagnostics.length).toBe(0);
 	});
+
+	test("variable scopes are isolated between functions", () => {
+		const externalSigs: FunctionSignatureMap = new Map();
+		externalSigs.set("Get_matrix", [[
+			{ name: "m", type: "Matrix3", byRef: false, isArray: false },
+			{ name: "r", type: "Integer", byRef: false, isArray: false },
+			{ name: "c", type: "Integer", byRef: false, isArray: false },
+			{ name: "v", type: "Real", byRef: true, isArray: false },
+		]]);
+
+		const code = `
+void Test()
+{
+	Matrix3 mat;
+	Real a, b, c;
+	Get_matrix(mat, 1, 2, a);
+	Get_matrix(mat, 1, 2, c);
+}
+
+void Test2()
+{
+	Vector3 c;
+}
+
+void main()
+{
+	Test();
+	Test2();
+}
+`;
+		// `c` is Real inside Test() — should NOT be affected by Vector3 c in Test2()
+		const diagnostics = ValidateFunctionArgs(code, externalSigs);
+		expect(diagnostics.length).toBe(0);
+	});
 });
 
 // ─── Return value validation (#47) ──────────────────────────────────────────

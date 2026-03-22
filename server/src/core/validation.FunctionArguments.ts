@@ -170,10 +170,9 @@ export function validateFunctionArguments(
 ): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];
 
-	// Phase 1: Collect local function definitions and variable declarations
+	// Pass 1: Collect all function signatures and return types (global)
 	const localSignatures: FunctionSignatureMap = new Map();
-	const localReturnTypes = new Map<string, string>(); // name → return type
-	const declaredVars = new Map<string, string>(); // name → type
+	const localReturnTypes = new Map<string, string>();
 
 	const getTypeText = (ctx: any): string | undefined => {
 		try {
@@ -182,12 +181,12 @@ export function validateFunctionArguments(
 		} catch { return undefined; }
 	};
 
-	const collector: any = {
+	const sigCollector: any = {
 		visitTerminal() { return undefined; },
 		visitErrorNode() { return undefined; },
 		visitChildren(ctx: any) {
 			for (const child of ctx?.children ?? []) {
-				if (child && typeof child.accept === 'function') child.accept(collector);
+				if (child && typeof child.accept === 'function') child.accept(sigCollector);
 			}
 			return undefined;
 		},
@@ -202,72 +201,44 @@ export function validateFunctionArguments(
 				} else {
 					localSignatures.set(info.name, [params]);
 				}
-				// Collect return type
 				const returnType = getTypeText(ctx);
 				if (returnType) {
 					localReturnTypes.set(info.name, returnType);
 				}
 			}
-			return collector.visitChildren(ctx);
-		},
-		visitDeclaration(ctx: any) {
-			const declType = getTypeText(ctx);
-			if (declType) {
-				const list = ctx?.initDeclaratorList?.();
-				try {
-					for (const initDecl of list?.initDeclarator_list?.() ?? []) {
-						const declarator = initDecl?.declarator?.();
-						const info = extractIdentifierFromDeclarator(declarator);
-						if (info) {
-							declaredVars.set(info.name, declType);
-						}
-					}
-				} catch { /* ignore */ }
-			}
-			return collector.visitChildren(ctx);
-		},
-		visitForDeclaration(ctx: any) {
-			const declType = getTypeText(ctx);
-			if (declType) {
-				const list = ctx?.initDeclaratorList?.();
-				try {
-					for (const initDecl of list?.initDeclarator_list?.() ?? []) {
-						const declarator = initDecl?.declarator?.();
-						const info = extractIdentifierFromDeclarator(declarator);
-						if (info) {
-							declaredVars.set(info.name, declType);
-						}
-					}
-				} catch { /* ignore */ }
-			}
-			return collector.visitChildren(ctx);
-		},
-		visitParameterDeclaration(ctx: any) {
-			try {
-				const typeText = ctx?.declarationSpecifiers?.()?.getText?.();
-				const idNode = ctx?.Identifier?.();
-				const name = safeTokenText(idNode);
-				if (name && typeText) {
-					declaredVars.set(name, typeText);
-				}
-			} catch { /* ignore */ }
-			return collector.visitChildren(ctx);
+			return sigCollector.visitChildren(ctx);
 		}
 	};
+	try { tree.accept(sigCollector); } catch { /* ignore */ }
 
-	try { tree.accept(collector); } catch { /* ignore */ }
-
-	// Combine local + external signatures for lookup
 	const resolveSignatures = (name: string): ParamList[] | undefined => {
 		return localSignatures.get(name) ?? externalSignatures.get(name);
 	};
-
-	// Combine local + external return types for lookup
 	const resolveReturnType = (name: string): string | undefined => {
 		return localReturnTypes.get(name) ?? externalReturnTypes.get(name);
 	};
 
-	// Phase 2: Find function calls and check argument types
+	// Pass 2: Check function calls with scoped variable tracking.
+	// Each function body gets its own variable scope so that identically-named
+	// variables in different functions don't interfere with each other.
+	let scopedVars = new Map<string, string>();
+
+	const collectVarsFromDecl = (ctx: any) => {
+		const declType = getTypeText(ctx);
+		if (declType) {
+			const list = ctx?.initDeclaratorList?.();
+			try {
+				for (const initDecl of list?.initDeclarator_list?.() ?? []) {
+					const declarator = initDecl?.declarator?.();
+					const info = extractIdentifierFromDeclarator(declarator);
+					if (info) {
+						scopedVars.set(info.name, declType);
+					}
+				}
+			} catch { /* ignore */ }
+		}
+	};
+
 	const checker: any = {
 		visitTerminal() { return undefined; },
 		visitErrorNode() { return undefined; },
@@ -276,6 +247,44 @@ export function validateFunctionArguments(
 				if (child && typeof child.accept === 'function') child.accept(checker);
 			}
 			return undefined;
+		},
+		visitFunctionDefinition(ctx: any) {
+			// Start a fresh scope for this function's body
+			const outerVars = scopedVars;
+			scopedVars = new Map<string, string>();
+
+			// Collect parameters into the new scope
+			const decl = ctx?.declarator?.();
+			const params = extractParams(decl);
+			for (const p of params) {
+				if (p.name && p.type) scopedVars.set(p.name, p.type);
+			}
+
+			// Visit the function body (collects local vars + checks calls)
+			checker.visitChildren(ctx);
+
+			// Restore outer scope
+			scopedVars = outerVars;
+			return undefined;
+		},
+		visitDeclaration(ctx: any) {
+			collectVarsFromDecl(ctx);
+			return checker.visitChildren(ctx);
+		},
+		visitForDeclaration(ctx: any) {
+			collectVarsFromDecl(ctx);
+			return checker.visitChildren(ctx);
+		},
+		visitParameterDeclaration(ctx: any) {
+			try {
+				const typeText = ctx?.declarationSpecifiers?.()?.getText?.();
+				const idNode = ctx?.Identifier?.();
+				const name = safeTokenText(idNode);
+				if (name && typeText) {
+					scopedVars.set(name, typeText);
+				}
+			} catch { /* ignore */ }
+			return checker.visitChildren(ctx);
 		},
 		visitPostfixExpression(ctx: any) {
 			try {
@@ -300,7 +309,6 @@ export function validateFunctionArguments(
 				const argExprs = argList?.assignmentExpression_list?.() ?? [];
 				const argCount = argExprs.length;
 
-				// Check if any overload matches
 				const line = safeTokenLine(idNode);
 				const column = safeTokenColumn(idNode);
 				if (line === null || column === null) return checker.visitChildren(ctx);
@@ -309,7 +317,6 @@ export function validateFunctionArguments(
 				const countMatches = overloads.filter(params => params.length === argCount);
 
 				if (countMatches.length === 0) {
-					// No overload with matching parameter count
 					const expectedCounts = [...new Set(overloads.map(p => p.length))].sort().join(' or ');
 					diagnostics.push({
 						severity: DiagnosticSeverity.Error,
@@ -322,13 +329,13 @@ export function validateFunctionArguments(
 				} else {
 					// Check type compatibility for overloads with matching count
 					const argTypes: (string | undefined)[] = argExprs.map(
-						(arg: any) => resolveArgType(arg, declaredVars, resolveReturnType)
+						(arg: any) => resolveArgType(arg, scopedVars, resolveReturnType)
 					);
 
 					const anyOverloadMatches = countMatches.some(params =>
 						params.every((param, i) => {
 							const argType = argTypes[i];
-							if (!argType || !param.type) return true; // can't check — assume OK
+							if (!argType || !param.type) return true;
 							return isTypeCompatible(argType, param.type, !!param.isArray);
 						})
 					);
@@ -350,9 +357,7 @@ export function validateFunctionArguments(
 				}
 			} catch { /* ignore */ }
 
-			// Visit children but skip primary (already handled above).
-			// The children array includes argumentExpressionList nodes, so
-			// there is no need to visit them separately.
+			// Visit children but skip primary (already handled above)
 			const children: any[] = ctx?.children ?? [];
 			for (const child of children) {
 				if (child && typeof child.accept === 'function') {
