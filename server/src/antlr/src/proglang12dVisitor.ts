@@ -33,6 +33,7 @@ import { DeclarationSpecifiersContext } from "./proglang12dParser";
 import { DeclarationSpecifierContext } from "./proglang12dParser";
 import { TypeSpecifierContext } from "./proglang12dParser";
 import { BuiltInTypeSpecifierContext } from "./proglang12dParser";
+import { BuiltInWidgetTypeSpecifierContext } from "./proglang12dParser";
 import { BuiltInSetTypeSpecifierContext } from "./proglang12dParser";
 import { BuiltInMultiSetTypeSpecifierContext } from "./proglang12dParser";
 import { BuiltInMapTypeSpecifierContext } from "./proglang12dParser";
@@ -260,6 +261,12 @@ export default class proglang12dVisitor<Result> extends ParseTreeVisitor<Result>
 	 * @return the visitor result
 	 */
 	visitBuiltInTypeSpecifier?: (ctx: BuiltInTypeSpecifierContext) => Result;
+	/**
+	 * Visit a parse tree produced by `proglang12dParser.builtInWidgetTypeSpecifier`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitBuiltInWidgetTypeSpecifier?: (ctx: BuiltInWidgetTypeSpecifierContext) => Result;
 	/**
 	 * Visit a parse tree produced by `proglang12dParser.builtInSetTypeSpecifier`.
 	 * @param ctx the parse tree

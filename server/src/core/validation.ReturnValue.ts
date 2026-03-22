@@ -18,6 +18,7 @@ import {
 	extractIdentifierFromDeclarator,
 	type DeclaredSymbol,
 } from './validation.Common';
+import { isSubtypeOf, isPromotableTo } from './typeHierarchy';
 
 /** Generated wrapper prefix — skip validation for synthetic script wrappers. */
 const GENERATED_WRAPPER_PREFIX = '__12dpl__';
@@ -120,7 +121,15 @@ function inferReturnExprType(exprCtx: any, declaredVars: Map<string, string>): s
 function isReturnTypeMatch(exprType: string, declaredReturnType: string): boolean {
 	if (!exprType || !declaredReturnType) return true; // unknown — don't flag
 
-	return exprType === declaredReturnType;
+	if (exprType === declaredReturnType) return true;
+
+	// Automatic type promotions (e.g. Integer→Real, Point→Segment)
+	if (isPromotableTo(exprType, declaredReturnType)) return true;
+
+	// Built-in type inheritance (e.g. returning Panel where Widget is expected)
+	if (isSubtypeOf(exprType, declaredReturnType)) return true;
+
+	return false;
 }
 
 /**
@@ -256,11 +265,8 @@ export function validateReturnStatements(tree: any): Diagnostic[] {
 								// Check type compatibility
 								const exprType = inferReturnExprType(expr, declaredVars);
 								if (exprType && returnType && !isReturnTypeMatch(exprType, returnType)) {
-									const exprText = expr.getText?.() ?? '';
-								const numericTypes = new Set(['Integer', 'Real']);
-								const isNumericInterop = numericTypes.has(exprType) && numericTypes.has(returnType);
 									diagnostics.push({
-										severity: isNumericInterop ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error,
+										severity: DiagnosticSeverity.Error,
 										range: {
 											start: { line: returnLine - 1, character: returnColumn },
 											end: { line: returnLine - 1, character: returnColumn + 6 }

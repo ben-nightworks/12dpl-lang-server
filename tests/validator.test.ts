@@ -1760,6 +1760,137 @@ void main()
 		expect(diagnostics.length).toBe(1);
 		expect(diagnostics[0].message).toContain("mismatch");
 	});
+
+	test("allows Widget subtype where Widget parameter expected", () => {
+		const code = `
+void Show_widget(Widget w)
+{
+}
+
+void main()
+{
+	Panel p;
+	Show_widget(p);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("allows Box type where Widget parameter expected", () => {
+		const code = `
+void Show_widget(Widget w)
+{
+}
+
+void main()
+{
+	Input_Box box;
+	Show_widget(box);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("does not allow Widget where specific subtype expected", () => {
+		const code = `
+void Need_panel(Panel p)
+{
+}
+
+void main()
+{
+	Widget w;
+	Need_panel(w);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("mismatch");
+	});
+
+	test("does not allow unrelated type where Widget expected", () => {
+		const code = `
+void Show_widget(Widget w)
+{
+}
+
+void main()
+{
+	Integer x;
+	Show_widget(x);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("mismatch");
+	});
+
+	test("allows Point where Segment parameter expected (promotion)", () => {
+		const code = `
+void Process(Segment s)
+{
+}
+
+void main()
+{
+	Point p;
+	Process(p);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("allows Element where Dynamic_Element parameter expected (promotion)", () => {
+		const code = `
+void Process(Dynamic_Element de)
+{
+}
+
+void main()
+{
+	Element e;
+	Process(e);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("allows Vector2 where Vector3 parameter expected (promotion)", () => {
+		const code = `
+void Process(Vector3 v)
+{
+}
+
+void main()
+{
+	Vector2 v2;
+	Process(v2);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("does not allow Segment where Point expected (promotion is one-way)", () => {
+		const code = `
+void Process(Point p)
+{
+}
+
+void main()
+{
+	Segment s;
+	Process(s);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("mismatch");
+	});
 });
 
 // ─── Return value validation (#47) ──────────────────────────────────────────
@@ -1905,7 +2036,7 @@ Integer My_func()
 		expect(diagnostics[0].message).toContain("Integer");
 	});
 
-	test("Integer/Real numeric interop is a warning, not an error", () => {
+	test("Integer/Real promotion is accepted without error", () => {
 		const code = `
 Real My_func()
 {
@@ -1914,10 +2045,19 @@ Real My_func()
 }
 `;
 		const diagnostics = ValidateReturnStatements(code);
-		expect(diagnostics.length).toBe(1);
-		expect(diagnostics[0].severity).toBe(2); // Warning
-		expect(diagnostics[0].message).toContain("Integer");
-		expect(diagnostics[0].message).toContain("Real");
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("allows Point returned where Segment expected (promotion)", () => {
+		const code = `
+Segment Make_segment()
+{
+	Point p;
+	return p;
+}
+`;
+		const diagnostics = ValidateReturnStatements(code);
+		expect(diagnostics.length).toBe(0);
 	});
 
 	test("does not flag script-level code (wrapper functions)", () => {
@@ -1939,5 +2079,32 @@ Integer My_func(Text name)
 		expect(diagnostics.length).toBe(1);
 		expect(diagnostics[0].severity).toBe(1); // Error
 		expect(diagnostics[0].message).toContain("Text");
+	});
+
+	test("allows Widget subtype as return value where Widget expected", () => {
+		const code = `
+Widget Make_widget()
+{
+	Panel p;
+	return p;
+}
+`;
+		const diagnostics = ValidateReturnStatements(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("flags Widget returned where specific subtype expected", () => {
+		const code = `
+Panel Make_panel()
+{
+	Widget w;
+	return w;
+}
+`;
+		const diagnostics = ValidateReturnStatements(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].severity).toBe(1); // Error
+		expect(diagnostics[0].message).toContain("Widget");
+		expect(diagnostics[0].message).toContain("Panel");
 	});
 });
