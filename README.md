@@ -44,12 +44,22 @@ This repository’s documentation is split into the following Markdown files:
 
 ---
 
-### What's New in v1.1.0
+### What's New in v1.3.0
 
-- Expanded auto-completion: merged prototype sources with enriched documentation for better hover docs and overloads
-- Improved preprocessor-aware completions and include-path handling
-- Formatting and Go-to-definition improvements
-- Compile action (Play button) to compile `.4dm` files from the editor with include paths
+**Enhanced Validation & Type System** ✨
+- **Advanced Function Argument Validation** — Validates argument types against function signatures with type promotion support
+- **Return Type Validation** — Checks that return values match function return types and handles void functions correctly
+- **Type Inheritance** — Proper type hierarchy support (e.g., Panel inherits from Widget) with automatic type promotion
+- **Scope-Aware Validation** — Improved variable and function definition tracking to reduce false errors
+- **Function Overloading** — Full support for functions with the same name but different parameter signatures
+- **Case Sensitivity Fixes** — Proper handling of type and symbol name resolution
+
+**Architectural Improvements**
+- Refactored validator infrastructure for easier extension
+- Enhanced symbol collection and caching
+- Better include-file integration
+
+
 
 
 ## 🚀 Quick Start Guide
