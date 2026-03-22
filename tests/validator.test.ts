@@ -1349,7 +1349,6 @@ void Do_thing(Integer x, Integer y)
 		const redeclErrors = diagnostics.filter(d =>
 			d.message.includes("already defined")
 		);
-				expect(redeclErrors.length).toBe(0);
+		expect(redeclErrors.length).toBe(0);
 	});
 });
-
