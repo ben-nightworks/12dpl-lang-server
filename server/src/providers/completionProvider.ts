@@ -227,7 +227,7 @@ export function registerCompletionProvider(opts: {
 		
 		// Get local/scoped symbols at cursor position
 		const localSymbols = symbolTable ? visibleSymbolsAt(symbolTable.root, textDocumentPosition.position) : [];
-		const localNames = new Set(localSymbols.map((s: SymbolDeclaration) => s.name.toLowerCase()));
+		const localNames = new Set(localSymbols.map((s: SymbolDeclaration) => s.name));
 		
 		// Group all functions (locals + globals) by name to handle overloads
 		const functionsByName = new Map<string, SymbolDeclaration[]>();
@@ -235,7 +235,7 @@ export function registerCompletionProvider(opts: {
 		// Add local functions
 		for (const sym of localSymbols) {
 			if (!sym.name.startsWith('__12dpl__script__') && sym.kind === 'function') {
-				const key = sym.name.toLowerCase();
+				const key = sym.name;
 				if (!functionsByName.has(key)) {
 					functionsByName.set(key, []);
 				}
@@ -247,7 +247,7 @@ export function registerCompletionProvider(opts: {
 		if (views && views.exportedFunctions.size > 0) {
 			for (const [, decls] of views.exportedFunctions) {
 				if (decls.length > 0) {
-					const key = decls[0].name.toLowerCase();
+					const key = decls[0].name;
 					// Only add if not already in local scope
 					if (!functionsByName.has(key)) {
 						functionsByName.set(key, decls);
@@ -294,7 +294,7 @@ const detailText = primaryFn.signature ?? '';
 		// Add global variables (skip if shadowed by local)
 		if (views && views.exportedVariables.size > 0) {
 			for (const [, v] of views.exportedVariables) {
-				if (!localNames.has(v.name.toLowerCase())) {
+				if (!localNames.has(v.name)) {
 					symbolItems.push({
 						label: v.name,
 						kind: CompletionItemKind.Variable,

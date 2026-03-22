@@ -35,19 +35,17 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 
 	/** Declare a symbol. Wrapper-function locals go to global scope (index 0). */
 	const declareSymbol = (name: string, symbol: DeclaredSymbol) => {
-		const lower = name.toLowerCase();
 		if (inWrapperFunction) {
-			scopeStack[0].set(lower, symbol);
+			scopeStack[0].set(name, symbol);
 		} else {
-			scopeStack[scopeStack.length - 1].set(lower, symbol);
+			scopeStack[scopeStack.length - 1].set(name, symbol);
 		}
 	};
 
 	/** Look up a symbol walking from innermost scope outward. */
 	const lookupSymbol = (name: string): DeclaredSymbol | undefined => {
-		const lower = name.toLowerCase();
 		for (let i = scopeStack.length - 1; i >= 0; i--) {
-			const sym = scopeStack[i].get(lower);
+			const sym = scopeStack[i].get(name);
 			if (sym) return sym;
 		}
 		return undefined;
@@ -55,11 +53,10 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 
 	/** Check an identifier usage inline; emit diagnostic if undeclared. */
 	const checkUsage = (text: string, line: number, column: number, isFunctionCall: boolean) => {
-		const lowerName = text.toLowerCase();
-		if (lookupSymbol(lowerName)) return;
-		if (isFunctionCall && knownSymbols.functions.has(lowerName)) return;
-		if (knownSymbols.variables.has(lowerName)) return;
-		if (knownSymbols.defines.has(lowerName)) return;
+		if (lookupSymbol(text)) return;
+		if (isFunctionCall && knownSymbols.functions.has(text)) return;
+		if (knownSymbols.variables.has(text)) return;
+		if (knownSymbols.defines.has(text)) return;
 		if (isFunctionCall) return;
 
 		diagnostics.push({
@@ -149,7 +146,7 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 		visitFunctionDefinition(ctx: any) {
 			const decl = ctx?.declarator?.();
 			const info = extractIdentifierFromDeclarator(decl);
-			const funcName = info?.name?.toLowerCase() ?? '';
+			const funcName = info?.name ?? '';
 
 			// Function names are always global
 			if (info) scopeStack[0].set(funcName, info);

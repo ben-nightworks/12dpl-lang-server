@@ -431,7 +431,7 @@ export function visibleSymbolsAt(root: ScopeNode, position: { line: number; char
 	// Walk from innermost to outermost, skip duplicates (inner wins)
 	for (let i = chain.length - 1; i >= 0; i--) {
 		for (const decl of chain[i].declarations) {
-			const key = decl.name.toLowerCase();
+			const key = decl.name;
 			if (!seen.has(key)) {
 				seen.add(key);
 				result.push(decl);
@@ -444,10 +444,9 @@ export function visibleSymbolsAt(root: ScopeNode, position: { line: number; char
 /** Returns the innermost scope that declares a given name. */
 export function findDeclaringScope(root: ScopeNode, position: { line: number; character: number }, name: string): { scope: ScopeNode; declaration: SymbolDeclaration } | null {
 	const chain = scopeChainAt(root, position);
-	const lowerName = name.toLowerCase();
 	for (let i = chain.length - 1; i >= 0; i--) {
 		for (const decl of chain[i].declarations) {
-			if (decl.name.toLowerCase() === lowerName) {
+			if (decl.name === name) {
 				return { scope: chain[i], declaration: decl };
 			}
 		}

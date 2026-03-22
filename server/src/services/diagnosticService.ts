@@ -106,24 +106,24 @@ export class DiagnosticService {
 
 		// Built-in prototypes
 		for (const name of this.prototypeService.getAllNames()) {
-			knownSymbols.functions.add(name.toLowerCase());
+			knownSymbols.functions.add(name);
 		}
 
 		// Document symbols
 		const docViews = this.documentService.getDerivedViews(uri);
 		if (docViews) {
 			for (const fn of docViews.exportedFunctions.keys()) {
-				knownSymbols.functions.add(fn.toLowerCase());
+				knownSymbols.functions.add(fn);
 			}
 			for (const v of docViews.exportedVariables.keys()) {
-				knownSymbols.variables.add(v.toLowerCase());
+				knownSymbols.variables.add(v);
 			}
 		}
 
 		// Document defines
 		const docDefines = this.documentService.getDefines(uri);
 		for (const def of docDefines) {
-			knownSymbols.defines.add(def.name.toLowerCase());
+			knownSymbols.defines.add(def.name);
 		}
 
 		// Include file symbols and defines
@@ -132,15 +132,15 @@ export class DiagnosticService {
 			const views = this.documentService.getDerivedViewsForFsPath(includeFsPath);
 			if (views) {
 				for (const fn of views.exportedFunctions.keys()) {
-					knownSymbols.functions.add(fn.toLowerCase());
+					knownSymbols.functions.add(fn);
 				}
 				for (const v of views.exportedVariables.keys()) {
-					knownSymbols.variables.add(v.toLowerCase());
+					knownSymbols.variables.add(v);
 				}
 			}
 			const defines = this.documentService.getDefinesForFsPath(includeFsPath);
 			for (const def of defines) {
-				knownSymbols.defines.add(def.name.toLowerCase());
+				knownSymbols.defines.add(def.name);
 			}
 		}
 
@@ -155,7 +155,7 @@ export class DiagnosticService {
 		for (const name of this.prototypeService.getAllNames()) {
 			const overloads = this.prototypeService.getPrototypes(name);
 			if (overloads.length > 0) {
-				const allVoid = overloads.every(o => o.returnType.toLowerCase() === 'void');
+				const allVoid = overloads.every(o => o.returnType === 'void');
 				returnTypes.set(name, allVoid ? 'void' : overloads[0].returnType);
 			}
 		}
