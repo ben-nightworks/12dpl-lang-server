@@ -1,5 +1,21 @@
 import { describe, expect, test } from 'bun:test';
-import { collectDocumentSymbolNames, collectDocumentSymbolIndex } from '../server/src/antlr/symbols.ts';
+import { parse } from '../server/src/core/parsePipeline';
+import { collectSymbolTable, deriveViews } from '../server/src/core/symbolCollector';
+import type { DerivedSymbolViews } from '../server/src/core/types';
+
+function collectDerivedViews(text: string): DerivedSymbolViews {
+	const result = parse(text);
+	const table = collectSymbolTable(result, text);
+	return deriveViews(table.root);
+}
+
+function collectDocumentSymbolNames(text: string): { functions: string[]; variables: string[] } {
+	const views = collectDerivedViews(text);
+	return {
+		functions: Array.from(views.exportedFunctions.keys()),
+		variables: Array.from(views.exportedVariables.keys()),
+	};
+}
 
 describe('collectDocumentSymbolNames', () => {
 	test('collects variables, parameters, and functions', () => {
@@ -35,24 +51,25 @@ void foo(Integer a, Integer &b, Real c[]){
 void bar();
 `;
 
-		const index = collectDocumentSymbolIndex(src);
-		expect(index.variables.count.type).toBe('Integer');
-		// local, a, b, c are inside function foo — not in global index
-		expect(index.variables.local).toBeUndefined();
-		expect(index.variables.a).toBeUndefined();
-		expect(index.variables.b).toBeUndefined();
-		expect(index.variables.c).toBeUndefined();
+		const views = collectDerivedViews(src);
+		expect(views.exportedVariables.get('count')?.type).toBe('Integer');
+		// local, a, b, c are inside function foo — not in global views
+		expect(views.exportedVariables.get('local')).toBeUndefined();
+		expect(views.exportedVariables.get('a')).toBeUndefined();
+		expect(views.exportedVariables.get('b')).toBeUndefined();
+		expect(views.exportedVariables.get('c')).toBeUndefined();
 
-		expect(index.functions.foo.signature).toBe('void foo(Integer a, Integer &b, Real c[])');
-		expect(index.functions.bar.signature).toBe('void bar()');
+		expect(views.exportedFunctions.get('foo')?.[0]?.signature).toBe('void foo(Integer a, Integer &b, Real c[])');
+		expect(views.exportedFunctions.get('bar')?.[0]?.signature).toBe('void bar()');
 	});
 
 	test('captures ranges for go-to-definition', () => {
 		const src = 'void foo(){\n}\n';
-		const index = collectDocumentSymbolIndex(src);
-		expect(index.functions.foo.range).toBeDefined();
-		expect(index.functions.foo.range?.start.line).toBe(0);
-		expect(index.functions.foo.range?.start.character).toBe(5);
+		const views = collectDerivedViews(src);
+		const fooDecl = views.exportedFunctions.get('foo')?.[0];
+		expect(fooDecl?.range).toBeDefined();
+		expect(fooDecl?.range?.start.line).toBe(0);
+		expect(fooDecl?.range?.start.character).toBe(5);
 	});
 
 	test('does not leak generated wrapper function names', () => {
@@ -74,17 +91,17 @@ void forward_declaration(Integer x);
 Integer create_rgb(Integer r, Integer g, Integer b);
 `;
 
-		const index = collectDocumentSymbolIndex(src);
+		const views = collectDerivedViews(src);
 
 		// Forward declarations should register as functions
-		expect(index.functions.forward_declaration).toBeDefined();
-		expect(index.functions.create_rgb).toBeDefined();
+		expect(views.exportedFunctions.get('forward_declaration')).toBeDefined();
+		expect(views.exportedFunctions.get('create_rgb')).toBeDefined();
 
 		// Parameters should NOT appear as global variables
-		expect(index.variables.x).toBeUndefined();
-		expect(index.variables.r).toBeUndefined();
-		expect(index.variables.g).toBeUndefined();
-		expect(index.variables.b).toBeUndefined();
+		expect(views.exportedVariables.get('x')).toBeUndefined();
+		expect(views.exportedVariables.get('r')).toBeUndefined();
+		expect(views.exportedVariables.get('g')).toBeUndefined();
+		expect(views.exportedVariables.get('b')).toBeUndefined();
 	});
 
 	test('still exports script-level variables alongside forward declarations', () => {
@@ -94,17 +111,17 @@ void forward_declaration(Integer x);
 Text name = "test";
 `;
 
-		const index = collectDocumentSymbolIndex(src);
+		const views = collectDerivedViews(src);
 
 		// Functions registered
-		expect(index.functions.forward_declaration).toBeDefined();
+		expect(views.exportedFunctions.get('forward_declaration')).toBeDefined();
 
 		// Script-level variables exported
-		expect(index.variables.count).toBeDefined();
-		expect(index.variables.name).toBeDefined();
+		expect(views.exportedVariables.get('count')).toBeDefined();
+		expect(views.exportedVariables.get('name')).toBeDefined();
 
 		// Forward declaration parameter NOT exported
-		expect(index.variables.x).toBeUndefined();
+		expect(views.exportedVariables.get('x')).toBeUndefined();
 	});
 
 	test('does not leak parameters from overloaded forward declarations', () => {
@@ -116,18 +133,18 @@ void process(Integer x, Integer y);
 Integer other_var = 5;
 `;
 
-		const index = collectDocumentSymbolIndex(src);
+		const views = collectDerivedViews(src);
 
 		// Overloaded function registered
-		expect(index.functions.process).toBeDefined();
+		expect(views.exportedFunctions.get('process')).toBeDefined();
 
 		// Script-level variables exported
-		expect(index.variables.count).toBeDefined();
-		expect(index.variables.other_var).toBeDefined();
+		expect(views.exportedVariables.get('count')).toBeDefined();
+		expect(views.exportedVariables.get('other_var')).toBeDefined();
 
 		// Parameters from ALL overloads must NOT leak
-		expect(index.variables.x).toBeUndefined();
-		expect(index.variables.y).toBeUndefined();
-		expect(index.variables.z).toBeUndefined();
+		expect(views.exportedVariables.get('x')).toBeUndefined();
+		expect(views.exportedVariables.get('y')).toBeUndefined();
+		expect(views.exportedVariables.get('z')).toBeUndefined();
 	});
 });

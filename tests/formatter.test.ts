@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { format12dplDocument } from "../server/src/util/formatter.ts";
+import { format12dplDocument } from "../server/src/services/formattingService.ts";
 
 describe("format12dplDocument", () => {
 	test("indents braces and preserves newline style", () => {
