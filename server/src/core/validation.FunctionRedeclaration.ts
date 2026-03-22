@@ -64,7 +64,7 @@ export function validateFunctionRedeclarations(
 	const includeFunctions = new Map<string, { sourceFile: string }>();
 	for (const v of includeFileVariables) {
 		if (v.kind === 'function') {
-			includeFunctions.set(v.name.toLowerCase(), { sourceFile: v.sourceFile });
+			includeFunctions.set(v.name, { sourceFile: v.sourceFile });
 		}
 	}
 
@@ -82,9 +82,8 @@ export function validateFunctionRedeclarations(
 			const info = extractIdentifierFromDeclarator(decl);
 			if (!info) return visitor.visitChildren(ctx);
 
-			const lowerName = info.name.toLowerCase();
 			const paramSig = extractParamSignature(decl);
-			const existing = definedFunctions.get(lowerName);
+			const existing = definedFunctions.get(info.name);
 
 			if (existing) {
 				// Check if any existing definition has the same parameter signature
@@ -104,7 +103,7 @@ export function validateFunctionRedeclarations(
 				}
 			} else {
 				// Check if it conflicts with a function from an include file
-				const includeFunc = includeFunctions.get(lowerName);
+				const includeFunc = includeFunctions.get(info.name);
 				if (includeFunc) {
 					diagnostics.push({
 						severity: DiagnosticSeverity.Error,
@@ -115,7 +114,7 @@ export function validateFunctionRedeclarations(
 						message: `Function '${info.name}' is already defined in included file '${includeFunc.sourceFile}'`
 					});
 				} else {
-					definedFunctions.set(lowerName, [{ signature: paramSig, line: info.line, column: info.column, name: info.name }]);
+					definedFunctions.set(info.name, [{ signature: paramSig, line: info.line, column: info.column, name: info.name }]);
 				}
 			}
 

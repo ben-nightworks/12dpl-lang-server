@@ -71,14 +71,11 @@ function formatParamTypes(params: ParamList): string {
 function isTypeCompatible(argType: string, paramType: string, paramIsArray: boolean): boolean {
 	if (!argType || !paramType) return true; // unknown types — don't flag
 
-	const a = argType.toLowerCase();
-	const p = paramType.toLowerCase();
-
-	if (a === p) return true;
+	if (argType === paramType) return true;
 
 	// Integer ↔ Real numeric compatibility
-	const numericTypes = new Set(['integer', 'real']);
-	if (!paramIsArray && numericTypes.has(a) && numericTypes.has(p)) return true;
+	const numericTypes = new Set(['Integer', 'Real']);
+	if (!paramIsArray && numericTypes.has(argType) && numericTypes.has(paramType)) return true;
 
 	return false;
 }

@@ -64,7 +64,6 @@ export class SymbolResolver {
 		name: string,
 		position: { line: number; character: number }
 	): Promise<ResolvedSymbol | null> {
-		const lowerName = name.toLowerCase();
 
 		// 1. Document scope tree (locals, params, functions, variables)
 		const symbolTable = this.documentService.getSymbolTable(uri);
@@ -78,7 +77,7 @@ export class SymbolResolver {
 		// 2. Document defines
 		if (symbolTable) {
 			for (const def of symbolTable.defines) {
-				if (def.name.toLowerCase() === lowerName) {
+				if (def.name === name) {
 					return this.declarationToResolved(def, 'define', uri);
 				}
 			}
@@ -101,7 +100,7 @@ export class SymbolResolver {
 		// 4. Include defines
 		const includeDefines = await this.includeService.getIncludeDefines(uri);
 		for (const def of includeDefines) {
-			if (def.name.toLowerCase() === lowerName) {
+			if (def.name === name) {
 				return this.declarationToResolved(def, 'define', undefined, def.definedInFsPath);
 			}
 		}
@@ -130,7 +129,7 @@ export class SymbolResolver {
 		}
 
 		// 7. Keywords
-		if (KEYWORD_LIST.includes(lowerName)) {
+		if (KEYWORD_LIST.includes(name)) {
 			return {
 				name,
 				source: 'keyword',
@@ -153,7 +152,7 @@ export class SymbolResolver {
 		const seen = new Set<string>();
 
 		const add = (symbol: ResolvedSymbol) => {
-			const key = symbol.name.toLowerCase();
+			const key = symbol.name;
 			if (seen.has(key)) return;
 			seen.add(key);
 			result.push(symbol);

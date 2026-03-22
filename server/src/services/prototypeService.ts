@@ -38,7 +38,7 @@ export class PrototypeService {
 	}
 
 	private addPrototype(func: FunctionData): void {
-		const key = func.name.toLowerCase();
+		const key = func.name;
 		const existing = this.prototypes.get(key);
 		if (!existing) {
 			this.prototypes.set(key, [func]);
@@ -115,15 +115,15 @@ export class PrototypeService {
 	}
 
 	getPrototype(name: string): FunctionData | undefined {
-		return this.prototypes.get(name.toLowerCase())?.[0];
+		return this.prototypes.get(name)?.[0];
 	}
 
 	getPrototypes(name: string): FunctionData[] {
-		return this.prototypes.get(name.toLowerCase()) ?? [];
+		return this.prototypes.get(name) ?? [];
 	}
 
 	getPrototypeOverload(name: string, id: number): FunctionData | undefined {
-		return this.prototypes.get(name.toLowerCase())?.find(f => f.id === id);
+		return this.prototypes.get(name)?.find(f => f.id === id);
 	}
 
 	getPrototypeSignature(name: string): string | undefined {

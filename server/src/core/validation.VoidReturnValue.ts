@@ -144,7 +144,7 @@ export function validateVoidFunctionReturnValues(
 				if (!funcName) return checker.visitChildren(ctx);
 
 				const returnType = resolveReturnType(funcName);
-				if (!returnType || returnType.toLowerCase() !== 'void') {
+				if (!returnType || returnType !== 'void') {
 					return checker.visitChildren(ctx);
 				}
 

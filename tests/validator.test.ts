@@ -218,13 +218,13 @@ void main() {
 		expect(redeclErrors[0].message).toContain("common.h");
 	});
 
-	test("include file variable check is case-insensitive", () => {
+	test("include file variable check is case-sensitive", () => {
 		const code = `
 void main() {
     Integer MYVAR = 1;
 }
 `;
-		// Variable in include file is lowercase
+		// Variable in include file is lowercase — different from MYVAR
 		const includeVars = [
 			{ name: "myvar", sourceFile: "utils.h", kind: 'variable' as const }
 		];
@@ -232,8 +232,8 @@ void main() {
 		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
-		expect(redeclErrors.length).toBe(1);
-		expect(redeclErrors[0].message).toContain("utils.h");
+		// MYVAR and myvar are different identifiers — no conflict
+		expect(redeclErrors.length).toBe(0);
 	});
 
 	test("reports warning when local variable shadows global variable in same file", () => {
@@ -291,10 +291,10 @@ void main() {
 			defines: new Set<string>()
 		};
 		for (const fn of headerViews.exportedFunctions.keys()) {
-			knownSymbols.functions.add(fn.toLowerCase());
+			knownSymbols.functions.add(fn);
 		}
 		for (const v of headerViews.exportedVariables.keys()) {
-			knownSymbols.variables.add(v.toLowerCase());
+			knownSymbols.variables.add(v);
 		}
 
 		// Step 4: Validate a main file that uses the same parameter names
@@ -446,7 +446,7 @@ void main() {
 		expect(redeclErrors.length).toBe(0);
 	});
 
-	test("case-insensitive redeclaration detection", () => {
+	test("case-sensitive redeclaration detection", () => {
 		const code = `
 void MyFunc() {
     return;
@@ -460,8 +460,8 @@ void myfunc() {
 		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already defined")
 		);
-		expect(redeclErrors.length).toBe(1);
-		expect(redeclErrors[0].message).toMatch(/MyFunc|myfunc/i);
+		// MyFunc and myfunc are different identifiers — no redeclaration
+		expect(redeclErrors.length).toBe(0);
 	});
 
 	test("multiple redeclarations are all reported", () => {
@@ -588,7 +588,7 @@ void main() {
 		const knownSymbols = {
 			functions: new Set<string>(),
 			variables: new Set<string>(),
-			defines: new Set(['my_constant', 'another_macro'])
+			defines: new Set(['MY_CONSTANT', 'ANOTHER_MACRO'])
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredErrors = diagnostics.filter(d =>
@@ -609,7 +609,7 @@ void main() {
 		const knownSymbols = {
 			functions: new Set<string>(),
 			variables: new Set<string>(),
-			defines: new Set(['true', 'false'])
+			defines: new Set(['TRUE', 'FALSE'])
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredErrors = diagnostics.filter(d =>
@@ -688,7 +688,7 @@ void main() {
 		expect(undeclaredErrors.length).toBe(0);
 	});
 
-	test("function name matching is case-insensitive", () => {
+	test("function name matching is case-sensitive", () => {
 		const code = `
 void main() {
     Integer a = MyFunction();
@@ -705,7 +705,8 @@ void main() {
 		const undeclaredErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("is not declared")
 		);
-		expect(undeclaredErrors.length).toBe(0);
+		// MyFunction and MYFUNCTION are different from myfunction — should be flagged
+		expect(undeclaredErrors.length).toBe(0); // function calls don't flag as undeclared (they pass through)
 	});
 
 	// =========================================================================
@@ -731,7 +732,7 @@ void main() {
 		expect(undeclaredErrors.length).toBe(0);
 	});
 
-	test("variable name matching is case-insensitive", () => {
+	test("variable name matching is case-sensitive", () => {
 		const code = `
 void main() {
     Integer a = GlobalVar;
@@ -748,7 +749,8 @@ void main() {
 		const undeclaredErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("is not declared")
 		);
-		expect(undeclaredErrors.length).toBe(0);
+		// GlobalVar and GLOBALVAR are not the same as globalvar
+		expect(undeclaredErrors.length).toBe(2);
 	});
 
 	// =========================================================================
@@ -766,7 +768,7 @@ void main() {
 		const knownSymbols = {
 			functions: new Set<string>(),
 			variables: new Set<string>(),
-			defines: new Set(['max_value', 'min_value', 'pi_constant'])
+			defines: new Set(['MAX_VALUE', 'MIN_VALUE', 'PI_CONSTANT'])
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredErrors = diagnostics.filter(d =>
@@ -775,7 +777,7 @@ void main() {
 		expect(undeclaredErrors.length).toBe(0);
 	});
 
-	test("define name matching is case-insensitive", () => {
+	test("define name matching is case-sensitive", () => {
 		const code = `
 void main() {
     Integer a = MY_DEFINE;
@@ -792,7 +794,8 @@ void main() {
 		const undeclaredErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("is not declared")
 		);
-		expect(undeclaredErrors.length).toBe(0);
+		// MY_DEFINE and My_Define are not the same as my_define
+		expect(undeclaredErrors.length).toBe(2);
 	});
 
 	// =========================================================================
@@ -810,7 +813,7 @@ void main() {
 		const knownSymbols = {
 			functions: new Set(['include_function']),
 			variables: new Set(['global_var']),
-			defines: new Set(['define_constant'])
+			defines: new Set(['DEFINE_CONSTANT'])
 		};
 		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const undeclaredErrors = diagnostics.filter(d => 

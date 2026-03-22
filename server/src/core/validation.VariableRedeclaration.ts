@@ -29,7 +29,7 @@ export function validateVariableRedeclarations(
 
 	const includeVars = new Map<string, { sourceFile: string; kind: 'variable' | 'function' }>();
 	for (const v of includeFileVariables) {
-		includeVars.set(v.name.toLowerCase(), { sourceFile: v.sourceFile, kind: v.kind });
+		includeVars.set(v.name, { sourceFile: v.sourceFile, kind: v.kind });
 	}
 
 	const globalVariables = new Map<string, DeclaredVariable>();
@@ -71,9 +71,7 @@ export function validateVariableRedeclarations(
 		const scopeVars = scopeVariables.get(scopeId);
 		if (!scopeVars) return;
 
-		const lowerName = info.name.toLowerCase();
-
-		const existing = scopeVars.get(lowerName);
+		const existing = scopeVars.get(info.name);
 		if (existing) {
 			if (existing.isFunction && isFunction) return;
 			if (condLines.has(existing.line) || condLines.has(info.line)) return;
@@ -88,7 +86,7 @@ export function validateVariableRedeclarations(
 			return;
 		}
 
-		const includeEntry = includeVars.get(lowerName);
+		const includeEntry = includeVars.get(info.name);
 		if (includeEntry) {
 			const kindLabel = includeEntry.kind === 'function' ? 'Function' : 'Variable';
 			diagnostics.push({
@@ -103,7 +101,7 @@ export function validateVariableRedeclarations(
 		}
 
 		if (inRealFunction) {
-			const globalVar = globalVariables.get(lowerName);
+			const globalVar = globalVariables.get(info.name);
 			if (globalVar) {
 				diagnostics.push({
 					severity: DiagnosticSeverity.Warning,
@@ -120,7 +118,7 @@ export function validateVariableRedeclarations(
 			const outerScopeId = scopeStack[i];
 			const outerScopeVars = scopeVariables.get(outerScopeId);
 			if (outerScopeVars) {
-				const outerVar = outerScopeVars.get(lowerName);
+				const outerVar = outerScopeVars.get(info.name);
 				if (outerVar) {
 					diagnostics.push({
 						severity: DiagnosticSeverity.Warning,
@@ -136,10 +134,10 @@ export function validateVariableRedeclarations(
 		}
 
 		if (inWrapperFunction && !inRealFunction) {
-			globalVariables.set(lowerName, { ...info, scopeDepth, isFunction });
+			globalVariables.set(info.name, { ...info, scopeDepth, isFunction });
 		}
 
-		scopeVars.set(lowerName, { ...info, scopeDepth, isFunction });
+		scopeVars.set(info.name, { ...info, scopeDepth, isFunction });
 	};
 
 	let inFunctionBody = false;

@@ -120,7 +120,7 @@ function inferReturnExprType(exprCtx: any, declaredVars: Map<string, string>): s
 function isReturnTypeMatch(exprType: string, declaredReturnType: string): boolean {
 	if (!exprType || !declaredReturnType) return true; // unknown — don't flag
 
-	return exprType.toLowerCase() === declaredReturnType.toLowerCase();
+	return exprType === declaredReturnType;
 }
 
 /**
@@ -154,7 +154,7 @@ export function validateReturnStatements(tree: any): Diagnostic[] {
 			}
 
 			const returnType = getReturnType(ctx);
-			const isVoid = !returnType || returnType.toLowerCase() === 'void';
+			const isVoid = !returnType || returnType === 'void';
 
 			const compoundStmt = ctx?.compoundStatement?.();
 			if (!compoundStmt) return visitor.visitChildren(ctx);
@@ -257,8 +257,8 @@ export function validateReturnStatements(tree: any): Diagnostic[] {
 								const exprType = inferReturnExprType(expr, declaredVars);
 								if (exprType && returnType && !isReturnTypeMatch(exprType, returnType)) {
 									const exprText = expr.getText?.() ?? '';
-									const numericTypes = new Set(['integer', 'real']);
-									const isNumericInterop = numericTypes.has(exprType.toLowerCase()) && numericTypes.has(returnType.toLowerCase());
+								const numericTypes = new Set(['Integer', 'Real']);
+								const isNumericInterop = numericTypes.has(exprType) && numericTypes.has(returnType);
 									diagnostics.push({
 										severity: isNumericInterop ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error,
 										range: {
