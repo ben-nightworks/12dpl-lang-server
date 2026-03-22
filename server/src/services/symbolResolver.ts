@@ -45,8 +45,7 @@ export interface ResolvedSymbol {
 	typeDoc?: string;
 }
 
-const KEYWORD_LIST = ['if', 'else', 'while', 'for', 'return', 'void', 'int', 'double',
-	'break', 'continue', 'switch', 'case', 'default', 'do', 'goto', 'struct'];
+const KEYWORD_LIST = ['if', 'else', 'while', 'for', 'return', 'break', 'continue', 'switch', 'case', 'default', 'do', 'goto', 'label'];
 
 export class SymbolResolver {
 	constructor(

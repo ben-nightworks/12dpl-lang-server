@@ -222,6 +222,7 @@
 	"scripts": {
 		"vscode:prepublish": "bun run compile && bun server/copy-resources.js",
 		"generate-antlr": "cd server && bun run generate-antlr",
+		"sync-types": "bun server/sync-grammar-types.js",
 		"build": "bun run compile",
 		"compile": "bun x tsc -b && bun server/copy-resources.js",
 		"watch": "bun x tsc -b -w",

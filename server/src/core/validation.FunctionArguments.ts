@@ -18,6 +18,7 @@ import {
 	safeTokenColumn,
 	extractIdentifierFromDeclarator,
 } from './validation.Common';
+import { isSubtypeOf, isPromotableTo } from './typeHierarchy';
 
 /** One overload's parameter list. */
 type ParamList = ParameterSymbolInfo[];
@@ -73,9 +74,11 @@ function isTypeCompatible(argType: string, paramType: string, paramIsArray: bool
 
 	if (argType === paramType) return true;
 
-	// Integer ↔ Real numeric compatibility
-	const numericTypes = new Set(['Integer', 'Real']);
-	if (!paramIsArray && numericTypes.has(argType) && numericTypes.has(paramType)) return true;
+	// Automatic type promotions (e.g. Integer→Real, Point→Segment)
+	if (!paramIsArray && isPromotableTo(argType, paramType)) return true;
+
+	// Built-in type inheritance (e.g. Panel is-a Widget)
+	if (isSubtypeOf(argType, paramType)) return true;
 
 	return false;
 }

@@ -399,9 +399,14 @@ const detailText = primaryFn.signature ?? '';
 			{ label: 'while', kind: CompletionItemKind.Keyword, detail: 'While loop', data: 3 },
 			{ label: 'for', kind: CompletionItemKind.Keyword, detail: 'For loop', data: 4 },
 			{ label: 'return', kind: CompletionItemKind.Keyword, detail: 'Return statement', data: 5 },
-			{ label: 'void', kind: CompletionItemKind.Keyword, detail: 'Void return type', data: 6 },
-			{ label: 'int', kind: CompletionItemKind.Keyword, detail: 'Integer type', data: 7 },
-			{ label: 'double', kind: CompletionItemKind.Keyword, detail: 'Double type', data: 8 }
+			{ label: 'do', kind: CompletionItemKind.Keyword, detail: 'Do loop', data: 6 },
+			{ label: 'label', kind: CompletionItemKind.Keyword, detail: 'Label', data: 7 },
+			{ label: 'goto', kind: CompletionItemKind.Keyword, detail: 'Goto statement', data: 8 },
+			{ label: 'continue', kind: CompletionItemKind.Keyword, detail: 'Continue statement', data: 9 },
+			{ label: 'break', kind: CompletionItemKind.Keyword, detail: 'Break statement', data: 10 },
+			{ label: 'switch', kind: CompletionItemKind.Keyword, detail: 'Switch statement', data: 11 },
+			{ label: 'case', kind: CompletionItemKind.Keyword, detail: 'Case statement', data: 12 },
+			{ label: 'default', kind: CompletionItemKind.Keyword, detail: 'Default statement', data: 13 },
 		];
 
 		// Add type completions

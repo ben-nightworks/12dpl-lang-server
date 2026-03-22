@@ -10,6 +10,7 @@ import type { ErrorListener, RecognitionException } from 'antlr4';
 import proglang12dLexer from '../antlr/src/proglang12dLexer';
 import proglang12dParser from '../antlr/src/proglang12dParser';
 import type { ParseResult, SyntaxError } from './types';
+import { typeKeywords } from './typeKeywords';
 
 /**
  * Removes conditional/preprocessor directive lines before parsing.
@@ -126,37 +127,6 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 		while (i < text.length && (text[i] === ' ' || text[i] === '\t')) i++;
 		return i;
 	};
-
-	const typeKeywords = new Set([
-		'void', 'Text', 'Integer', 'Real',
-		'Element', 'Model', 'Tin', 'Dynamic_Element', 'Dynamic_Integer', 'Dynamic_Real', 'Dynamic_Text',
-		'Menu', 'Dynamic_Text', 'Point', 'Line', 'Arc', 'Segment', 'File', 'View',
-		'Panel', 'Vertical_Group', 'Horizontal_Group', 'Message_Box', 'Model_Box',
-		'Named_Tick_Box', 'Button', 'Widget', 'Map_File', 'Select_Button', 'Select_Box',
-		'Select_Boxes', 'Angle_Box', 'Choice_Box', 'Colour_Box', 'Directory_Box',
-		'Real_Box', 'File_Box', 'Input_Box', 'Integer_Box', 'Justify_Box', 'Linestyle_Box',
-		'Map_File_Box', 'Name_Box', 'Plotter_Box', 'Report_Box', 'Template_Box',
-		'Projection_Box',
-		'Sheet_Size_Box', 'Text_Style_Box', 'Text_Units_Box', 'Tick_Box', 'Tin_Box',
-		'View_Box', 'XYZ_Box', 'Apply_Many_Function', 'Kerb_Return_Function', 'Function',
-		'Macro_Function', 'Apply_Function', 'Function_Box', 'Widget_Pages', 'Sheet_Panel',
-		'List_Box', 'Draw_Box', 'Screen_Text', 'Text_Edit_Box', 'Overlay_Widget', 'Tab_Box',
-		'ListCtrl_Box', 'Bitmap_List_Box', 'Undo_List', 'Undo', 'Textstyle_Data',
-		'Textstyle_Data_Box', 'Source_Box', 'Target_Box', 'SDR_Attribute', 'Spiral',
-		'Parabola', 'Billboard_Box', 'Texture_Box', 'Bitmap_Fill_Box', 'Date_Time_Box',
-		'HyperLink_Box', 'Uid', 'Attributes', 'Symbol_Box', 'Chainage_Box', 'Graph_Box',
-		'Attributes_Box', 'Equality_Info', 'Equality_Label', 'New_Select_Box', 'Polygon_Box',
-		'New_XYZ_Box', 'Vector2', 'Vector3', 'Vector4', 'Matrix3', 'Matrix4', 'GridCtrl_Box',
-		'XML_Document', 'XML_Node', 'Plot_Parameter_File', 'Connection', 'Select_Query',
-		'Database_Result', 'Insert_Query', 'Update_Query', 'Delete_Query', 'Manual_Query',
-		'Transaction', 'Query_Condition', 'Parameter_Collection', 'Manual_Condition',
-		'Tree_Box', 'Tree_Page', 'Colour_Message_Box', 'Unknown', 'Log_Line', 'Log_Box',
-		'Slider_Box', 'Function_Property_Collection', 'Curve', 'Integer64', 'Guid',
-		'Attribute_Blob', 'Attribute', 'Functions', 'Database_Results', 'Transactions',
-		'Dynamic_Integer64', 'Colour', 'Time', 'Drainage_Network', 'Integer_Set', 'List',
-		'Process_Handle', 'Real_Set', 'Selection', 'String', 'Text_Set', 'Time_Zone_Box',
-		'Time_Zone_Box_Box',
-	]);
 
 	const tryMatchFunctionSignatureAt = (i: number): boolean => {
 		let j = skipWhitespace(i);
