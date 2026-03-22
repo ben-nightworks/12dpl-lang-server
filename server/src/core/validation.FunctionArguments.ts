@@ -85,10 +85,14 @@ function isTypeCompatible(argType: string, paramType: string, paramIsArray: bool
 
 /**
  * Tries to resolve the type of an argument expression.
- * Handles simple identifiers by looking them up in the declared variables map.
+ * Handles simple identifiers, literals, and function calls.
  * Returns undefined if the type cannot be determined.
  */
-function resolveArgType(argCtx: any, declaredVars: Map<string, string>): string | undefined {
+function resolveArgType(
+	argCtx: any,
+	declaredVars: Map<string, string>,
+	returnTypeResolver?: (name: string) => string | undefined
+): string | undefined {
 	try {
 		const text = argCtx?.getText?.();
 		if (!text) return undefined;
@@ -103,8 +107,61 @@ function resolveArgType(argCtx: any, declaredVars: Map<string, string>): string 
 		if (/^[0-9]*\.[0-9]+$/.test(text)) return 'Real';
 
 		// Simple identifier — look up in declared variables
-		return declaredVars.get(text);
+		const varType = declaredVars.get(text);
+		if (varType) return varType;
+
+		// Function call — walk the parse tree to find a postfix expression with parens
+		if (returnTypeResolver) {
+			const funcName = extractFunctionCallName(argCtx);
+			if (funcName) {
+				const rt = returnTypeResolver(funcName);
+				if (rt && rt !== 'void') return rt;
+			}
+		}
+
+		return undefined;
 	} catch { return undefined; }
+}
+
+/**
+ * Extracts the function name from an expression context that is a function call.
+ * Walks down through assignment/conditional/logical/... expression wrappers
+ * to find a postfixExpression with parentheses.
+ */
+function extractFunctionCallName(ctx: any): string | undefined {
+	try {
+		// Walk down single-child expression wrappers to the postfix expression
+		let cur = ctx;
+		while (cur) {
+			// Check if this is a postfix expression with parens (function call)
+			const leftParens = cur.LeftParen_list?.();
+			if (leftParens && leftParens.length > 0) {
+				const primary = cur.primaryExpression?.();
+				const idNode = primary?.Identifier?.();
+				return safeTokenText(idNode) ?? undefined;
+			}
+			// Descend into single-child wrappers
+			const children = cur.children;
+			if (children && children.length === 1) {
+				cur = children[0];
+			} else if (children && children.length > 0) {
+				// For postfix expressions, the first child might be the primary
+				// Try to find postfixExpression among children
+				for (const child of children) {
+					if (child?.constructor?.name?.includes?.('PostfixExpression')) {
+						cur = child;
+						break;
+					}
+				}
+				// If we didn't find a postfix child, try the first child
+				if (cur === ctx) break;
+				if (cur === children[children.length - 1] && !cur?.constructor?.name?.includes?.('PostfixExpression')) break;
+			} else {
+				break;
+			}
+		}
+	} catch { /* ignore */ }
+	return undefined;
 }
 
 /**
@@ -116,12 +173,14 @@ function resolveArgType(argCtx: any, declaredVars: Map<string, string>): string 
  */
 export function validateFunctionArguments(
 	tree: any,
-	externalSignatures: FunctionSignatureMap
+	externalSignatures: FunctionSignatureMap,
+	externalReturnTypes: Map<string, string> = new Map()
 ): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];
 
 	// Phase 1: Collect local function definitions and variable declarations
 	const localSignatures: FunctionSignatureMap = new Map();
+	const localReturnTypes = new Map<string, string>(); // name → return type
 	const declaredVars = new Map<string, string>(); // name → type
 
 	const getTypeText = (ctx: any): string | undefined => {
@@ -150,6 +209,11 @@ export function validateFunctionArguments(
 					existing.push(params);
 				} else {
 					localSignatures.set(info.name, [params]);
+				}
+				// Collect return type
+				const returnType = getTypeText(ctx);
+				if (returnType) {
+					localReturnTypes.set(info.name, returnType);
 				}
 			}
 			return collector.visitChildren(ctx);
@@ -204,6 +268,11 @@ export function validateFunctionArguments(
 	// Combine local + external signatures for lookup
 	const resolveSignatures = (name: string): ParamList[] | undefined => {
 		return localSignatures.get(name) ?? externalSignatures.get(name);
+	};
+
+	// Combine local + external return types for lookup
+	const resolveReturnType = (name: string): string | undefined => {
+		return localReturnTypes.get(name) ?? externalReturnTypes.get(name);
 	};
 
 	// Phase 2: Find function calls and check argument types
@@ -261,7 +330,7 @@ export function validateFunctionArguments(
 				} else {
 					// Check type compatibility for overloads with matching count
 					const argTypes: (string | undefined)[] = argExprs.map(
-						(arg: any) => resolveArgType(arg, declaredVars)
+						(arg: any) => resolveArgType(arg, declaredVars, resolveReturnType)
 					);
 
 					const anyOverloadMatches = countMatches.some(params =>

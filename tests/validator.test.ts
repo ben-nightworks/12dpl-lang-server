@@ -1562,11 +1562,11 @@ void main() {
 
 // ─── Function argument validation (#45) ─────────────────────────────────────
 
-function ValidateFunctionArgs(text: string, externalSignatures: FunctionSignatureMap = new Map()): Diagnostic[] {
+function ValidateFunctionArgs(text: string, externalSignatures: FunctionSignatureMap = new Map(), externalReturnTypes: Map<string, string> = new Map()): Diagnostic[] {
 	const result = parse(text);
 	const synErrs = syntaxDiagnostics(result);
 	if (synErrs.length > 0) return synErrs;
-	return validateFunctionArguments(result.tree, externalSignatures) as Diagnostic[];
+	return validateFunctionArguments(result.tree, externalSignatures, externalReturnTypes) as Diagnostic[];
 }
 
 describe("Function argument validation (#45)", () => {
@@ -1890,6 +1890,103 @@ void main()
 		const diagnostics = ValidateFunctionArgs(code);
 		expect(diagnostics.length).toBe(1);
 		expect(diagnostics[0].message).toContain("mismatch");
+	});
+
+	test("allows Colour_Message_Box where Message_Box parameter expected", () => {
+		const code = `
+void Show(Message_Box mb)
+{
+}
+
+void main()
+{
+	Colour_Message_Box cmb;
+	Show(cmb);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("resolves function call return type in argument position", () => {
+		const code = `
+Integer Get_value()
+{
+	return 42;
+}
+
+void Process(Integer x)
+{
+}
+
+void main()
+{
+	Process(Get_value());
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("detects type mismatch from function call return type in argument", () => {
+		const code = `
+Text Get_name()
+{
+	return "hello";
+}
+
+void Process(Integer x)
+{
+}
+
+void main()
+{
+	Process(Get_name());
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("mismatch");
+	});
+
+	test("resolves external function call return type in argument position", () => {
+		const externalSigs: FunctionSignatureMap = new Map();
+		externalSigs.set("Ext_get", [[]]);
+		const externalReturnTypes = new Map<string, string>();
+		externalReturnTypes.set("Ext_get", "Integer");
+
+		const code = `
+void Process(Integer x)
+{
+}
+
+void main()
+{
+	Process(Ext_get());
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code, externalSigs, externalReturnTypes);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("allows Integer return type promoted to Real in argument position", () => {
+		const code = `
+Integer Get_count()
+{
+	return 42;
+}
+
+void Process(Real val)
+{
+}
+
+void main()
+{
+	Process(Get_count());
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(0);
 	});
 });
 

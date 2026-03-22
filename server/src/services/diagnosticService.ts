@@ -73,14 +73,15 @@ export class DiagnosticService {
 
 			// 3d. Function argument checking (issue #45)
 			const functionSignatures = await this.buildFunctionSignatures(uri);
+			const functionReturnTypes = await this.buildFunctionReturnTypes(uri);
 			const argDiagnostics = validateFunctionArguments(
 				parseResult.tree,
-				functionSignatures
+				functionSignatures,
+				functionReturnTypes
 			);
 			diagnostics.push(...argDiagnostics);
 
 			// 3e. Void function return value checking (issue #46)
-			const functionReturnTypes = await this.buildFunctionReturnTypes(uri);
 			const voidReturnDiagnostics = validateVoidFunctionReturnValues(
 				parseResult.tree,
 				functionReturnTypes
