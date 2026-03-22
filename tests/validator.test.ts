@@ -3,8 +3,9 @@ import * as fs from "fs";
 import * as path from "path";
 import { parse } from "../server/src/core/parsePipeline";
 import { collectSymbolTable, deriveViews } from "../server/src/core/symbolCollector";
-import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls } from "../server/src/core/validators";
-import type { IncludeFileVariable, KnownSymbols, DerivedSymbolViews } from "../server/src/core/types";
+import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls, validateFunctionArguments } from "../server/src/core/validators";
+import type { FunctionSignatureMap } from "../server/src/core/validators";
+import type { IncludeFileVariable, KnownSymbols, DerivedSymbolViews, ParameterSymbolInfo } from "../server/src/core/types";
 
 // The core validators return vscode-languageserver Diagnostic objects.
 // We use `any` here to avoid importing the LSP package from the test runner.
@@ -1350,5 +1351,207 @@ void Do_thing(Integer x, Integer y)
 			d.message.includes("already defined")
 		);
 		expect(redeclErrors.length).toBe(0);
+	});
+});
+
+// ─── Function argument validation (#45) ─────────────────────────────────────
+
+function ValidateFunctionArgs(text: string, externalSignatures: FunctionSignatureMap = new Map()): Diagnostic[] {
+	const result = parse(text);
+	const synErrs = syntaxDiagnostics(result);
+	if (synErrs.length > 0) return synErrs;
+	return validateFunctionArguments(result.tree, externalSignatures) as Diagnostic[];
+}
+
+describe("Function argument validation (#45)", () => {
+	test("detects type mismatch from issue example", () => {
+		const code = `
+Integer Get_integer(Dynamic_Integer ints, Integer item_num)
+{
+	Integer int = 0;
+	return int;
+}
+
+void Get_the_thing()
+{
+	Text test;
+	Integer int;
+	Get_integer(test, int);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("Get_integer");
+		expect(diagnostics[0].message).toContain("mismatch");
+	});
+
+	test("allows correct argument types", () => {
+		const code = `
+Integer Get_integer(Dynamic_Integer ints, Integer item_num)
+{
+	return 0;
+}
+
+void main()
+{
+	Dynamic_Integer my_ints;
+	Integer num;
+	Get_integer(my_ints, num);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("detects wrong argument count", () => {
+		const code = `
+Integer Add(Integer a, Integer b)
+{
+	return 0;
+}
+
+void main()
+{
+	Integer x;
+	Add(x);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("expects");
+		expect(diagnostics[0].message).toContain("2");
+		expect(diagnostics[0].message).toContain("1");
+	});
+
+	test("allows Integer where Real is expected (numeric compatibility)", () => {
+		const code = `
+void Do_thing(Real val)
+{
+}
+
+void main()
+{
+	Integer x;
+	Do_thing(x);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("allows matching overload among multiple", () => {
+		const code = `
+Integer Sort_array(Integer count, Integer index[], Integer data[])
+{
+	return 0;
+}
+
+Integer Sort_array(Integer count, Integer index[], Real data[])
+{
+	return 0;
+}
+
+Integer Sort_array(Integer count, Integer index[], Text data[])
+{
+	return 0;
+}
+
+void main()
+{
+	Integer count;
+	Integer idx[];
+	Text vals[];
+	Sort_array(count, idx, vals);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("detects mismatch when no overload matches", () => {
+		const code = `
+Integer Sort_array(Integer count, Integer index[], Integer data[])
+{
+	return 0;
+}
+
+Integer Sort_array(Integer count, Integer index[], Real data[])
+{
+	return 0;
+}
+
+void main()
+{
+	Integer count;
+	Integer idx[];
+	Element vals[];
+	Sort_array(count, idx, vals);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("mismatch");
+	});
+
+	test("resolves external function signatures", () => {
+		const externalSigs: FunctionSignatureMap = new Map();
+		externalSigs.set("Ext_func", [
+			[{ name: "a", type: "Integer" }, { name: "b", type: "Text" }]
+		]);
+
+		const code = `
+void main()
+{
+	Integer x;
+	Integer y;
+	Ext_func(x, y);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code, externalSigs);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("mismatch");
+	});
+
+	test("does not flag calls to unknown functions", () => {
+		const code = `
+void main()
+{
+	Integer x;
+	Unknown_func(x);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("allows call with no arguments to parameterless function", () => {
+		const code = `
+void Do_thing()
+{
+}
+
+void main()
+{
+	Do_thing();
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("detects string literal where Integer expected", () => {
+		const code = `
+void Do_thing(Integer x)
+{
+}
+
+void main()
+{
+	Do_thing("hello");
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("mismatch");
 	});
 });
