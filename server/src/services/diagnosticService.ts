@@ -9,7 +9,12 @@ import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver/node';
 import type { DocumentService } from './documentService';
 import type { IncludeService } from './includeService';
 import type { PrototypeService } from './prototypeService';
-import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls, validateFunctionArguments } from '../core/validators';
+import { validateVariableRedeclarations, 
+	validateFunctionRedeclarations, 
+	validateUndeclaredIdentifiers, 
+	validateDeprecatedCalls, 
+	validateVoidFunctionReturnValues,
+	validateFunctionArguments } from '../core/validators';
 import type { FunctionSignatureMap } from '../core/validators';
 import type { KnownSymbols, ParameterSymbolInfo } from '../core/types';
 
@@ -72,6 +77,14 @@ export class DiagnosticService {
 				functionSignatures
 			);
 			diagnostics.push(...argDiagnostics);
+
+			// 3e. Void function return value checking (issue #46)
+			const functionReturnTypes = await this.buildFunctionReturnTypes(uri);
+			const voidReturnDiagnostics = validateVoidFunctionReturnValues(
+				parseResult.tree,
+				functionReturnTypes
+			);
+			diagnostics.push(...voidReturnDiagnostics);
 		}
 
 		return diagnostics;
@@ -128,6 +141,44 @@ export class DiagnosticService {
 		return knownSymbols;
 	}
 
+	/** Builds a map of function name → return type for void-return-value checking. */
+	private async buildFunctionReturnTypes(uri: string): Promise<Map<string, string>> {
+		const returnTypes = new Map<string, string>();
+
+		// Built-in prototypes — only mark as void if ALL overloads return void
+		for (const name of this.prototypeService.getAllNames()) {
+			const overloads = this.prototypeService.getPrototypes(name);
+			if (overloads.length > 0) {
+				const allVoid = overloads.every(o => o.returnType.toLowerCase() === 'void');
+				returnTypes.set(name, allVoid ? 'void' : overloads[0].returnType);
+			}
+		}
+
+		// Document functions
+		const docViews = this.documentService.getDerivedViews(uri);
+		if (docViews) {
+			for (const [name, decls] of docViews.allFunctions) {
+				if (decls.length > 0 && decls[0].returnType) {
+					returnTypes.set(name, decls[0].returnType);
+				}
+			}
+		}
+
+		// Include file functions
+		const includeFiles = await this.includeService.getIncludeFiles(uri);
+		for (const includeFsPath of includeFiles) {
+			const views = this.documentService.getDerivedViewsForFsPath(includeFsPath);
+			if (views) {
+				for (const [name, decls] of views.exportedFunctions) {
+					if (decls.length > 0 && decls[0].returnType) {
+						returnTypes.set(name, decls[0].returnType);
+					}
+				}
+			}
+		}
+		return returnTypes;
+	}
+
 	/** Builds a map of function name → overload parameter lists for argument checking. */
 	private async buildFunctionSignatures(uri: string): Promise<FunctionSignatureMap> {
 		const signatures: FunctionSignatureMap = new Map();
@@ -166,7 +217,6 @@ export class DiagnosticService {
 				}
 			}
 		}
-
 		return signatures;
 	}
 }

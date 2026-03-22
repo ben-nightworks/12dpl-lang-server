@@ -16,5 +16,6 @@ export { validateVariableRedeclarations } from './validation.VariableRedeclarati
 export { validateFunctionRedeclarations } from './validation.FunctionRedeclaration';
 export { validateDeprecatedCalls } from './validation.FunctionDeprecation';
 export { validateUndeclaredIdentifiers } from './validation.UndeclaredSymbols';
+export { validateVoidFunctionReturnValues } from './validation.VoidReturnValue';
 export { validateFunctionArguments } from './validation.FunctionArguments';
 export type { FunctionSignatureMap } from './validation.FunctionArguments';
