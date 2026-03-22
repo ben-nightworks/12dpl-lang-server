@@ -1,5 +1,8 @@
 /**
  * Undeclared symbols and type mismatch validation.
+ *
+ * Uses a scope stack so that variables declared in one function
+ * are not visible in another (issue #43).
  */
 
 import {
@@ -21,10 +24,53 @@ import {
 
 export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymbols): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];
-	const declaredSymbols = new Map<string, DeclaredSymbol>();
-	const usages: IdentifierUsage[] = [];
 	const switchCaseMismatches: SwitchCaseMismatch[] = [];
-	let scopeDepth = 0;
+
+	// Scope stack: index 0 is the global scope, higher indices are nested scopes.
+	const scopeStack: Map<string, DeclaredSymbol>[] = [new Map()];
+	let inWrapperFunction = false;
+
+	const pushScope = () => { scopeStack.push(new Map()); };
+	const popScope = () => { if (scopeStack.length > 1) scopeStack.pop(); };
+
+	/** Declare a symbol. Wrapper-function locals go to global scope (index 0). */
+	const declareSymbol = (name: string, symbol: DeclaredSymbol) => {
+		const lower = name.toLowerCase();
+		if (inWrapperFunction) {
+			scopeStack[0].set(lower, symbol);
+		} else {
+			scopeStack[scopeStack.length - 1].set(lower, symbol);
+		}
+	};
+
+	/** Look up a symbol walking from innermost scope outward. */
+	const lookupSymbol = (name: string): DeclaredSymbol | undefined => {
+		const lower = name.toLowerCase();
+		for (let i = scopeStack.length - 1; i >= 0; i--) {
+			const sym = scopeStack[i].get(lower);
+			if (sym) return sym;
+		}
+		return undefined;
+	};
+
+	/** Check an identifier usage inline; emit diagnostic if undeclared. */
+	const checkUsage = (text: string, line: number, column: number, isFunctionCall: boolean) => {
+		const lowerName = text.toLowerCase();
+		if (lookupSymbol(lowerName)) return;
+		if (isFunctionCall && knownSymbols.functions.has(lowerName)) return;
+		if (knownSymbols.variables.has(lowerName)) return;
+		if (knownSymbols.defines.has(lowerName)) return;
+		if (isFunctionCall) return;
+
+		diagnostics.push({
+			severity: DiagnosticSeverity.Error,
+			range: {
+				start: { line: line - 1, character: column },
+				end: { line: line - 1, character: column + text.length }
+			},
+			message: `'${text}' is not declared`
+		});
+	};
 
 	const getDeclarationTypeText = (ctx: any): string | undefined => {
 		try {
@@ -103,10 +149,19 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 		visitFunctionDefinition(ctx: any) {
 			const decl = ctx?.declarator?.();
 			const info = extractIdentifierFromDeclarator(decl);
-			if (info) declaredSymbols.set(info.name.toLowerCase(), info);
-			scopeDepth++;
+			const funcName = info?.name?.toLowerCase() ?? '';
+
+			// Function names are always global
+			if (info) scopeStack[0].set(funcName, info);
+
+			const prevWrapper = inWrapperFunction;
+			inWrapperFunction = funcName.startsWith('__12dpl__');
+
+			pushScope();
 			visitor.visitChildren(ctx);
-			scopeDepth--;
+			popScope();
+
+			inWrapperFunction = prevWrapper;
 			return undefined;
 		},
 		visitDeclaration(ctx: any) {
@@ -116,7 +171,7 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 				for (const initDecl of list?.initDeclarator_list?.() ?? []) {
 					const declarator = initDecl?.declarator?.();
 					const info = extractIdentifierFromDeclarator(declarator);
-					if (info) declaredSymbols.set(info.name.toLowerCase(), { ...info, type: declType });
+					if (info) declareSymbol(info.name, { ...info, type: declType });
 				}
 			} catch { /* ignore */ }
 			return visitor.visitChildren(ctx);
@@ -128,7 +183,7 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 				for (const initDecl of list?.initDeclarator_list?.() ?? []) {
 					const declarator = initDecl?.declarator?.();
 					const info = extractIdentifierFromDeclarator(declarator);
-					if (info) declaredSymbols.set(info.name.toLowerCase(), { ...info, type: declType });
+					if (info) declareSymbol(info.name, { ...info, type: declType });
 				}
 			} catch { /* ignore */ }
 			return visitor.visitChildren(ctx);
@@ -139,7 +194,9 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 				const text = safeTokenText(idNode);
 				const line = safeTokenLine(idNode);
 				const column = safeTokenColumn(idNode);
-				if (text && line !== null && column !== null) declaredSymbols.set(text.toLowerCase(), { name: text, line, column });
+				if (text && line !== null && column !== null) {
+					declareSymbol(text, { name: text, line, column });
+				}
 			} catch { /* ignore */ }
 			return visitor.visitChildren(ctx);
 		},
@@ -149,7 +206,9 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 					const text = safeTokenText(idNode);
 					const line = safeTokenLine(idNode);
 					const column = safeTokenColumn(idNode);
-					if (text && line !== null && column !== null) declaredSymbols.set(text.toLowerCase(), { name: text, line, column });
+					if (text && line !== null && column !== null) {
+						declareSymbol(text, { name: text, line, column });
+					}
 				}
 			} catch { /* ignore */ }
 			return visitor.visitChildren(ctx);
@@ -163,7 +222,7 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 				let switchType: string | undefined;
 				const exprText = switchExpr?.getText?.();
 				if (exprText) {
-					const symbol = declaredSymbols.get(exprText.toLowerCase());
+					const symbol = lookupSymbol(exprText);
 					if (symbol?.type) switchType = symbol.type;
 				}
 				if (switchType) {
@@ -187,7 +246,7 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 				const leftParenTokens = ctx?.LeftParen_list?.();
 				const isFunctionCall = leftParenTokens && leftParenTokens.length > 0;
 				if (text && line !== null && column !== null) {
-					usages.push({ name: text, line, column, isAssignmentTarget: false, isFunctionCall: !!isFunctionCall });
+					checkUsage(text, line, column, !!isFunctionCall);
 				}
 			} catch { /* ignore */ }
 			const children: any[] = ctx?.children ?? [];
@@ -211,7 +270,7 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 				const line = safeTokenLine(idNode);
 				const column = safeTokenColumn(idNode);
 				if (text && line !== null && column !== null) {
-					usages.push({ name: text, line, column, isAssignmentTarget: false, isFunctionCall: false });
+					checkUsage(text, line, column, false);
 				}
 			} catch { /* ignore */ }
 			return visitor.visitChildren(ctx);
@@ -219,24 +278,6 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 	};
 
 	try { tree.accept(visitor); } catch { return diagnostics; }
-
-	for (const usage of usages) {
-		const lowerName = usage.name.toLowerCase();
-		if (declaredSymbols.has(lowerName)) continue;
-		if (usage.isFunctionCall && knownSymbols.functions.has(lowerName)) continue;
-		if (knownSymbols.variables.has(lowerName)) continue;
-		if (knownSymbols.defines.has(lowerName)) continue;
-		if (usage.isFunctionCall) continue;
-
-		diagnostics.push({
-			severity: DiagnosticSeverity.Warning,
-			range: {
-				start: { line: usage.line - 1, character: usage.column },
-				end: { line: usage.line - 1, character: usage.column + usage.name.length }
-			},
-			message: `'${usage.name}' is not declared`
-		});
-	}
 
 	for (const mismatch of switchCaseMismatches) {
 		diagnostics.push({
