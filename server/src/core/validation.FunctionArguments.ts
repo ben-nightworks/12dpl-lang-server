@@ -130,9 +130,13 @@ function resolveArgType(
  */
 function extractFunctionCallName(ctx: any): string | undefined {
 	try {
-		// Walk down single-child expression wrappers to the postfix expression
+		// Walk down single-child expression wrappers to the postfix expression.
+		// A simple function call like `foo(x)` produces a chain of single-child
+		// expression contexts (assign → conditional → ... → postfix). If any
+		// node has multiple children, the expression is compound (e.g. `a + b`)
+		// and we give up — we only resolve simple call expressions.
 		let cur = ctx;
-		while (cur) {
+		for (let depth = 0; depth < 25 && cur; depth++) {
 			// Check if this is a postfix expression with parens (function call)
 			const leftParens = cur.LeftParen_list?.();
 			if (leftParens && leftParens.length > 0) {
@@ -140,21 +144,10 @@ function extractFunctionCallName(ctx: any): string | undefined {
 				const idNode = primary?.Identifier?.();
 				return safeTokenText(idNode) ?? undefined;
 			}
-			// Descend into single-child wrappers
+			// Only descend through single-child wrappers
 			const children = cur.children;
 			if (children && children.length === 1) {
 				cur = children[0];
-			} else if (children && children.length > 0) {
-				// Try to find a postfixExpression child to descend into
-				let found = false;
-				for (const child of children) {
-					if (child?.constructor?.name?.includes?.('PostfixExpression')) {
-						cur = child;
-						found = true;
-						break;
-					}
-				}
-				if (!found) break;
 			} else {
 				break;
 			}
@@ -357,7 +350,9 @@ export function validateFunctionArguments(
 				}
 			} catch { /* ignore */ }
 
-			// Visit children but skip primary (already handled above)
+			// Visit children but skip primary (already handled above).
+			// The children array includes argumentExpressionList nodes, so
+			// there is no need to visit them separately.
 			const children: any[] = ctx?.children ?? [];
 			for (const child of children) {
 				if (child && typeof child.accept === 'function') {
@@ -365,11 +360,6 @@ export function validateFunctionArguments(
 					if (!isPrimary) child.accept(checker);
 				}
 			}
-			try {
-				for (const argList of ctx?.argumentExpressionList_list?.() ?? []) {
-					argList?.accept?.(checker);
-				}
-			} catch { /* ignore */ }
 			return undefined;
 		}
 	};
