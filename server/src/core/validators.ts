@@ -17,3 +17,6 @@ export { validateFunctionRedeclarations } from './validation.FunctionRedeclarati
 export { validateDeprecatedCalls } from './validation.FunctionDeprecation';
 export { validateUndeclaredIdentifiers } from './validation.UndeclaredSymbols';
 export { validateReturnStatements } from './validation.ReturnValue';
+export { validateVoidFunctionReturnValues } from './validation.VoidReturnValue';
+export { validateFunctionArguments } from './validation.FunctionArguments';
+export type { FunctionSignatureMap } from './validation.FunctionArguments';

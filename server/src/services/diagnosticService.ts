@@ -9,8 +9,15 @@ import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver/node';
 import type { DocumentService } from './documentService';
 import type { IncludeService } from './includeService';
 import type { PrototypeService } from './prototypeService';
-import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls, validateReturnStatements } from '../core/validators';
-import type { KnownSymbols } from '../core/types';
+import { validateVariableRedeclarations, 
+	validateFunctionRedeclarations, 
+	validateUndeclaredIdentifiers, 
+	validateDeprecatedCalls, 
+	validateVoidFunctionReturnValues,
+	validateFunctionArguments,
+  validateReturnStatements} from '../core/validators';
+import type { FunctionSignatureMap } from '../core/validators';
+import type { KnownSymbols, ParameterSymbolInfo } from '../core/types';
 
 export class DiagnosticService {
 	constructor(
@@ -64,9 +71,26 @@ export class DiagnosticService {
 			);
 			diagnostics.push(...undeclaredDiagnostics);
 
-			// 3d. Return statement validation (issue #47)
+			// 3d. Function argument checking (issue #45)
+			const functionSignatures = await this.buildFunctionSignatures(uri);
+			const argDiagnostics = validateFunctionArguments(
+				parseResult.tree,
+				functionSignatures
+			);
+			diagnostics.push(...argDiagnostics);
+
+			// 3e. Void function return value checking (issue #46)
+			const functionReturnTypes = await this.buildFunctionReturnTypes(uri);
+			const voidReturnDiagnostics = validateVoidFunctionReturnValues(
+				parseResult.tree,
+				functionReturnTypes
+			);
+			diagnostics.push(...voidReturnDiagnostics);
+
+      // 3f. Return statement validation (issue #47)
 			const returnDiagnostics = validateReturnStatements(parseResult.tree);
 			diagnostics.push(...returnDiagnostics);
+      
 		}
 
 		return diagnostics;
@@ -121,5 +145,84 @@ export class DiagnosticService {
 		}
 
 		return knownSymbols;
+	}
+
+	/** Builds a map of function name → return type for void-return-value checking. */
+	private async buildFunctionReturnTypes(uri: string): Promise<Map<string, string>> {
+		const returnTypes = new Map<string, string>();
+
+		// Built-in prototypes — only mark as void if ALL overloads return void
+		for (const name of this.prototypeService.getAllNames()) {
+			const overloads = this.prototypeService.getPrototypes(name);
+			if (overloads.length > 0) {
+				const allVoid = overloads.every(o => o.returnType.toLowerCase() === 'void');
+				returnTypes.set(name, allVoid ? 'void' : overloads[0].returnType);
+			}
+		}
+
+		// Document functions
+		const docViews = this.documentService.getDerivedViews(uri);
+		if (docViews) {
+			for (const [name, decls] of docViews.allFunctions) {
+				if (decls.length > 0 && decls[0].returnType) {
+					returnTypes.set(name, decls[0].returnType);
+				}
+			}
+		}
+
+		// Include file functions
+		const includeFiles = await this.includeService.getIncludeFiles(uri);
+		for (const includeFsPath of includeFiles) {
+			const views = this.documentService.getDerivedViewsForFsPath(includeFsPath);
+			if (views) {
+				for (const [name, decls] of views.exportedFunctions) {
+					if (decls.length > 0 && decls[0].returnType) {
+						returnTypes.set(name, decls[0].returnType);
+					}
+				}
+			}
+		}
+		return returnTypes;
+	}
+
+	/** Builds a map of function name → overload parameter lists for argument checking. */
+	private async buildFunctionSignatures(uri: string): Promise<FunctionSignatureMap> {
+		const signatures: FunctionSignatureMap = new Map();
+
+		const addOverloads = (name: string, params: ParameterSymbolInfo[]) => {
+			const existing = signatures.get(name);
+			if (existing) {
+				existing.push(params);
+			} else {
+				signatures.set(name, [params]);
+			}
+		};
+
+		// Built-in prototypes
+		for (const name of this.prototypeService.getAllNames()) {
+			const overloads = this.prototypeService.getPrototypes(name);
+			for (const overload of overloads) {
+				addOverloads(name, overload.parameters.map(p => ({
+					name: p.name,
+					type: p.type,
+				})));
+			}
+		}
+
+		// Include file functions
+		const includeFiles = await this.includeService.getIncludeFiles(uri);
+		for (const includeFsPath of includeFiles) {
+			const views = this.documentService.getDerivedViewsForFsPath(includeFsPath);
+			if (views) {
+				for (const [name, decls] of views.exportedFunctions) {
+					for (const decl of decls) {
+						if (decl.params) {
+							addOverloads(name, decl.params);
+						}
+					}
+				}
+			}
+		}
+		return signatures;
 	}
 }
