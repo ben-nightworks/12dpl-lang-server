@@ -85,10 +85,14 @@ function isTypeCompatible(argType: string, paramType: string, paramIsArray: bool
 
 /**
  * Tries to resolve the type of an argument expression.
- * Handles simple identifiers by looking them up in the declared variables map.
+ * Handles simple identifiers, literals, and function calls.
  * Returns undefined if the type cannot be determined.
  */
-function resolveArgType(argCtx: any, declaredVars: Map<string, string>): string | undefined {
+function resolveArgType(
+	argCtx: any,
+	declaredVars: Map<string, string>,
+	returnTypeResolver?: (name: string) => string | undefined
+): string | undefined {
 	try {
 		const text = argCtx?.getText?.();
 		if (!text) return undefined;
@@ -103,8 +107,53 @@ function resolveArgType(argCtx: any, declaredVars: Map<string, string>): string 
 		if (/^[0-9]*\.[0-9]+$/.test(text)) return 'Real';
 
 		// Simple identifier — look up in declared variables
-		return declaredVars.get(text);
+		const varType = declaredVars.get(text);
+		if (varType) return varType;
+
+		// Function call — walk the parse tree to find a postfix expression with parens
+		if (returnTypeResolver) {
+			const funcName = extractFunctionCallName(argCtx);
+			if (funcName) {
+				const rt = returnTypeResolver(funcName);
+				if (rt && rt !== 'void') return rt;
+			}
+		}
+
+		return undefined;
 	} catch { return undefined; }
+}
+
+/**
+ * Extracts the function name from an expression context that is a function call.
+ * Walks down through assignment/conditional/logical/... expression wrappers
+ * to find a postfixExpression with parentheses.
+ */
+function extractFunctionCallName(ctx: any): string | undefined {
+	try {
+		// Walk down single-child expression wrappers to the postfix expression.
+		// A simple function call like `foo(x)` produces a chain of single-child
+		// expression contexts (assign → conditional → ... → postfix). If any
+		// node has multiple children, the expression is compound (e.g. `a + b`)
+		// and we give up — we only resolve simple call expressions.
+		let cur = ctx;
+		for (let depth = 0; depth < 25 && cur; depth++) {
+			// Check if this is a postfix expression with parens (function call)
+			const leftParens = cur.LeftParen_list?.();
+			if (leftParens && leftParens.length > 0) {
+				const primary = cur.primaryExpression?.();
+				const idNode = primary?.Identifier?.();
+				return safeTokenText(idNode) ?? undefined;
+			}
+			// Only descend through single-child wrappers
+			const children = cur.children;
+			if (children && children.length === 1) {
+				cur = children[0];
+			} else {
+				break;
+			}
+		}
+	} catch { /* ignore */ }
+	return undefined;
 }
 
 /**
@@ -116,13 +165,14 @@ function resolveArgType(argCtx: any, declaredVars: Map<string, string>): string 
  */
 export function validateFunctionArguments(
 	tree: any,
-	externalSignatures: FunctionSignatureMap
+	externalSignatures: FunctionSignatureMap,
+	externalReturnTypes: Map<string, string> = new Map()
 ): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];
 
-	// Phase 1: Collect local function definitions and variable declarations
+	// Pass 1: Collect all function signatures and return types (global)
 	const localSignatures: FunctionSignatureMap = new Map();
-	const declaredVars = new Map<string, string>(); // name → type
+	const localReturnTypes = new Map<string, string>();
 
 	const getTypeText = (ctx: any): string | undefined => {
 		try {
@@ -131,12 +181,12 @@ export function validateFunctionArguments(
 		} catch { return undefined; }
 	};
 
-	const collector: any = {
+	const sigCollector: any = {
 		visitTerminal() { return undefined; },
 		visitErrorNode() { return undefined; },
 		visitChildren(ctx: any) {
 			for (const child of ctx?.children ?? []) {
-				if (child && typeof child.accept === 'function') child.accept(collector);
+				if (child && typeof child.accept === 'function') child.accept(sigCollector);
 			}
 			return undefined;
 		},
@@ -151,62 +201,44 @@ export function validateFunctionArguments(
 				} else {
 					localSignatures.set(info.name, [params]);
 				}
-			}
-			return collector.visitChildren(ctx);
-		},
-		visitDeclaration(ctx: any) {
-			const declType = getTypeText(ctx);
-			if (declType) {
-				const list = ctx?.initDeclaratorList?.();
-				try {
-					for (const initDecl of list?.initDeclarator_list?.() ?? []) {
-						const declarator = initDecl?.declarator?.();
-						const info = extractIdentifierFromDeclarator(declarator);
-						if (info) {
-							declaredVars.set(info.name, declType);
-						}
-					}
-				} catch { /* ignore */ }
-			}
-			return collector.visitChildren(ctx);
-		},
-		visitForDeclaration(ctx: any) {
-			const declType = getTypeText(ctx);
-			if (declType) {
-				const list = ctx?.initDeclaratorList?.();
-				try {
-					for (const initDecl of list?.initDeclarator_list?.() ?? []) {
-						const declarator = initDecl?.declarator?.();
-						const info = extractIdentifierFromDeclarator(declarator);
-						if (info) {
-							declaredVars.set(info.name, declType);
-						}
-					}
-				} catch { /* ignore */ }
-			}
-			return collector.visitChildren(ctx);
-		},
-		visitParameterDeclaration(ctx: any) {
-			try {
-				const typeText = ctx?.declarationSpecifiers?.()?.getText?.();
-				const idNode = ctx?.Identifier?.();
-				const name = safeTokenText(idNode);
-				if (name && typeText) {
-					declaredVars.set(name, typeText);
+				const returnType = getTypeText(ctx);
+				if (returnType) {
+					localReturnTypes.set(info.name, returnType);
 				}
-			} catch { /* ignore */ }
-			return collector.visitChildren(ctx);
+			}
+			return sigCollector.visitChildren(ctx);
 		}
 	};
+	try { tree.accept(sigCollector); } catch { /* ignore */ }
 
-	try { tree.accept(collector); } catch { /* ignore */ }
-
-	// Combine local + external signatures for lookup
 	const resolveSignatures = (name: string): ParamList[] | undefined => {
 		return localSignatures.get(name) ?? externalSignatures.get(name);
 	};
+	const resolveReturnType = (name: string): string | undefined => {
+		return localReturnTypes.get(name) ?? externalReturnTypes.get(name);
+	};
 
-	// Phase 2: Find function calls and check argument types
+	// Pass 2: Check function calls with scoped variable tracking.
+	// Each function body gets its own variable scope so that identically-named
+	// variables in different functions don't interfere with each other.
+	let scopedVars = new Map<string, string>();
+
+	const collectVarsFromDecl = (ctx: any) => {
+		const declType = getTypeText(ctx);
+		if (declType) {
+			const list = ctx?.initDeclaratorList?.();
+			try {
+				for (const initDecl of list?.initDeclarator_list?.() ?? []) {
+					const declarator = initDecl?.declarator?.();
+					const info = extractIdentifierFromDeclarator(declarator);
+					if (info) {
+						scopedVars.set(info.name, declType);
+					}
+				}
+			} catch { /* ignore */ }
+		}
+	};
+
 	const checker: any = {
 		visitTerminal() { return undefined; },
 		visitErrorNode() { return undefined; },
@@ -215,6 +247,44 @@ export function validateFunctionArguments(
 				if (child && typeof child.accept === 'function') child.accept(checker);
 			}
 			return undefined;
+		},
+		visitFunctionDefinition(ctx: any) {
+			// Start a fresh scope for this function's body
+			const outerVars = scopedVars;
+			scopedVars = new Map<string, string>();
+
+			// Collect parameters into the new scope
+			const decl = ctx?.declarator?.();
+			const params = extractParams(decl);
+			for (const p of params) {
+				if (p.name && p.type) scopedVars.set(p.name, p.type);
+			}
+
+			// Visit the function body (collects local vars + checks calls)
+			checker.visitChildren(ctx);
+
+			// Restore outer scope
+			scopedVars = outerVars;
+			return undefined;
+		},
+		visitDeclaration(ctx: any) {
+			collectVarsFromDecl(ctx);
+			return checker.visitChildren(ctx);
+		},
+		visitForDeclaration(ctx: any) {
+			collectVarsFromDecl(ctx);
+			return checker.visitChildren(ctx);
+		},
+		visitParameterDeclaration(ctx: any) {
+			try {
+				const typeText = ctx?.declarationSpecifiers?.()?.getText?.();
+				const idNode = ctx?.Identifier?.();
+				const name = safeTokenText(idNode);
+				if (name && typeText) {
+					scopedVars.set(name, typeText);
+				}
+			} catch { /* ignore */ }
+			return checker.visitChildren(ctx);
 		},
 		visitPostfixExpression(ctx: any) {
 			try {
@@ -239,7 +309,6 @@ export function validateFunctionArguments(
 				const argExprs = argList?.assignmentExpression_list?.() ?? [];
 				const argCount = argExprs.length;
 
-				// Check if any overload matches
 				const line = safeTokenLine(idNode);
 				const column = safeTokenColumn(idNode);
 				if (line === null || column === null) return checker.visitChildren(ctx);
@@ -248,7 +317,6 @@ export function validateFunctionArguments(
 				const countMatches = overloads.filter(params => params.length === argCount);
 
 				if (countMatches.length === 0) {
-					// No overload with matching parameter count
 					const expectedCounts = [...new Set(overloads.map(p => p.length))].sort().join(' or ');
 					diagnostics.push({
 						severity: DiagnosticSeverity.Error,
@@ -261,13 +329,13 @@ export function validateFunctionArguments(
 				} else {
 					// Check type compatibility for overloads with matching count
 					const argTypes: (string | undefined)[] = argExprs.map(
-						(arg: any) => resolveArgType(arg, declaredVars)
+						(arg: any) => resolveArgType(arg, scopedVars, resolveReturnType)
 					);
 
 					const anyOverloadMatches = countMatches.some(params =>
 						params.every((param, i) => {
 							const argType = argTypes[i];
-							if (!argType || !param.type) return true; // can't check — assume OK
+							if (!argType || !param.type) return true;
 							return isTypeCompatible(argType, param.type, !!param.isArray);
 						})
 					);
@@ -297,11 +365,6 @@ export function validateFunctionArguments(
 					if (!isPrimary) child.accept(checker);
 				}
 			}
-			try {
-				for (const argList of ctx?.argumentExpressionList_list?.() ?? []) {
-					argList?.accept?.(checker);
-				}
-			} catch { /* ignore */ }
 			return undefined;
 		}
 	};
