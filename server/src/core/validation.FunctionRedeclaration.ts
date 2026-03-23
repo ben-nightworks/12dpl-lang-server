@@ -94,6 +94,25 @@ export function validateFunctionRedeclarations(
 		const paramSig = extractParamSignature(declaratorCtx);
 		const existing = definedFunctions.get(info.name);
 
+		// 1. Always check against include files — every occurrence that matches is an error
+		let hasIncludeConflict = false;
+		const includeOverloads = includeFunctions.get(info.name);
+		if (includeOverloads) {
+			const includeMatch = includeOverloads.find(o => o.signature === paramSig);
+			if (includeMatch) {
+				hasIncludeConflict = true;
+				diagnostics.push({
+					severity: DiagnosticSeverity.Error,
+					range: {
+						start: { line: info.line - 1, character: info.column },
+						end: { line: info.line - 1, character: info.column + info.name.length }
+					},
+					message: `Function '${info.name}' is already defined in included file '${includeMatch.sourceFile}'`
+				});
+			}
+		}
+
+		// 2. Track locally for same-file duplicate detection
 		if (existing) {
 			const duplicate = existing.find(e => e.signature === paramSig);
 			if (duplicate) {
@@ -104,8 +123,9 @@ export function validateFunctionRedeclarations(
 					duplicate.column = info.column;
 				} else if (!duplicate.isForwardDecl && isForwardDecl) {
 					// Forward declaration after a full definition — silently ignore
-				} else {
+				} else if (!hasIncludeConflict) {
 					// Two definitions or two forward declarations with same signature — error
+					// (skip if already reported as include conflict)
 					diagnostics.push({
 						severity: DiagnosticSeverity.Error,
 						range: {
@@ -120,21 +140,6 @@ export function validateFunctionRedeclarations(
 				existing.push({ signature: paramSig, line: info.line, column: info.column, name: info.name, isForwardDecl });
 			}
 		} else {
-			// Check if it conflicts with a function from an include file (with overload support)
-			const includeOverloads = includeFunctions.get(info.name);
-			if (includeOverloads) {
-				const duplicate = includeOverloads.find(o => o.signature === paramSig);
-				if (duplicate) {
-					diagnostics.push({
-						severity: DiagnosticSeverity.Error,
-						range: {
-							start: { line: info.line - 1, character: info.column },
-							end: { line: info.line - 1, character: info.column + info.name.length }
-						},
-						message: `Function '${info.name}' is already defined in included file '${duplicate.sourceFile}'`
-					});
-				}
-			}
 			definedFunctions.set(info.name, [{ signature: paramSig, line: info.line, column: info.column, name: info.name, isForwardDecl }]);
 		}
 	};

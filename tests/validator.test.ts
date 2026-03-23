@@ -88,10 +88,9 @@ describe("Validator.Validate", () => {
 	test("handles preprocessor directives and top-level blocks", () => {
 		const text = readFixture("client/testFixture/Test2.4dm");
 		const diagnostics = Validate(text);
-		// Test2.4dm has intentional re-declarations marked as "SHOULD BE ERROR"
-		// - program_name is declared twice at lines 16-17
+		// Test2.4dm has intentional re-declarations/redefinitions
 		const syntaxErrors = diagnostics.filter(d =>
-			d.severity === 1 /* Error */ && !d.message.includes("already declared") && !d.message.includes("is not declared")
+			d.severity === 1 /* Error */ && !d.message.includes("already declared") && !d.message.includes("is not declared") && !d.message.includes("already defined")
 		);
 		expect(syntaxErrors.length).toBe(0);
 	});
