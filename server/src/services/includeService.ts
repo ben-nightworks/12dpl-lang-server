@@ -10,7 +10,6 @@ import { collectRecursiveIncludeFiles, fileUriToFsPath } from './includeUtils';
 import { parseDefines } from '../core/symbolCollector';
 import type {
 	SymbolDeclaration,
-	IncludeFileVariable,
 } from '../core/types';
 import type { TextDocuments } from 'vscode-languageserver/node';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
@@ -104,20 +103,22 @@ export class IncludeService {
 		return result;
 	}
 
-	/** Builds IncludeFileVariable[] for redeclaration checking. */
-	async getIncludeFileVariables(uri: string): Promise<IncludeFileVariable[]> {
+	/** Builds SymbolDeclaration[] for redeclaration checking (functions + variables from includes). */
+	async getIncludeFileDeclarations(uri: string): Promise<SymbolDeclaration[]> {
 		const files = await this.getIncludeFiles(uri);
-		const result: IncludeFileVariable[] = [];
+		const result: SymbolDeclaration[] = [];
 
 		for (const filePath of files) {
 			const views = this.documentService.getDerivedViewsForFsPath(filePath);
 			if (!views) continue;
 			const fileName = filePath.split(/[\\/]/).pop() || filePath;
-			for (const name of views.exportedVariables.keys()) {
-				result.push({ name, sourceFile: fileName, kind: 'variable' });
+			for (const decl of views.exportedVariables.values()) {
+				result.push({ ...decl, definedInFsPath: fileName });
 			}
-			for (const name of views.exportedFunctions.keys()) {
-				result.push({ name, sourceFile: fileName, kind: 'function' });
+			for (const decls of views.exportedFunctions.values()) {
+				for (const decl of decls) {
+					result.push({ ...decl, definedInFsPath: fileName });
+				}
 			}
 		}
 		return result;

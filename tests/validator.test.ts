@@ -4,7 +4,7 @@ import * as path from "path";
 import { parse } from "../server/src/core/parsePipeline";
 import { collectSymbolTable, deriveViews } from "../server/src/core/symbolCollector";
 import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls, validateVoidFunctionReturnValues, FunctionSignatureMap, validateFunctionArguments, validateReturnStatements } from "../server/src/core/validators";
-import type { IncludeFileVariable, KnownSymbols, DerivedSymbolViews, ParameterSymbolInfo } from "../server/src/core/types";
+import type { SymbolDeclaration, KnownSymbols, DerivedSymbolViews, ParameterSymbolInfo } from "../server/src/core/types";
 
 // The core validators return vscode-languageserver Diagnostic objects.
 // We use `any` here to avoid importing the LSP package from the test runner.
@@ -27,12 +27,12 @@ function Validate(text: string): Diagnostic[] {
 	return [...ValidateWithIncludes(text, []), ...ValidateWithSymbols(text, { functions: new Set(), variables: new Set(), defines: new Set() })];
 }
 
-function ValidateWithIncludes(text: string, includeFileVariables: IncludeFileVariable[]): Diagnostic[] {
+function ValidateWithIncludes(text: string, includeDeclarations: SymbolDeclaration[]): Diagnostic[] {
 	const result = parse(text);
 	const synErrs = syntaxDiagnostics(result);
 	if (synErrs.length === 0) {
-		const varRedecl = validateVariableRedeclarations(result.tree, includeFileVariables, result.conditionalLines);
-		const funcRedecl = validateFunctionRedeclarations(result.tree, includeFileVariables);
+		const varRedecl = validateVariableRedeclarations(result.tree, includeDeclarations, result.conditionalLines);
+		const funcRedecl = validateFunctionRedeclarations(result.tree, includeDeclarations);
 		return [...synErrs, ...varRedecl, ...funcRedecl];
 	}
 	return synErrs;
@@ -51,6 +51,19 @@ function collectDerivedViews(text: string): DerivedSymbolViews {
 	const result = parse(text);
 	const table = collectSymbolTable(result, text);
 	return deriveViews(table.root);
+}
+
+/** Helper to create a minimal SymbolDeclaration for test include files. */
+const dummyRange = { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } };
+
+function includeDecl(name: string, sourceFile: string, kind: 'variable' | 'function', params?: ParameterSymbolInfo[]): SymbolDeclaration {
+	return {
+		name,
+		kind,
+		range: dummyRange,
+		definedInFsPath: sourceFile,
+		...(params ? { params } : {}),
+	};
 }
 
 function repoRoot(): string {
@@ -75,10 +88,9 @@ describe("Validator.Validate", () => {
 	test("handles preprocessor directives and top-level blocks", () => {
 		const text = readFixture("client/testFixture/Test2.4dm");
 		const diagnostics = Validate(text);
-		// Test2.4dm has intentional re-declarations marked as "SHOULD BE ERROR"
-		// - program_name is declared twice at lines 16-17
+		// Test2.4dm has intentional re-declarations/redefinitions
 		const syntaxErrors = diagnostics.filter(d =>
-			d.severity === 1 /* Error */ && !d.message.includes("already declared") && !d.message.includes("is not declared")
+			d.severity === 1 /* Error */ && !d.message.includes("already declared") && !d.message.includes("is not declared") && !d.message.includes("already defined")
 		);
 		expect(syntaxErrors.length).toBe(0);
 	});
@@ -208,7 +220,7 @@ void main() {
 `;
 		// Simulate variables from include files
 		const includeVars = [
-			{ name: "myVar", sourceFile: "common.h", kind: 'variable' as const }
+			includeDecl('myVar', 'common.h', 'variable')
 		];
 		const diagnostics = ValidateWithIncludes(code, includeVars);
 		const redeclErrors = diagnostics.filter(d =>
@@ -226,7 +238,7 @@ void main() {
 `;
 		// Variable in include file is lowercase — different from MYVAR
 		const includeVars = [
-			{ name: "myvar", sourceFile: "utils.h", kind: 'variable' as const }
+			includeDecl('myvar', 'utils.h', 'variable')
 		];
 		const diagnostics = ValidateWithIncludes(code, includeVars);
 		const redeclErrors = diagnostics.filter(d =>
@@ -275,13 +287,15 @@ void main() {
 		// Step 1: Collect symbols from header (same as server.ts does)
 		const headerViews = collectDerivedViews(headerCode);
 
-		// Step 2: Build includeFileVariables the same way server.ts does
-		const includeFileVariables: IncludeFileVariable[] = [];
-		for (const varName of headerViews.exportedVariables.keys()) {
-			includeFileVariables.push({ name: varName, sourceFile: 'header.h', kind: 'variable' });
+		// Step 2: Build includeDeclarations the same way server.ts does
+		const includeDeclarations: SymbolDeclaration[] = [];
+		for (const decl of headerViews.exportedVariables.values()) {
+			includeDeclarations.push({ ...decl, definedInFsPath: 'header.h' });
 		}
-		for (const funcName of headerViews.exportedFunctions.keys()) {
-			includeFileVariables.push({ name: funcName, sourceFile: 'header.h', kind: 'function' });
+		for (const decls of headerViews.exportedFunctions.values()) {
+			for (const decl of decls) {
+				includeDeclarations.push({ ...decl, definedInFsPath: 'header.h' });
+			}
 		}
 
 		// Step 3: Build knownSymbols the same way server.ts does for ValidateWithSymbols
@@ -306,7 +320,7 @@ void main() {
 		].join('\n');
 
 		// ValidateWithIncludes: x and y should NOT be flagged as redeclarations
-		const includeDiagnostics = ValidateWithIncludes(mainCode, includeFileVariables);
+		const includeDiagnostics = ValidateWithIncludes(mainCode, includeDeclarations);
 		const redeclErrors = includeDiagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
@@ -355,6 +369,21 @@ void process(Integer x, Integer y);
 		expect(redeclErrors.length).toBe(0);
 	});
 
+	test("allows forward declaration followed by full definition with same signature", () => {
+		const code = `
+void helper(Integer x);
+
+void helper(Integer x) {
+    Integer y = x;
+}
+`;
+		const diagnostics = Validate(code);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
 	test("detects redefinition after overload declaration", () => {
 		const code = `
 void process() {
@@ -384,9 +413,9 @@ void helper() {
     Integer x = 1;
 }
 `;
-		// Simulate a function in an include file
+		// Simulate a function in an include file with same signature
 		const includeVars = [
-			{ name: "helper", sourceFile: "utils.h", kind: 'function' as const }
+			includeDecl('helper', 'utils.h', 'function')
 		];
 		const diagnostics = ValidateWithIncludes(code, includeVars);
 		const redeclErrors = diagnostics.filter(d =>
@@ -400,8 +429,8 @@ void helper() {
 	test("detects redefinition of function declared in header file", () => {
 		// Simulate functions from a header file
 		const includeVars = [
-			{ name: "initialize", sourceFile: "setup.h", kind: 'function' as const },
-			{ name: "cleanup", sourceFile: "setup.h", kind: 'function' as const }
+			includeDecl('initialize', 'setup.h', 'function'),
+			includeDecl('cleanup', 'setup.h', 'function')
 		];
 
 		// Source file tries to redefine initialize
@@ -426,7 +455,7 @@ void main() {
 	test("allows defining functions not in header files", () => {
 		// Simulate functions from a header file
 		const includeVars = [
-			{ name: "setup", sourceFile: "utils.h", kind: 'function' as const }
+			includeDecl('setup', 'utils.h', 'function')
 		];
 
 		// Source file defines a different function
@@ -475,6 +504,75 @@ void func() { }
 			d.severity === 1 /* Error */ && d.message.includes("already defined")
 		);
 		expect(redeclErrors.length).toBe(2);
+	});
+
+	test("allows function overloads across include files with different param types (issue #64)", () => {
+		// Simulate Move_to_model(Model, Model) in the include file
+		const includeVars = [
+			includeDecl('Move_to_model', 'v15.h', 'function', [
+				{ name: 'source_model', type: 'Model', byRef: true, isArray: false },
+				{ name: 'target_model', type: 'Model', byRef: true, isArray: false }
+			])
+		];
+
+		// Source file defines Move_to_model(Dynamic_Element, Model) — different param types
+		const code = `
+void Move_to_model(Dynamic_Element &data, Model &target_model)
+{
+	Integer num_elts;
+}
+`;
+		const diagnostics = ValidateWithIncludes(code, includeVars);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		// Different parameter types = valid overload, no error
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("detects redefinition across include files with same param types (issue #64)", () => {
+		// Simulate Move_to_model(Dynamic_Element, Model) in the include file
+		const includeVars = [
+			includeDecl('Move_to_model', 'v15.h', 'function', [
+				{ name: 'data', type: 'Dynamic_Element', byRef: true, isArray: false },
+				{ name: 'target_model', type: 'Model', byRef: true, isArray: false }
+			])
+		];
+
+		// Source file defines Move_to_model with the same param types
+		const code = `
+void Move_to_model(Dynamic_Element &other, Model &dest)
+{
+	Integer num_elts;
+}
+`;
+		const diagnostics = ValidateWithIncludes(code, includeVars);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		// Same parameter types = redefinition, should report error
+		expect(redeclErrors.length).toBe(1);
+		expect(redeclErrors[0].message).toContain("v15.h");
+	});
+
+	test("allows overload with different param count across include files (issue #64)", () => {
+		const includeVars = [
+			includeDecl('process', 'utils.h', 'function', [
+				{ name: 'x', type: 'Integer', byRef: false, isArray: false }
+			])
+		];
+
+		const code = `
+void process(Integer x, Integer y) {
+	Integer z = x;
+}
+`;
+		const diagnostics = ValidateWithIncludes(code, includeVars);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		// Different param count = valid overload
+		expect(redeclErrors.length).toBe(0);
 	});
 });
 
@@ -2019,6 +2117,134 @@ void main()
 }
 `;
 		// `c` is Real inside Test() — should NOT be affected by Vector3 c in Test2()
+		const diagnostics = ValidateFunctionArgs(code, externalSigs);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	// ─── Regression tests for false-positive arg mismatch reports ────────────
+
+	test("allows subtype Apply_Many_Function where Function expected (issue: Function_recalc)", () => {
+		const externalSigs: FunctionSignatureMap = new Map();
+		externalSigs.set("Function_recalc", [
+			[{ name: "func", type: "Function" }]
+		]);
+
+		const code = `
+void main()
+{
+	Apply_Many_Function amf;
+	Function_recalc(amf);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code, externalSigs);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("allows exact type match Uid where Uid expected (issue: Is_global)", () => {
+		const externalSigs: FunctionSignatureMap = new Map();
+		externalSigs.set("Is_global", [
+			[{ name: "uid", type: "Uid" }]
+		]);
+
+		const code = `
+void main()
+{
+	Uid u;
+	Is_global(u);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code, externalSigs);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("allows correct arg count with multi-overload prototype (issue: Get_number_of_items)", () => {
+		const externalSigs: FunctionSignatureMap = new Map();
+		externalSigs.set("Get_number_of_items", [
+			[{ name: "list", type: "Dynamic_Element" }, { name: "count", type: "Integer" }],
+			[{ name: "list", type: "Dynamic_Text" }, { name: "count", type: "Integer" }],
+			[{ name: "elt", type: "Model" }, { name: "count", type: "Integer" }],
+			[{ name: "box", type: "List_Box" }, { name: "count", type: "Integer" }],
+		]);
+
+		const code = `
+void main()
+{
+	Dynamic_Element my_list;
+	Integer count;
+	Get_number_of_items(my_list, count);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code, externalSigs);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("allows correct arg count with mixed-arity overloads (issue: To_text)", () => {
+		const externalSigs: FunctionSignatureMap = new Map();
+		externalSigs.set("To_text", [
+			[{ name: "value", type: "Integer" }],
+			[{ name: "value", type: "Real" }, { name: "decimals", type: "Integer" }],
+			[{ name: "value", type: "Integer" }, { name: "format", type: "Text" }],
+			[{ name: "value", type: "Real" }, { name: "format", type: "Text" }],
+			[{ name: "uid", type: "Uid" }],
+			[{ name: "value", type: "Integer64" }],
+			[{ name: "guid", type: "Guid" }],
+			[{ name: "value", type: "Real" }],
+		]);
+
+		const code = `
+void main()
+{
+	Integer x;
+	To_text(x);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code, externalSigs);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("To_text with 2 args matches 2-param overload", () => {
+		const externalSigs: FunctionSignatureMap = new Map();
+		externalSigs.set("To_text", [
+			[{ name: "value", type: "Integer" }],
+			[{ name: "value", type: "Real" }, { name: "decimals", type: "Integer" }],
+			[{ name: "value", type: "Real" }, { name: "format", type: "Text" }],
+			[{ name: "uid", type: "Uid" }],
+			[{ name: "value", type: "Real" }],
+		]);
+
+		const code = `
+void main()
+{
+	Real val;
+	Integer dec;
+	To_text(val, dec);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code, externalSigs);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("local function definition does not shadow prototype overloads", () => {
+		// If a user defines To_text locally with 3 params, the prototype
+		// overloads (1-param, 2-param) must still be considered valid.
+		const externalSigs: FunctionSignatureMap = new Map();
+		externalSigs.set("To_text", [
+			[{ name: "value", type: "Integer" }],
+			[{ name: "value", type: "Real" }, { name: "decimals", type: "Integer" }],
+		]);
+
+		const code = `
+Text To_text(Integer a, Integer b, Integer c)
+{
+	return "custom";
+}
+
+void main()
+{
+	Integer x;
+	To_text(x);
+}
+`;
 		const diagnostics = ValidateFunctionArgs(code, externalSigs);
 		expect(diagnostics.length).toBe(0);
 	});

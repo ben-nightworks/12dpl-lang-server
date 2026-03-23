@@ -42,6 +42,7 @@ function extractTypesFromRule(ruleIndex: number): Set<string> {
 const typeChildren: ReadonlyMap<string, ReadonlySet<string>> = new Map([
 	['Widget', extractTypesFromRule(proglang12dParser.RULE_builtInWidgetTypeSpecifier)],
 	['Message_Box', new Set(['Colour_Message_Box'])],
+	['Function', new Set(['Apply_Many_Function', 'Apply_Function', 'Kerb_Return_Function', 'Macro_Function'])],
 ]);
 
 /**

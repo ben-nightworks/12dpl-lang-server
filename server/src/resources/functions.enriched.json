@@ -11891,7 +11891,7 @@
   },
   {
     "name": "View_redraw",
-    "id": 351,
+    "id": 3510001,
     "returnType": "Integer",
     "parameters": [
       {
@@ -11900,6 +11900,18 @@
       }
     ],
     "description": "Redraw the 12d Model View view. A function return value of zero indicates that the view was successfully redrawn."
+  },
+  {
+    "name": "View_redraw",
+    "id": 3510000,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "data",
+        "type": "Dynamic_Element"
+      }
+    ],
+    "description": "Redraw views containing the elements in the Dynamic_Element list. A function return value of zero indicates the views were successfully redrawn."
   },
   {
     "name": "View_fit",
@@ -43045,7 +43057,7 @@
     "parameters": [
       {
         "name": "&node",
-        "type": "XML_node"
+        "type": "XML_Node"
       }
     ],
     "description": "This call will attempt to determine if a node is a text only node or not. A text node is one that contains only text, and no other child nodes. This call will return 1 if the node is a text node."
@@ -43057,7 +43069,7 @@
     "parameters": [
       {
         "name": "&node",
-        "type": "XML_node"
+        "type": "XML_Node"
       }
     ],
     "description": "This call will attempt to determine if a node is a CDATA text only node or not. A text node is one that contains only text, and no other child nodes. This call will return 1 if the node is a text node, and the text must be of CDATA format."
@@ -52491,7 +52503,7 @@
     "parameters": [
       {
         "name": "tree_box",
-        "type": "Tree_box"
+        "type": "Tree_Box"
       },
       {
         "name": "name",

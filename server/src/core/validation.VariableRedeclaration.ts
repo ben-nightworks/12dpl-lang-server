@@ -7,7 +7,7 @@ import {
 	DiagnosticSeverity,
 } from 'vscode-languageserver/node';
 
-import type { IncludeFileVariable } from './types';
+import type { SymbolDeclaration } from './types';
 import {
 	safeTokenText,
 	safeTokenLine,
@@ -21,15 +21,17 @@ import {
  */
 export function validateVariableRedeclarations(
 	tree: any,
-	includeFileVariables: IncludeFileVariable[],
+	includeDeclarations: SymbolDeclaration[],
 	conditionalLines: Set<number>
 ): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];
 	const condLines = conditionalLines;
 
 	const includeVars = new Map<string, { sourceFile: string; kind: 'variable' | 'function' }>();
-	for (const v of includeFileVariables) {
-		includeVars.set(v.name, { sourceFile: v.sourceFile, kind: v.kind });
+	for (const decl of includeDeclarations) {
+		if (decl.kind === 'variable' || decl.kind === 'function') {
+			includeVars.set(decl.name, { sourceFile: decl.definedInFsPath ?? '', kind: decl.kind });
+		}
 	}
 
 	const globalVariables = new Map<string, DeclaredVariable>();
@@ -87,7 +89,7 @@ export function validateVariableRedeclarations(
 		}
 
 		const includeEntry = includeVars.get(info.name);
-		if (includeEntry) {
+		if (includeEntry && !isFunction) {
 			const kindLabel = includeEntry.kind === 'function' ? 'Function' : 'Variable';
 			diagnostics.push({
 				severity: DiagnosticSeverity.Error,
