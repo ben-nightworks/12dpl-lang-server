@@ -135871,7 +135871,7 @@
   },
   {
     "name": "View_redraw",
-    "id": 351,
+    "id": 3510001,
     "returnType": "Integer",
     "parameters": [
       {
@@ -135883,7 +135883,7 @@
   },
   {
     "name": "View_redraw",
-    "id": 351,
+    "id": 3510000,
     "returnType": "Integer",
     "parameters": [
       {

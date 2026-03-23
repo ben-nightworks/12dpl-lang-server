@@ -6,9 +6,18 @@
 Clear_console();
 #endif
 
+Dynamic_Element data;
+
+Integer Get_number_of_items(data, item_index)
+
+ {
+
+    return 0;
 
 
 Integer create_rgb(Integer r,Integer g,Integer b);//SHOULD BE ERROR
+
+}
 
 
 {   
