@@ -3131,9 +3131,6 @@
 							"include": "#string_escaped_char"
 						},
 						{
-							"include": "#string_placeholder"
-						},
-						{
 							"include": "#line_continuation_character"
 						}
 					]
