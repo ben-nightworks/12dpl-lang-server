@@ -51,16 +51,16 @@ export class DiagnosticService {
 		// 3. Semantic validation — only when zero syntax errors
 		if (parseResult.syntaxErrors.length === 0) {
 			// 3a. Variable redeclaration checking
-			const includeFileVariables = await this.includeService.getIncludeFileVariables(uri);
+			const includeDeclarations = await this.includeService.getIncludeFileDeclarations(uri);
 			const redeclDiagnostics = validateVariableRedeclarations(
 				parseResult.tree,
-				includeFileVariables,
+				includeDeclarations,
 				parseResult.conditionalLines
 			);
 			diagnostics.push(...redeclDiagnostics);
 
 			// 3b. Function redeclaration checking (issue #44)
-			const funcRedeclDiagnostics = validateFunctionRedeclarations(parseResult.tree, includeFileVariables);
+			const funcRedeclDiagnostics = validateFunctionRedeclarations(parseResult.tree, includeDeclarations);
 			diagnostics.push(...funcRedeclDiagnostics);
 
 			// 3c. Undeclared identifier checking

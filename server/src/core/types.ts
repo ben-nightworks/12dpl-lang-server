@@ -86,14 +86,6 @@ export interface SyntaxError {
 	message: string;
 }
 
-// ─── Include file variable (for redeclaration checking) ─────────────────────
-
-export interface IncludeFileVariable {
-	name: string;
-	sourceFile: string;
-	kind: 'variable' | 'function';
-}
-
 // ─── Known symbols (for undeclared identifier checking) ─────────────────────
 
 export interface KnownSymbols {

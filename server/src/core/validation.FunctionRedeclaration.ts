@@ -10,7 +10,7 @@ import {
 	DiagnosticSeverity,
 } from 'vscode-languageserver/node';
 
-import type { IncludeFileVariable } from './types';
+import type { SymbolDeclaration } from './types';
 import {
 	safeTokenText,
 	safeTokenLine,
@@ -47,6 +47,18 @@ function extractParamSignature(declaratorCtx: any): string {
 }
 
 /**
+ * Checks whether a declarator represents a function (has parentheses).
+ */
+function isFunctionDeclarator(declaratorCtx: any): boolean {
+	try {
+		const direct = declaratorCtx?.directDeclarator?.();
+		if (direct?.parameterTypeList?.() != null) return true;
+		if (direct?.LeftParen?.() != null) return true;
+	} catch { /* ignore */ }
+	return false;
+}
+
+/**
  * Validates that functions are not defined more than once.
  * Tracks function definitions by name AND parameter signature.
  * Same name with different parameter types (overloading) is allowed.
@@ -54,19 +66,78 @@ function extractParamSignature(declaratorCtx: any): string {
  */
 export function validateFunctionRedeclarations(
 	tree: any,
-	includeFileVariables: IncludeFileVariable[] = []
+	includeDeclarations: SymbolDeclaration[] = []
 ): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];
-	// Map from lowercase name → array of { signature, line, column, name }
-	const definedFunctions = new Map<string, { signature: string; line: number; column: number; name: string }[]>();
+	// Map from name → array of { signature, line, column, name, isForwardDecl }
+	const definedFunctions = new Map<string, { signature: string; line: number; column: number; name: string; isForwardDecl: boolean }[]>();
 
-	// Track functions from include files
-	const includeFunctions = new Map<string, { sourceFile: string }>();
-	for (const v of includeFileVariables) {
-		if (v.kind === 'function') {
-			includeFunctions.set(v.name, { sourceFile: v.sourceFile });
+	// Track functions from include files: name → array of { sourceFile, signature }
+	const includeFunctions = new Map<string, { sourceFile: string; signature: string }[]>();
+	for (const decl of includeDeclarations) {
+		if (decl.kind === 'function') {
+			const sig = (decl.params ?? []).map(p => {
+				const typeStr = p.type ?? '';
+				return typeStr + (p.isArray ? '[]' : '');
+			}).join(',');
+			const existing = includeFunctions.get(decl.name);
+			if (existing) existing.push({ sourceFile: decl.definedInFsPath ?? '', signature: sig });
+			else includeFunctions.set(decl.name, [{ sourceFile: decl.definedInFsPath ?? '', signature: sig }]);
 		}
 	}
+
+	/** Shared check logic for both full definitions and forward declarations. */
+	const checkFunction = (declaratorCtx: any, isForwardDecl: boolean) => {
+		const info = extractIdentifierFromDeclarator(declaratorCtx);
+		if (!info) return;
+
+		const paramSig = extractParamSignature(declaratorCtx);
+		const existing = definedFunctions.get(info.name);
+
+		if (existing) {
+			const duplicate = existing.find(e => e.signature === paramSig);
+			if (duplicate) {
+				if (duplicate.isForwardDecl && !isForwardDecl) {
+					// Full definition following a forward declaration — allowed, upgrade the entry
+					duplicate.isForwardDecl = false;
+					duplicate.line = info.line;
+					duplicate.column = info.column;
+				} else if (!duplicate.isForwardDecl && isForwardDecl) {
+					// Forward declaration after a full definition — silently ignore
+				} else {
+					// Two definitions or two forward declarations with same signature — error
+					diagnostics.push({
+						severity: DiagnosticSeverity.Error,
+						range: {
+							start: { line: info.line - 1, character: info.column },
+							end: { line: info.line - 1, character: info.column + info.name.length }
+						},
+						message: `Function '${info.name}' is already defined at line ${duplicate.line}`
+					});
+				}
+			} else {
+				// Different signature — this is a valid overload
+				existing.push({ signature: paramSig, line: info.line, column: info.column, name: info.name, isForwardDecl });
+			}
+		} else {
+			// Check if it conflicts with a function from an include file (with overload support)
+			const includeOverloads = includeFunctions.get(info.name);
+			if (includeOverloads) {
+				const duplicate = includeOverloads.find(o => o.signature === paramSig);
+				if (duplicate) {
+					diagnostics.push({
+						severity: DiagnosticSeverity.Error,
+						range: {
+							start: { line: info.line - 1, character: info.column },
+							end: { line: info.line - 1, character: info.column + info.name.length }
+						},
+						message: `Function '${info.name}' is already defined in included file '${duplicate.sourceFile}'`
+					});
+				}
+			}
+			definedFunctions.set(info.name, [{ signature: paramSig, line: info.line, column: info.column, name: info.name, isForwardDecl }]);
+		}
+	};
 
 	const visitor: any = {
 		visitTerminal() { return undefined; },
@@ -78,46 +149,19 @@ export function validateFunctionRedeclarations(
 			return undefined;
 		},
 		visitFunctionDefinition(ctx: any) {
-			const decl = ctx?.declarator?.();
-			const info = extractIdentifierFromDeclarator(decl);
-			if (!info) return visitor.visitChildren(ctx);
-
-			const paramSig = extractParamSignature(decl);
-			const existing = definedFunctions.get(info.name);
-
-			if (existing) {
-				// Check if any existing definition has the same parameter signature
-				const duplicate = existing.find(e => e.signature === paramSig);
-				if (duplicate) {
-					diagnostics.push({
-						severity: DiagnosticSeverity.Error,
-						range: {
-							start: { line: info.line - 1, character: info.column },
-							end: { line: info.line - 1, character: info.column + info.name.length }
-						},
-						message: `Function '${info.name}' is already defined at line ${duplicate.line}`
-					});
-				} else {
-					// Different signature — this is a valid overload
-					existing.push({ signature: paramSig, line: info.line, column: info.column, name: info.name });
+			checkFunction(ctx?.declarator?.(), false);
+			return visitor.visitChildren(ctx);
+		},
+		visitDeclaration(ctx: any) {
+			// Check forward declarations (e.g. "void process(Integer x);")
+			try {
+				for (const initDecl of ctx?.initDeclaratorList?.()?.initDeclarator_list?.() ?? []) {
+					const declarator = initDecl?.declarator?.();
+					if (declarator && isFunctionDeclarator(declarator)) {
+						checkFunction(declarator, true);
+					}
 				}
-			} else {
-				// Check if it conflicts with a function from an include file
-				const includeFunc = includeFunctions.get(info.name);
-				if (includeFunc) {
-					diagnostics.push({
-						severity: DiagnosticSeverity.Error,
-						range: {
-							start: { line: info.line - 1, character: info.column },
-							end: { line: info.line - 1, character: info.column + info.name.length }
-						},
-						message: `Function '${info.name}' is already defined in included file '${includeFunc.sourceFile}'`
-					});
-				} else {
-					definedFunctions.set(info.name, [{ signature: paramSig, line: info.line, column: info.column, name: info.name }]);
-				}
-			}
-
+			} catch { /* ignore */ }
 			return visitor.visitChildren(ctx);
 		}
 	};
