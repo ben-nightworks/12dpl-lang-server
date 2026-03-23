@@ -83,6 +83,7 @@ export class SymbolResolver {
 		}
 
 		// 3. Include symbols (functions + variables) — case-insensitive lookup
+		const lowerName = name.toLowerCase();
 		const includeSymbols = await this.includeService.getIncludeSymbols(uri);
 		for (const [key, decls] of includeSymbols.functions) {
 			if (key.toLowerCase() === lowerName && decls.length > 0) {
