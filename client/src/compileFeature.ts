@@ -2,7 +2,7 @@
 import * as path from 'path';
 import * as cp from 'child_process';
 import * as fs from 'fs';
-import { commands, ExtensionContext, StatusBarAlignment, StatusBarItem, window, workspace } from 'vscode';
+import { commands, ExtensionContext, StatusBarAlignment, StatusBarItem, window, workspace, tasks, TaskScope, ProcessExecution, Task, TaskRevealKind, TaskPanelKind } from 'vscode';
 
 type CompilerInfo = {
     versionLine?: string;
@@ -199,57 +199,59 @@ export function registerCompileFeatures(context: ExtensionContext) {
         }
 
         const inputFileFolder = path.dirname(inputFile);
-        outputChannel.clear();
         const flagArgs = (selectedFlags ?? []).flatMap((flag) => splitCommandLineArgs(flag));
         const args = [...flagArgs, inputFile];
-        if (cachedCompilerInfo?.versionLine) {
-            outputChannel.appendLine(`cc4d version: ${cachedCompilerInfo.versionLine}`);
-        }
-        outputChannel.appendLine(`> ${compilerExe} ${args.join(' ')}`);
-        outputChannel.show(true);
 
         const configTop = workspace.getConfiguration('12dpl', document.uri);
         const includePathsTop = (configTop.get<string[]>('compiler.includePaths') ?? []).map((p) => String(p).trim()).filter(Boolean);
-        const envTop = { ...process.env };
+        const envVars = { ...process.env };
         if (includePathsTop.length > 0) {
-            const sep = ':';
-            envTop.CPLUS_INCLUDE_PATH = `${envTop.CPLUS_INCLUDE_PATH ?? ''}${sep}${includePathsTop.join(sep)}${sep}${inputFileFolder}`;
+            const sep = process.platform === 'win32' ? ';' : ':';
+            envVars.CPLUS_INCLUDE_PATH = `${envVars.CPLUS_INCLUDE_PATH ?? ''}${sep}${includePathsTop.join(sep)}${sep}${inputFileFolder}`;
         }
 
-        const child = cp.spawn(compilerExe, args, {
-            cwd: inputFileFolder,
-            windowsHide: true,
-            env: envTop
-        });
+        // Create a task that uses the problem matcher defined in package.json
+        const task = new Task(
+            { type: 'cc4d', label: 'Compile 12dPL' },
+            TaskScope.Workspace,
+            'Compile 12dPL',
+            '12dPL',
+            new ProcessExecution(compilerExe, args, {
+                cwd: workspace.workspaceFolders?.[0].uri.fsPath,
+                env: envVars
+            }),
+            ['12dPL'] // Use the problem matcher from package.json
+        );
+        task.isBackground = false;
+        task.presentationOptions = { reveal: TaskRevealKind.Always, panel: TaskPanelKind.Shared };
 
-        child.stdout.on('data', (data) => outputChannel.append(data.toString()));
-        child.stderr.on('data', (data) => outputChannel.append(data.toString()));
-        child.on('error', (err) => {
-            outputChannel.appendLine(`\n[spawn error] ${String(err)}`);
-            void window.showErrorMessage('Failed to start cc4d.exe. See Output: 12dPL Compiler.');
-        });
-        child.on('close', (code) => {
-            outputChannel.appendLine(`\n[exit code] ${code ?? 'unknown'}`);
-            if (code === 0) {
-                // Check if .4do was created next to input, or in compiler directory
-                const compilerDirOutput = path.join(path.dirname(compilerExe), path.basename(expectedOutput));
-                if (fs.existsSync(expectedOutput)) {
-                    void window.showInformationMessage(`Compiled: ${expectedOutput}`);
-                } else if (fs.existsSync(compilerDirOutput)) {
-                    // Move the .4do from compiler directory to input file directory
-                    try {
-                        fs.copyFileSync(compilerDirOutput, expectedOutput);
-                        fs.unlinkSync(compilerDirOutput);
-                        void window.showInformationMessage(`Compiled: ${expectedOutput}`);
-                    } catch (err) {
-                        void window.showWarningMessage(`Compiled to ${compilerDirOutput} but failed to move to source directory.`);
+        void tasks.executeTask(task).then((execution) => {
+            // Handle task completion
+            let disposable: any;
+            disposable = tasks.onDidEndTaskProcess((e) => {
+                if (e.execution === execution) {
+                    disposable.dispose();
+                    if (e.exitCode === 0) {
+                        const expectedOutput = inputFile.replace(/\.4dm$/i, '.4do');
+                        const compilerDirOutput = path.join(path.dirname(compilerExe), path.basename(expectedOutput));
+                        if (fs.existsSync(expectedOutput)) {
+                            void window.showInformationMessage(`Compiled: ${expectedOutput}`);
+                        } else if (fs.existsSync(compilerDirOutput)) {
+                            try {
+                                fs.copyFileSync(compilerDirOutput, expectedOutput);
+                                fs.unlinkSync(compilerDirOutput);
+                                void window.showInformationMessage(`Compiled: ${expectedOutput}`);
+                            } catch (err) {
+                                void window.showWarningMessage(`Compiled to ${compilerDirOutput} but failed to move to source directory.`);
+                            }
+                        } else {
+                            void window.showWarningMessage('Compilation succeeded but .4do was not found next to the input file.');
+                        }
+                    } else {
+                        void window.showErrorMessage('Compilation failed. See Tasks output for details.');
                     }
-                } else {
-                    void window.showWarningMessage('Compilation succeeded but .4do was not found next to the input file.');
                 }
-            } else {
-                void window.showErrorMessage('Compilation failed. See Output: 12dPL Compiler.');
-            }
+            });
         });
     };
 
