@@ -76,6 +76,24 @@ export function registerHoverProvider(opts: {
 					const definedIn = symbol.source === 'include' && symbol.fsPath
 						? `\n\nDefined in: ${symbol.fsPath}` : '';
 					if (symbol.kind === 'function' && symbol.signature) {
+						// Also show prototype overloads if they exist
+						const overloads = prototypeService.getPrototypes(word);
+						if (overloads.length > 0) {
+							const localSig = symbol.signature;
+							const overloadSigs = overloads.map(f => {
+								const params = f.parameters.map(p => `${p.type} ${p.name}`).join(', ');
+								return `${f.returnType} ${f.name}(${params})`;
+							}).filter(sig => sig !== localSig);
+							const allSigs = [localSig, ...overloadSigs].join('\n');
+							const totalCount = 1 + overloadSigs.length;
+							const desc = overloads.find(f => f.description)?.description || '';
+							return {
+								contents: {
+									kind: 'markdown',
+									value: `\`\`\`12dpl\n${allSigs}\n\`\`\`\n${definedIn}${desc ? `\n\n${desc}` : ''}${totalCount > 1 ? `\n\n**${totalCount} overloads**` : ''}`
+								}
+							};
+						}
 						return {
 							contents: {
 								kind: 'markdown',
