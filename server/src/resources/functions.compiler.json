@@ -135871,12 +135871,24 @@
   },
   {
     "name": "View_redraw",
-    "id": 351,
+    "id": 3510001,
     "returnType": "Integer",
     "parameters": [
       {
         "name": "view",
         "type": "View"
+      }
+    ],
+    "description": "12dPL function View_redraw"
+  },
+  {
+    "name": "View_redraw",
+    "id": 3510000,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "data",
+        "type": "Dynamic_Element"
       }
     ],
     "description": "12dPL function View_redraw"

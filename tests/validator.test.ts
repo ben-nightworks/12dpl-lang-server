@@ -2022,6 +2022,134 @@ void main()
 		const diagnostics = ValidateFunctionArgs(code, externalSigs);
 		expect(diagnostics.length).toBe(0);
 	});
+
+	// ─── Regression tests for false-positive arg mismatch reports ────────────
+
+	test("allows subtype Apply_Many_Function where Function expected (issue: Function_recalc)", () => {
+		const externalSigs: FunctionSignatureMap = new Map();
+		externalSigs.set("Function_recalc", [
+			[{ name: "func", type: "Function" }]
+		]);
+
+		const code = `
+void main()
+{
+	Apply_Many_Function amf;
+	Function_recalc(amf);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code, externalSigs);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("allows exact type match Uid where Uid expected (issue: Is_global)", () => {
+		const externalSigs: FunctionSignatureMap = new Map();
+		externalSigs.set("Is_global", [
+			[{ name: "uid", type: "Uid" }]
+		]);
+
+		const code = `
+void main()
+{
+	Uid u;
+	Is_global(u);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code, externalSigs);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("allows correct arg count with multi-overload prototype (issue: Get_number_of_items)", () => {
+		const externalSigs: FunctionSignatureMap = new Map();
+		externalSigs.set("Get_number_of_items", [
+			[{ name: "list", type: "Dynamic_Element" }, { name: "count", type: "Integer" }],
+			[{ name: "list", type: "Dynamic_Text" }, { name: "count", type: "Integer" }],
+			[{ name: "elt", type: "Model" }, { name: "count", type: "Integer" }],
+			[{ name: "box", type: "List_Box" }, { name: "count", type: "Integer" }],
+		]);
+
+		const code = `
+void main()
+{
+	Dynamic_Element my_list;
+	Integer count;
+	Get_number_of_items(my_list, count);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code, externalSigs);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("allows correct arg count with mixed-arity overloads (issue: To_text)", () => {
+		const externalSigs: FunctionSignatureMap = new Map();
+		externalSigs.set("To_text", [
+			[{ name: "value", type: "Integer" }],
+			[{ name: "value", type: "Real" }, { name: "decimals", type: "Integer" }],
+			[{ name: "value", type: "Integer" }, { name: "format", type: "Text" }],
+			[{ name: "value", type: "Real" }, { name: "format", type: "Text" }],
+			[{ name: "uid", type: "Uid" }],
+			[{ name: "value", type: "Integer64" }],
+			[{ name: "guid", type: "Guid" }],
+			[{ name: "value", type: "Real" }],
+		]);
+
+		const code = `
+void main()
+{
+	Integer x;
+	To_text(x);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code, externalSigs);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("To_text with 2 args matches 2-param overload", () => {
+		const externalSigs: FunctionSignatureMap = new Map();
+		externalSigs.set("To_text", [
+			[{ name: "value", type: "Integer" }],
+			[{ name: "value", type: "Real" }, { name: "decimals", type: "Integer" }],
+			[{ name: "value", type: "Real" }, { name: "format", type: "Text" }],
+			[{ name: "uid", type: "Uid" }],
+			[{ name: "value", type: "Real" }],
+		]);
+
+		const code = `
+void main()
+{
+	Real val;
+	Integer dec;
+	To_text(val, dec);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code, externalSigs);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("local function definition does not shadow prototype overloads", () => {
+		// If a user defines To_text locally with 3 params, the prototype
+		// overloads (1-param, 2-param) must still be considered valid.
+		const externalSigs: FunctionSignatureMap = new Map();
+		externalSigs.set("To_text", [
+			[{ name: "value", type: "Integer" }],
+			[{ name: "value", type: "Real" }, { name: "decimals", type: "Integer" }],
+		]);
+
+		const code = `
+Text To_text(Integer a, Integer b, Integer c)
+{
+	return "custom";
+}
+
+void main()
+{
+	Integer x;
+	To_text(x);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code, externalSigs);
+		expect(diagnostics.length).toBe(0);
+	});
 });
 
 // ─── Return value validation (#47) ──────────────────────────────────────────

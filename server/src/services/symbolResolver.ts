@@ -84,16 +84,15 @@ export class SymbolResolver {
 
 		// 3. Include symbols (functions + variables)
 		const includeSymbols = await this.includeService.getIncludeSymbols(uri);
-		const inclFnDecls = includeSymbols.functions.get(name);
-		if (inclFnDecls && inclFnDecls.length > 0) {
-			const inclFn = inclFnDecls[0];
+		const incFunctions = includeSymbols.functions.get(name);
+		if (incFunctions && incFunctions.length > 0) {
 			const incFsPath = await this.findIncludeFsPathForSymbol(uri, name);
-			return this.declarationToResolved(inclFn, 'include', undefined, incFsPath);
+			return this.declarationToResolved(incFunctions[0], 'include', undefined, incFsPath);
 		}
-		const inclVar = includeSymbols.variables.get(name);
-		if (inclVar) {
+		const incVariable = includeSymbols.variables.get(name);
+		if (incVariable) {
 			const incFsPath = await this.findIncludeFsPathForSymbol(uri, name);
-			return this.declarationToResolved(inclVar, 'include', undefined, incFsPath);
+			return this.declarationToResolved(incVariable, 'include', undefined, incFsPath);
 		}
 
 		// 4. Include defines
@@ -215,15 +214,13 @@ export class SymbolResolver {
 		};
 	}
 
-	/** Finds which include file defines a given symbol name. */
 	private async findIncludeFsPathForSymbol(uri: string, name: string): Promise<string | undefined> {
 		const files = await this.includeService.getIncludeFiles(uri);
 		for (const fp of files) {
 			const views = this.documentService.getDerivedViewsForFsPath(fp);
 			if (!views) continue;
-			if (views.exportedFunctions.has(name) || views.exportedVariables.has(name)) {
-				return fp;
-			}
+			if (views.exportedFunctions.has(name)) return fp;
+			if (views.exportedVariables.has(name)) return fp;
 		}
 		return undefined;
 	}
