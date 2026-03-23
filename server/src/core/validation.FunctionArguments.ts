@@ -212,7 +212,10 @@ export function validateFunctionArguments(
 	try { tree.accept(sigCollector); } catch { /* ignore */ }
 
 	const resolveSignatures = (name: string): ParamList[] | undefined => {
-		return localSignatures.get(name) ?? externalSignatures.get(name);
+		const local = localSignatures.get(name);
+		const external = externalSignatures.get(name);
+		if (local && external) return [...local, ...external];
+		return local ?? external;
 	};
 	const resolveReturnType = (name: string): string | undefined => {
 		return localReturnTypes.get(name) ?? externalReturnTypes.get(name);

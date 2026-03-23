@@ -2125,6 +2125,31 @@ void main()
 		const diagnostics = ValidateFunctionArgs(code, externalSigs);
 		expect(diagnostics.length).toBe(0);
 	});
+
+	test("local function definition does not shadow prototype overloads", () => {
+		// If a user defines To_text locally with 3 params, the prototype
+		// overloads (1-param, 2-param) must still be considered valid.
+		const externalSigs: FunctionSignatureMap = new Map();
+		externalSigs.set("To_text", [
+			[{ name: "value", type: "Integer" }],
+			[{ name: "value", type: "Real" }, { name: "decimals", type: "Integer" }],
+		]);
+
+		const code = `
+Text To_text(Integer a, Integer b, Integer c)
+{
+	return "custom";
+}
+
+void main()
+{
+	Integer x;
+	To_text(x);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code, externalSigs);
+		expect(diagnostics.length).toBe(0);
+	});
 });
 
 // ─── Return value validation (#47) ──────────────────────────────────────────
