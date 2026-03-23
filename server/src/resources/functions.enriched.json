@@ -43045,7 +43045,7 @@
     "parameters": [
       {
         "name": "&node",
-        "type": "XML_node"
+        "type": "XML_Node"
       }
     ],
     "description": "This call will attempt to determine if a node is a text only node or not. A text node is one that contains only text, and no other child nodes. This call will return 1 if the node is a text node."
@@ -43057,7 +43057,7 @@
     "parameters": [
       {
         "name": "&node",
-        "type": "XML_node"
+        "type": "XML_Node"
       }
     ],
     "description": "This call will attempt to determine if a node is a CDATA text only node or not. A text node is one that contains only text, and no other child nodes. This call will return 1 if the node is a text node, and the text must be of CDATA format."
@@ -52491,7 +52491,7 @@
     "parameters": [
       {
         "name": "tree_box",
-        "type": "Tree_box"
+        "type": "Tree_Box"
       },
       {
         "name": "name",
