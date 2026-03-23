@@ -8,9 +8,10 @@ Clear_console();
 
 
 
+Integer create_rgb(Integer r,Integer g,Integer b);//SHOULD BE ERROR
 
 
-{   Integer create_rgb(Integer r,Integer g,Integer b);//SHOULD BE ERROR
+{   
     Text prog_name = "TEST"; //SHOULD BE ERROR
 
     Text	program_name	= "12dF Check Exporter";
