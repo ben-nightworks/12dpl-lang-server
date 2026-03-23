@@ -170,8 +170,9 @@ void main()
     Integer colour;
     Text    colour_name,model_name;
     Model   model;
-    Real
-    x_prev_tangent,y_prev_tangent;
+    Real x_prev_tangent,y_prev_tangent;
+
+
     // Get model for text
     model :
     Model_prompt("Model name for text ? ",model_name);

@@ -15,6 +15,41 @@ Integer example_func()
     Print("Example Func \n");
 }
 
+
+void Create_text(Text text, Real x, Real y, Textstyle_Data txtstyl, Model model)
+{
+	Real txt_size;
+	Integer txt_colour;
+	
+	Get_size(txtstyl,txt_size);
+	Get_colour(txtstyl,txt_colour);
+	
+	Element text_elt = Create_text(text, x, y, txt_size, txt_colour);
+	Set_text_textstyle_data(text_elt,txtstyl);
+	Set_text_value(text_elt,text);
+	Set_model(text_elt,model);
+
+	return;
+}
+Text Get_time(Time t, Text format)
+{
+    //see https://pubs.opengroup.org/onlinepubs/9799919799/functions/strftime.html for format options
+	
+    Text result;
+    if(Convert_time(t, format, result))
+	{
+        return "Error converting time (using format: " + format + ")";
+    }
+    return result;
+}
+
+Time Get_now()
+{
+    Time t;
+    Get_time(t);
+    return t;
+}
+
 void main()
 {
     Panel panel = Create_panel("Title", FALSE, TRUE);
@@ -96,5 +131,7 @@ void main()
 
     Integer new = 0;
     Integer new = 0; //should be error
+    
+
 
 }
