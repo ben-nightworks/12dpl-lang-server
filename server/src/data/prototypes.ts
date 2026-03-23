@@ -33,7 +33,7 @@ export function loadPrototypes(): FunctionData[] {
 	if (fs.existsSync(enrichedPath)) {
 		const functions: FunctionData[] = JSON.parse(fs.readFileSync(enrichedPath, 'utf-8'));
 		for (const func of functions) {
-			baseByName.set(func.name.toLowerCase(), func);
+			baseByName.set(func.name, func);
 			results.push(func);
 		}
 	} else {
@@ -43,7 +43,7 @@ export function loadPrototypes(): FunctionData[] {
 	if (fs.existsSync(compilerPath)) {
 		const functions: FunctionData[] = JSON.parse(fs.readFileSync(compilerPath, 'utf-8'));
 		for (const func of functions) {
-			const base = baseByName.get(func.name.toLowerCase());
+			const base = baseByName.get(func.name);
 			results.push({
 				...func,
 				description: (base?.description && base.description.trim().length > 0)

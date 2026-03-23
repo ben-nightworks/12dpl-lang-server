@@ -358,7 +358,7 @@ void complex() {
 		expect(names).toContain('level3');
 	});
 
-	test('completion respects case-insensitivity for symbol lookup', () => {
+	test('completion preserves case for symbol lookup', () => {
 		const src = `
 {
 	Integer MyVar;
@@ -370,10 +370,10 @@ void foo() {
 }
 `;
 		const ctx = setupCompletion(src);
-		// Check exported variables (case-insensitive keys)
-		const names = Array.from(ctx.views.exportedVariables.keys()).map(s => s.toLowerCase());
+		// Check exported variables (case-sensitive keys)
+		const names = Array.from(ctx.views.exportedVariables.keys());
 
-		expect(names).toContain('myvar');
-		expect(names).toContain('myvar2');
+		expect(names).toContain('MyVar');
+		expect(names).toContain('myVar2');
 	});
 });

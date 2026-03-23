@@ -227,7 +227,7 @@ export function registerCompletionProvider(opts: {
 		
 		// Get local/scoped symbols at cursor position
 		const localSymbols = symbolTable ? visibleSymbolsAt(symbolTable.root, textDocumentPosition.position) : [];
-		const localNames = new Set(localSymbols.map((s: SymbolDeclaration) => s.name.toLowerCase()));
+		const localNames = new Set(localSymbols.map((s: SymbolDeclaration) => s.name));
 		
 		// Group all functions (locals + globals) by name to handle overloads
 		const functionsByName = new Map<string, SymbolDeclaration[]>();
@@ -235,7 +235,7 @@ export function registerCompletionProvider(opts: {
 		// Add local functions
 		for (const sym of localSymbols) {
 			if (!sym.name.startsWith('__12dpl__script__') && sym.kind === 'function') {
-				const key = sym.name.toLowerCase();
+				const key = sym.name;
 				if (!functionsByName.has(key)) {
 					functionsByName.set(key, []);
 				}
@@ -247,7 +247,7 @@ export function registerCompletionProvider(opts: {
 		if (views && views.exportedFunctions.size > 0) {
 			for (const [, decls] of views.exportedFunctions) {
 				if (decls.length > 0) {
-					const key = decls[0].name.toLowerCase();
+					const key = decls[0].name;
 					// Only add if not already in local scope
 					if (!functionsByName.has(key)) {
 						functionsByName.set(key, decls);
@@ -294,7 +294,7 @@ const detailText = primaryFn.signature ?? '';
 		// Add global variables (skip if shadowed by local)
 		if (views && views.exportedVariables.size > 0) {
 			for (const [, v] of views.exportedVariables) {
-				if (!localNames.has(v.name.toLowerCase())) {
+				if (!localNames.has(v.name)) {
 					symbolItems.push({
 						label: v.name,
 						kind: CompletionItemKind.Variable,
@@ -399,9 +399,14 @@ const detailText = primaryFn.signature ?? '';
 			{ label: 'while', kind: CompletionItemKind.Keyword, detail: 'While loop', data: 3 },
 			{ label: 'for', kind: CompletionItemKind.Keyword, detail: 'For loop', data: 4 },
 			{ label: 'return', kind: CompletionItemKind.Keyword, detail: 'Return statement', data: 5 },
-			{ label: 'void', kind: CompletionItemKind.Keyword, detail: 'Void return type', data: 6 },
-			{ label: 'int', kind: CompletionItemKind.Keyword, detail: 'Integer type', data: 7 },
-			{ label: 'double', kind: CompletionItemKind.Keyword, detail: 'Double type', data: 8 }
+			{ label: 'do', kind: CompletionItemKind.Keyword, detail: 'Do loop', data: 6 },
+			{ label: 'label', kind: CompletionItemKind.Keyword, detail: 'Label', data: 7 },
+			{ label: 'goto', kind: CompletionItemKind.Keyword, detail: 'Goto statement', data: 8 },
+			{ label: 'continue', kind: CompletionItemKind.Keyword, detail: 'Continue statement', data: 9 },
+			{ label: 'break', kind: CompletionItemKind.Keyword, detail: 'Break statement', data: 10 },
+			{ label: 'switch', kind: CompletionItemKind.Keyword, detail: 'Switch statement', data: 11 },
+			{ label: 'case', kind: CompletionItemKind.Keyword, detail: 'Case statement', data: 12 },
+			{ label: 'default', kind: CompletionItemKind.Keyword, detail: 'Default statement', data: 13 },
 		];
 
 		// Add type completions

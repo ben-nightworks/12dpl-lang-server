@@ -33,6 +33,7 @@ import { DeclarationSpecifiersContext } from "./proglang12dParser";
 import { DeclarationSpecifierContext } from "./proglang12dParser";
 import { TypeSpecifierContext } from "./proglang12dParser";
 import { BuiltInTypeSpecifierContext } from "./proglang12dParser";
+import { BuiltInWidgetTypeSpecifierContext } from "./proglang12dParser";
 import { BuiltInSetTypeSpecifierContext } from "./proglang12dParser";
 import { BuiltInMultiSetTypeSpecifierContext } from "./proglang12dParser";
 import { BuiltInMapTypeSpecifierContext } from "./proglang12dParser";
@@ -377,6 +378,16 @@ export default class proglang12dListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitBuiltInTypeSpecifier?: (ctx: BuiltInTypeSpecifierContext) => void;
+	/**
+	 * Enter a parse tree produced by `proglang12dParser.builtInWidgetTypeSpecifier`.
+	 * @param ctx the parse tree
+	 */
+	enterBuiltInWidgetTypeSpecifier?: (ctx: BuiltInWidgetTypeSpecifierContext) => void;
+	/**
+	 * Exit a parse tree produced by `proglang12dParser.builtInWidgetTypeSpecifier`.
+	 * @param ctx the parse tree
+	 */
+	exitBuiltInWidgetTypeSpecifier?: (ctx: BuiltInWidgetTypeSpecifierContext) => void;
 	/**
 	 * Enter a parse tree produced by `proglang12dParser.builtInSetTypeSpecifier`.
 	 * @param ctx the parse tree
