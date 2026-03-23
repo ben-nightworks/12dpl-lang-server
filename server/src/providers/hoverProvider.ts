@@ -33,13 +33,12 @@ export function registerHoverProvider(opts: {
 
 			switch (symbol.source) {
 				case 'prototype': {
-					// Use enriched documentation when available
-					const proto = prototypeService.getPrototype(word);
-					if (proto) {
+					const overloads = prototypeService.getPrototypes(word);
+					if (overloads.length > 0) {
 						return {
 							contents: {
 								kind: 'markdown',
-								value: prototypeService.generateDocumentation(proto)
+								value: prototypeService.generateOverloadDocumentation(overloads)
 							}
 						};
 					}

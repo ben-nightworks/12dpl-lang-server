@@ -110,6 +110,26 @@ export class PrototypeService {
 		return doc;
 	}
 
+	generateOverloadDocumentation(overloads: FunctionData[]): string {
+		if (overloads.length === 1) {
+			return this.generateDocumentation(overloads[0]);
+		}
+
+		// Show all overload signatures in a single code block
+		const signatures = overloads.map(f => {
+			const params = f.parameters.map(p => `${p.type} ${p.name}`).join(', ');
+			return `${f.returnType} ${f.name}(${params})`;
+		});
+		let doc = `\`\`\`12dpl\n${signatures.join('\n')}\n\`\`\`\n\n`;
+
+		// Use the description from the first overload that has one
+		const desc = overloads.find(f => f.description)?.description;
+		doc += desc || 'No description available';
+
+		doc += `\n\n**${overloads.length} overloads**`;
+		return doc;
+	}
+
 	getCompletionItems(): CompletionItem[] {
 		return this.completionItems;
 	}

@@ -82,20 +82,17 @@ export class SymbolResolver {
 			}
 		}
 
-		// 3. Include symbols (functions + variables) — case-insensitive lookup
-		const lowerName = name.toLowerCase();
+		// 3. Include symbols (functions + variables)
 		const includeSymbols = await this.includeService.getIncludeSymbols(uri);
-		for (const [key, decls] of includeSymbols.functions) {
-			if (key.toLowerCase() === lowerName && decls.length > 0) {
-				const incFsPath = await this.findIncludeFsPathForSymbol(uri, lowerName);
-				return this.declarationToResolved(decls[0], 'include', undefined, incFsPath);
-			}
+		const incFunctions = includeSymbols.functions.get(name);
+		if (incFunctions && incFunctions.length > 0) {
+			const incFsPath = await this.findIncludeFsPathForSymbol(uri, name);
+			return this.declarationToResolved(incFunctions[0], 'include', undefined, incFsPath);
 		}
-		for (const [key, decl] of includeSymbols.variables) {
-			if (key.toLowerCase() === lowerName) {
-				const incFsPath = await this.findIncludeFsPathForSymbol(uri, lowerName);
-				return this.declarationToResolved(decl, 'include', undefined, incFsPath);
-			}
+		const incVariable = includeSymbols.variables.get(name);
+		if (incVariable) {
+			const incFsPath = await this.findIncludeFsPathForSymbol(uri, name);
+			return this.declarationToResolved(incVariable, 'include', undefined, incFsPath);
 		}
 
 		// 4. Include defines
@@ -217,19 +214,13 @@ export class SymbolResolver {
 		};
 	}
 
-	/** Finds which include file defines a given symbol name (case-insensitive). */
 	private async findIncludeFsPathForSymbol(uri: string, name: string): Promise<string | undefined> {
-		const lowerName = name.toLowerCase();
 		const files = await this.includeService.getIncludeFiles(uri);
 		for (const fp of files) {
 			const views = this.documentService.getDerivedViewsForFsPath(fp);
 			if (!views) continue;
-			for (const key of views.exportedFunctions.keys()) {
-				if (key.toLowerCase() === lowerName) return fp;
-			}
-			for (const key of views.exportedVariables.keys()) {
-				if (key.toLowerCase() === lowerName) return fp;
-			}
+			if (views.exportedFunctions.has(name)) return fp;
+			if (views.exportedVariables.has(name)) return fp;
 		}
 		return undefined;
 	}
