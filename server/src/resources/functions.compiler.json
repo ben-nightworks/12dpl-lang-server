@@ -135882,6 +135882,18 @@
     "description": "12dPL function View_redraw"
   },
   {
+    "name": "View_redraw",
+    "id": 351,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "data",
+        "type": "Dynamic_Element"
+      }
+    ],
+    "description": "12dPL function View_redraw"
+  },
+  {
     "name": "View_remove_attribute",
     "id": 3078,
     "returnType": "Integer",

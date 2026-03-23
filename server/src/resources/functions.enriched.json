@@ -11902,6 +11902,18 @@
     "description": "Redraw the 12d Model View view. A function return value of zero indicates that the view was successfully redrawn."
   },
   {
+    "name": "View_redraw",
+    "id": 351,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "data",
+        "type": "Dynamic_Element"
+      }
+    ],
+    "description": "Redraw views containing the elements in the Dynamic_Element list. A function return value of zero indicates the views were successfully redrawn."
+  },
+  {
     "name": "View_fit",
     "id": 353,
     "returnType": "Integer",
