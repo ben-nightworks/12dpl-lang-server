@@ -1,8 +1,3 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <!-- Document body -->
-  <path d="M6 3C6 1.89543 6.89543 1 8 1H19L26 8V29C26 30.1046 25.1046 31 24 31H8C6.89543 31 6 30.1046 6 29V3Z" fill="#43A047"/>
-  <!-- Folded corner -->
-  <path d="M19 1L26 8H21C19.8954 8 19 7.10457 19 6V1Z" fill="#A5D6A7"/>
-  <!-- Text: 4do -->
-  <text x="16" y="23" font-family="Consolas, monospace" font-size="10" font-weight="bold" fill="#FFFFFF" text-anchor="middle">4do</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <text x="12" y="17" font-family="Roboto, sans-serif" font-size="11" font-weight="500" fill="#66BB6A" text-anchor="middle">4do</text>
 </svg>

@@ -95,7 +95,24 @@
 					".4dm",
 					".h"
 				],
-				"configuration": "./language-configuration.json"
+				"configuration": "./language-configuration.json",
+				"icon": {
+					"light": "./Images/4dm.svg",
+					"dark": "./Images/4dm.svg"
+				}
+			},
+			{
+				"id": "12dpl-compiled",
+				"aliases": [
+					"12dPL Compiled"
+				],
+				"extensions": [
+					".4do"
+				],
+				"icon": {
+					"light": "./Images/4do.svg",
+					"dark": "./Images/4do.svg"
+				}
 			},
 			{
 				"id": "mtfsnippet",
@@ -126,13 +143,7 @@
 				"path": "./snippets/12dpl.tmSnippets.json"
 			}
 		],
-		"iconThemes": [
-			{
-				"id": "12dpl-icons",
-				"label": "12dPL File Icons",
-				"path": "./Icons/12dpl-icon-theme.json"
-			}
-		],
+
 		"configuration": {
 			"type": "object",
 			"title": "12dPL",
