@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { parse } from "../server/src/core/parsePipeline";
 import { collectSymbolTable, deriveViews } from "../server/src/core/symbolCollector";
-import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls, validateVoidFunctionReturnValues, FunctionSignatureMap, validateFunctionArguments, validateReturnStatements } from "../server/src/core/validators";
+import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls, validateVoidFunctionReturnValues, FunctionSignatureMap, validateFunctionArguments, validateReturnStatements, validateArraySize } from "../server/src/core/validators";
 import type { SymbolDeclaration, KnownSymbols, DerivedSymbolViews, ParameterSymbolInfo } from "../server/src/core/types";
 
 // The core validators return vscode-languageserver Diagnostic objects.
@@ -2463,5 +2463,89 @@ Panel Make_panel()
 		expect(diagnostics[0].severity).toBe(1); // Error
 		expect(diagnostics[0].message).toContain("Widget");
 		expect(diagnostics[0].message).toContain("Panel");
+	});
+});
+
+// ─── Array size validation (issue #73) ──────────────────────────────────────
+
+function ValidateArraySize(text: string): Diagnostic[] {
+	const result = parse(text);
+	if (result.syntaxErrors.length > 0) return [];
+	return validateArraySize(result.tree);
+}
+
+describe("Array size validation (issue #73)", () => {
+	test("flags unsized array declaration in function body", () => {
+		const code = `
+void main()
+{
+	Text my_choices[];
+}
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].severity).toBe(1); // Error
+		expect(diagnostics[0].message).toContain("requires a size");
+		expect(diagnostics[0].message).toContain("my_choices");
+	});
+
+	test("flags unsized array declaration at top level (script)", () => {
+		const code = `Integer arr[];
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("requires a size");
+		expect(diagnostics[0].message).toContain("arr");
+	});
+
+	test("does not flag sized array declaration", () => {
+		const code = `
+void main()
+{
+	Text my_choices[10];
+}
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("does not flag array parameters in function signatures", () => {
+		const code = `
+void foo(Text items[])
+{
+}
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("does not flag pass-by-reference array parameters", () => {
+		const code = `
+void bar(Integer &arr[])
+{
+}
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("flags unsized array with initializer", () => {
+		const code = `
+void main()
+{
+	Real values[];
+	Integer counts[];
+}
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(2);
+	});
+
+	test("reads fixture Test8.4dm and flags unsized array", () => {
+		const text = readFixture("client/testFixture/Test8.4dm");
+		const diagnostics = ValidateArraySize(text);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("requires a size");
+		expect(diagnostics[0].message).toContain("my_choices");
 	});
 });

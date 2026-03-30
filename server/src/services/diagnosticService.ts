@@ -15,7 +15,8 @@ import { validateVariableRedeclarations,
 	validateDeprecatedCalls, 
 	validateVoidFunctionReturnValues,
 	validateFunctionArguments,
-  validateReturnStatements} from '../core/validators';
+  validateReturnStatements,
+  validateArraySize} from '../core/validators';
 import type { FunctionSignatureMap } from '../core/validators';
 import type { KnownSymbols, ParameterSymbolInfo } from '../core/types';
 
@@ -91,6 +92,10 @@ export class DiagnosticService {
       // 3f. Return statement validation (issue #47)
 			const returnDiagnostics = validateReturnStatements(parseResult.tree);
 			diagnostics.push(...returnDiagnostics);
+
+			// 3g. Array size validation (issue #73)
+			const arraySizeDiagnostics = validateArraySize(parseResult.tree);
+			diagnostics.push(...arraySizeDiagnostics);
       
 		}
 

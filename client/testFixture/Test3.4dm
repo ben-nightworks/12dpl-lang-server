@@ -1,5 +1,6 @@
 {
-Text prog_name = "TEST"; 
+    Text prog_name = "TEST";
+    Real PI = 3.1415926535897932384626433832795;
 
 }
 void main(){
