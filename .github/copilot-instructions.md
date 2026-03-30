@@ -301,6 +301,12 @@ The extension can invoke the **cc4d.exe** compiler (Windows-only):
 | `langServer.maxNumberOfProblems` | number | `100` | Max diagnostics reported |
 | `langServer.trace.server` | string | `"off"` | LSP trace level (`off`/`messages`/`verbose`) |
 
+## Git Workflow
+
+- The default integration branch is **`dev`**, not `main`.
+- All pull requests should target **`dev`** (`--base dev`).
+- Feature/fix branches should be created from `dev`.
+
 ## Common Development Tasks
 
 ### Adding a new LSP feature
