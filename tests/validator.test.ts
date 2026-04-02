@@ -1,6 +1,4 @@
 import { describe, expect, test } from "bun:test";
-import * as fs from "fs";
-import * as path from "path";
 import { parse } from "../server/src/core/parsePipeline";
 import { collectSymbolTable, deriveViews } from "../server/src/core/symbolCollector";
 import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls, validateVoidFunctionReturnValues, FunctionSignatureMap, validateFunctionArguments, validateReturnStatements, validateArraySize } from "../server/src/core/validators";
@@ -66,18 +64,105 @@ function includeDecl(name: string, sourceFile: string, kind: 'variable' | 'funct
 	};
 }
 
-function repoRoot(): string {
-	// tests/* lives one level below repo root
-	return path.resolve(import.meta.dir, "..");
-}
-
-function readFixture(relPath: string): string {
-	return fs.readFileSync(path.join(repoRoot(), relPath), "utf-8");
-}
-
 describe("Validator.Validate", () => {
-	test("parses the large fixture without crashing", () => {
-		const text = readFixture("client/testFixture/Test.4dm");
+	test("parses complex real-world macro without crashing", () => {
+		// Exercises: forward declarations, functions with arrays/refs, top-level blocks,
+		// switch/case, if/else chains, complex expressions, goto, multi-variable decls
+		const text = `
+void get_hip_info(Element align,Integer hip,Integer &type,
+Real xval[],Real yval[],Real lengths[]);
+
+Widget Cast(Widget &widget)
+{
+return widget;
+};
+
+void My_function(Text_Text_Map map)
+{
+    Vector4_Guid_Multimap guid_map;
+};
+
+Integer create_rgb(Integer r,Integer g,Integer b)
+{
+  return((1 << 31) | (r << 16) | (g << 8) | b);
+}
+
+{
+    Text hip_type;
+    Integer ret;
+    ret = Get_hip_type(align,hip,hip_type);
+    switch(hip_type)
+    {
+    case "Test 1":
+    case "Test 2":
+        {
+            break;
+        }
+    case "Test 3":
+    default:
+        {
+
+        }
+    }
+
+    if(hip_type == "IP") {
+        Real xip,yip;  ret = Get_hip_geom(align,hip,0,xip,yip);
+        xval[6] = xip; yval[6] = yip;
+        type = 0;
+        xval[1] = xip; yval[1] = yip;
+    } else if(hip_type == "Curve") {
+        Real xip,yip;  ret = Get_hip_geom(align,hip,0,xip,yip);
+        Real xtc,ytc;  ret = Get_hip_geom(align,hip,1,xtc,ytc);
+        xval[1] = xtc; yval[1] = ytc;
+        xval[6] = xip; yval[6] = yip;
+        type = 2;
+    }
+    return;
+}
+
+Element position_text(Text text,Real size,Integer colour,Real x1,Real y1,Real x2,Real y2)
+{
+    Real xpos,ypos,angle;
+    xpos = 0.5 * (x1 + x2);
+    ypos = 0.5 * (y1 + y2);
+    angle = Atan2(y2 - y1,x2 - x1);
+    Element elt = Create_text(text,xpos,ypos,size,colour,angle,4,1);
+    return (elt);
+}
+
+{
+    Text    program_name = "12dF Check Exporter";
+    Text    ver          = "15.1";
+    Text    td_ver       = "v15";
+    Integer Shutdown_code = 424242;
+}
+
+void main()
+{
+    Integer ret;
+    Element cl;
+    Real    text_size;
+    Integer colour;
+    Text    colour_name,model_name;
+    Model   model;
+
+    Integer no_hip;
+    Get_hip_points(cl,no_hip);
+    for(Integer i=1;i<= no_hip;i++) {
+        Integer  type;
+        Real xval[6],yval[6],lengths[4];
+        get_hip_info(cl,i,type,xval,yval,lengths);
+        Integer curve = (lengths[1] == 0) ? 0 : 1;
+        Integer left_spiral  = (lengths[3] == 0) ? 0 : 1;
+        Integer right_spiral = (lengths[4] == 0) ? 0 : 1;
+        if(left_spiral) {
+            Text text = "spiral length = " + To_text(lengths[3],1) + "m";
+            Element elt = position_text(text,text_size,colour,xval[1],yval[1],xval[4],yval[4]);
+            Set_model(elt,model);
+        }
+    }
+}
+`;
 		const diagnostics = Validate(text);
 		expect(Array.isArray(diagnostics)).toBe(true);
 		// This is a real-world macro; it should ideally be clean.
@@ -86,9 +171,49 @@ describe("Validator.Validate", () => {
 	});
 
 	test("handles preprocessor directives and top-level blocks", () => {
-		const text = readFixture("client/testFixture/Test2.4dm");
+		// Exercises: forward declarations with overloads, top-level blocks,
+		// intentional re-declarations/redefinitions
+		const text = `
+Integer create_rgb(Integer r,Integer g,Integer b);
+
+Integer create_rgb(Integer r,Integer g,Integer b, Integer a);
+
+Integer create_rgb(Integer r,Integer g,Integer b, Integer a)
+{
+    return 0;
+}
+
+Integer create_rgb(Integer r,Integer g,Integer b);
+
+{
+    Text prog_name = "TEST";
+
+    Text    program_name    = "12dF Check Exporter";
+    Text    program_name    = "12dF Check Exporter";
+    Text    ver             = "15.1";
+    Text    td_ver          = "v15";
+    Integer Shutdown_code = 424242;
+}
+
+Integer create_rgb(Integer r,Integer g,Integer b)
+{
+    return 0;
+}
+
+Integer create_rgb(Integer r,Integer g,Integer b);
+
+Integer create_rgb(Integer r,Integer g,Integer b)
+{
+    return 0;
+}
+
+Integer create_rgb(Integer r,Integer g,Integer b, Integer a)
+{
+    return 0;
+}
+`;
 		const diagnostics = Validate(text);
-		// Test2.4dm has intentional re-declarations/redefinitions
+		// Has intentional re-declarations/redefinitions
 		const syntaxErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && !d.message.includes("already declared") && !d.message.includes("is not declared") && !d.message.includes("already defined")
 		);
@@ -266,7 +391,13 @@ void main() {
 	});
 
 	test("allows overloaded forward declarations in same file", () => {
-		const text = readFixture("client/testFixture/Test7.4dm");
+		const text = `
+Integer count = 0;
+void process();
+void process(Integer x);
+void process(Integer x, Integer y);
+Integer other_var = 5;
+`;
 		const diagnostics = Validate(text);
 		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
@@ -2541,11 +2672,68 @@ void main()
 		expect(diagnostics.length).toBe(2);
 	});
 
-	test("reads fixture Test8.4dm and flags unsized array", () => {
-		const text = readFixture("client/testFixture/Test8.4dm");
-		const diagnostics = ValidateArraySize(text);
+	test("flags unsized Text array", () => {
+		const code = `
+void main()
+{
+	Text items[];
+}
+`;
+		const diagnostics = ValidateArraySize(code);
 		expect(diagnostics.length).toBe(1);
 		expect(diagnostics[0].message).toContain("requires a size");
-		expect(diagnostics[0].message).toContain("my_choices");
+		expect(diagnostics[0].message).toContain("items");
+	});
+
+	test("flags unsized Integer array", () => {
+		const code = `
+void main()
+{
+	Integer nums[];
+}
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("requires a size");
+		expect(diagnostics[0].message).toContain("nums");
+	});
+
+	test("flags unsized Real array", () => {
+		const code = `
+void main()
+{
+	Real coords[];
+}
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("requires a size");
+		expect(diagnostics[0].message).toContain("coords");
+	});
+
+	test("flags unsized Element array", () => {
+		const code = `
+void main()
+{
+	Element elems[];
+}
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("requires a size");
+		expect(diagnostics[0].message).toContain("elems");
+	});
+
+	test("flags unsized Model array", () => {
+		const code = `
+void main()
+{
+	Model models[];
+}
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("requires a size");
+		expect(diagnostics[0].message).toContain("models");
 	});
 });
