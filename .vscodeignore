@@ -1,26 +1,49 @@
-.vscode/**
+# Source & build artifacts
 **/*.ts
 **/*.map
-.gitignore
+**/*.tsbuildinfo
 **/tsconfig.json
 **/tsconfig.base.json
+
+# Lock files
+bun.lock
+**/bun.lock
+
+# Config & tooling
+.vscode/**
+.github/**
+.gitignore
+.eslintignore
+.eslintrc.json
+
+# Documentation (not needed at runtime)
+ARCHITECTURE.md
+CONTRIBUTING.md
 contributing.md
-.travis.yml
+
+# Directories not needed in extension
+macros/**
+macros_mattmonk/**
+tests/**
+docs/**
+client/testFixture/**
+server/src/**
+node_modules/**
+
+# Server node_modules - whitelist only runtime deps
+server/node_modules/**
+!server/node_modules/antlr4/**
+!server/node_modules/vscode-jsonrpc/**
+!server/node_modules/vscode-languageserver/**
+!server/node_modules/vscode-languageserver-protocol/**
+!server/node_modules/vscode-languageserver-textdocument/**
+!server/node_modules/vscode-languageserver-types/**
+
+# Client node_modules - whitelist only runtime deps
 client/node_modules/**
 !client/node_modules/vscode-jsonrpc/**
 !client/node_modules/vscode-languageclient/**
 !client/node_modules/vscode-languageserver-protocol/**
 !client/node_modules/vscode-languageserver-types/**
-!client/node_modules/{minimatch,brace-expansion,concat-map,balanced-match}/**
-!client/node_modules/{semver,lru-cache,yallist}/**
-macros
-macros_mattmonk
-tests/**
-docs/**
-client/testFixture/**
-server/src/**
-.github/**
-bun.lock
-.eslintignore
-.eslintrc.json
-node_modules/**
+!client/node_modules/{minimatch,brace-expansion,balanced-match}/**
+!client/node_modules/{semver}/**
