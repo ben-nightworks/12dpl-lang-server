@@ -1,1 +1,1 @@
-{"root":["./src/compilefeature.ts","./src/extension.ts","./src/formattingfeature.ts"],"version":"6.0.2"}
+{"version":"7.0.0-dev.20260403.1","root":["./src/compilefeature.ts","./src/extension.ts","./src/formattingfeature.ts"]}

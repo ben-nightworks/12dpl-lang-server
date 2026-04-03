@@ -143,7 +143,6 @@
 				"path": "./snippets/12dpl.tmSnippets.json"
 			}
 		],
-
 		"configuration": {
 			"type": "object",
 			"title": "12dPL",
@@ -174,7 +173,9 @@
 				"12dpl.compiler.includePaths": {
 					"scope": "window",
 					"type": "array",
-					"items": { "type": "string" },
+					"items": {
+						"type": "string"
+					},
 					"default": [],
 					"description": "List of folders to prepend to the PATH environment variable before running the compiler (useful for include directories). Use platform paths; on Windows use semicolon-separated PATH semantics."
 				},
@@ -241,8 +242,8 @@
 		"vscode:prepublish": "bun run compile && bun server/copy-resources.js",
 		"generate-antlr": "cd server && bun run generate-antlr",
 		"build": "bun run compile",
-		"compile": "bun x tsc -b && bun server/copy-resources.js",
-		"watch": "bun x tsc -b -w",
+		"compile": "bun x tsgo -b && bun server/copy-resources.js",
+		"watch": "bun x tsgo -b -w",
 		"lint": "eslint ./client/src ./server/src --ext .ts,.tsx",
 		"postinstall": "cd client && bun install && cd ../server && bun install && cd ..",
 		"test": "bun test tests",
@@ -255,6 +256,7 @@
 		"@types/node": "latest",
 		"@typescript-eslint/eslint-plugin": "latest",
 		"@typescript-eslint/parser": "latest",
+		"@typescript/native-preview": "^7.0.0-dev.20260403.1",
 		"@vscode/vsce": "latest",
 		"eslint": "latest",
 		"typescript": "latest"
