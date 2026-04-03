@@ -12,4 +12,6 @@ void main()
 
 	Text sized_array[10];//ok - has a size
 	Integer sized_int[5];//ok - has a size
+	Integer x=5;
+	Integer sized_int2[x];//Ok - has a size, even if it is not a constant expression
 }
