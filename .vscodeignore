@@ -22,13 +22,20 @@ CONTRIBUTING.md
 contributing.md
 
 # Directories not needed in extension
+macros
 macros/**
+macros_mattmonk
 macros_mattmonk/**
 tests/**
 docs/**
 client/testFixture/**
 server/src/**
 node_modules/**
+
+# Server build/tooling files (not needed at runtime)
+server/antlr-*.jar
+server/copy-resources.js
+server/package-lock.json
 
 # Server node_modules - whitelist only runtime deps
 server/node_modules/**
