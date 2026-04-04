@@ -338,6 +338,36 @@ void main() {
 		expect(redeclErrors.length).toBe(0);
 	});
 
+	test("does not flag variable followed by same-name function prototype", () => {
+		const code = `
+void main() {
+    Time my_time = some_value;
+    Time my_time();
+    Integer get_value = 5;
+    Integer get_value();
+}
+`;
+		const diagnostics = Validate(code);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already declared")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("does not flag function prototype followed by same-name variable", () => {
+		const code = `
+void main() {
+    Real calculate();
+    Real calculate = 3.14;
+}
+`;
+		const diagnostics = Validate(code);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already declared")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
 	test("reports error when variable conflicts with include file variable", () => {
 		const code = `
 void main() {
