@@ -167,7 +167,8 @@ void main()
 		expect(Array.isArray(diagnostics)).toBe(true);
 		// This is a real-world macro; it should ideally be clean.
 		// If this starts failing, it indicates a grammar/regression in the parser.
-		expect(diagnostics.filter(d => d.severity === 1 /* Error */).length).toBe(0);
+		// Filter out 'is not declared' since Validate() has no knownSymbols (no prototypes).
+		expect(diagnostics.filter(d => d.severity === 1 /* Error */ && !d.message.includes("is not declared")).length).toBe(0);
 	});
 
 	test("handles preprocessor directives and top-level blocks", () => {
@@ -776,14 +777,32 @@ void main() {
 		expect(undeclaredErrors.length).toBe(0);
 	});
 
-	test("does not flag function calls as undeclared", () => {
+	test("flags undeclared function calls as errors", () => {
 		const code = `
 void main() {
     Integer x = someFunction(1, 2);
 }
 `;
 		const diagnostics = Validate(code);
-		// Function calls should not be flagged as undeclared variables
+		const errors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("someFunction")
+		);
+		expect(errors.length).toBe(1);
+		expect(errors[0].message).toContain("Function 'someFunction' is not declared");
+	});
+
+	test("does not flag known function calls as undeclared", () => {
+		const code = `
+void main() {
+    Integer x = someFunction(1, 2);
+}
+`;
+		const knownSymbols = {
+			functions: new Set(['someFunction']),
+			variables: new Set<string>(),
+			defines: new Set<string>()
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const errors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("someFunction")
 		);
@@ -935,7 +954,9 @@ void main() {
 			d.severity === 1 /* Error */ && d.message.includes("is not declared")
 		);
 		// MyFunction and MYFUNCTION are different from myfunction — should be flagged
-		expect(undeclaredErrors.length).toBe(0); // function calls don't flag as undeclared (they pass through)
+		expect(undeclaredErrors.length).toBe(2);
+		expect(undeclaredErrors.some(d => d.message.includes("MyFunction"))).toBe(true);
+		expect(undeclaredErrors.some(d => d.message.includes("MYFUNCTION"))).toBe(true);
 	});
 
 	// =========================================================================
@@ -1070,6 +1091,89 @@ void main() {
 		);
 		expect(undeclaredErrors.length).toBe(1);
 		expect(undeclaredErrors[0].message).toContain("unknown_var");
+	});
+
+	// =========================================================================
+	// Undeclared Function Call Tests
+	// =========================================================================
+
+	test("flags undeclared function call with specific message", () => {
+		const code = `
+void main() {
+    nonexistent_function();
+}
+`;
+		const knownSymbols = {
+			functions: new Set<string>(),
+			variables: new Set<string>(),
+			defines: new Set<string>()
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
+		const errors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("is not declared")
+		);
+		expect(errors.length).toBe(1);
+		expect(errors[0].message).toBe("Function 'nonexistent_function' is not declared");
+	});
+
+	test("flags undeclared function call but not known ones", () => {
+		const code = `
+void main() {
+    known_func();
+    unknown_func();
+}
+`;
+		const knownSymbols = {
+			functions: new Set(['known_func']),
+			variables: new Set<string>(),
+			defines: new Set<string>()
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
+		const errors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("is not declared")
+		);
+		expect(errors.length).toBe(1);
+		expect(errors[0].message).toContain("unknown_func");
+	});
+
+	test("does not flag locally defined function as undeclared", () => {
+		const code = `
+Integer my_func() {
+    return 42;
+}
+
+void main() {
+    Integer x = my_func();
+}
+`;
+		const knownSymbols = {
+			functions: new Set<string>(),
+			variables: new Set<string>(),
+			defines: new Set<string>()
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
+		const errors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("my_func")
+		);
+		expect(errors.length).toBe(0);
+	});
+
+	test("does not flag define used as function call", () => {
+		const code = `
+void main() {
+    Integer x = MY_MACRO(42);
+}
+`;
+		const knownSymbols = {
+			functions: new Set<string>(),
+			variables: new Set<string>(),
+			defines: new Set(['MY_MACRO'])
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
+		const errors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("MY_MACRO")
+		);
+		expect(errors.length).toBe(0);
 	});
 
 	// =========================================================================
@@ -1262,7 +1366,7 @@ void main() {
 #endif
 }
 `;
-		const diagnostics = Validate(code);
+		const diagnostics = ValidateWithIncludes(code, []);
 		const redeclErrors = diagnostics.filter(d =>
 			d.message.includes("already declared")
 		);
@@ -1351,7 +1455,7 @@ void process_elements() {
 #endif
 }
 `;
-		const diagnostics = Validate(code);
+		const diagnostics = ValidateWithIncludes(code, []);
 		const redeclErrors = diagnostics.filter(d =>
 			d.message.includes("already declared")
 		);

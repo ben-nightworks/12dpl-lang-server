@@ -57,7 +57,6 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 		if (isFunctionCall && knownSymbols.functions.has(text)) return;
 		if (knownSymbols.variables.has(text)) return;
 		if (knownSymbols.defines.has(text)) return;
-		if (isFunctionCall) return;
 
 		diagnostics.push({
 			severity: DiagnosticSeverity.Error,
@@ -65,7 +64,9 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 				start: { line: line - 1, character: column },
 				end: { line: line - 1, character: column + text.length }
 			},
-			message: `'${text}' is not declared`
+			message: isFunctionCall
+				? `Function '${text}' is not declared`
+				: `'${text}' is not declared`
 		});
 	};
 
