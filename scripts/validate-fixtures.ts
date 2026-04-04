@@ -343,17 +343,22 @@ function buildFunctionSignatures(
 		}
 	}
 
-	// Prototypes
+	// Prototypes — merge with local/include overloads (don't skip)
 	for (const name of prototypes.getAllNames()) {
-		if (signatures.has(name)) continue; // local overrides
 		const overloads = prototypes.getPrototypes(name);
-		if (overloads.length > 0) {
-			signatures.set(name, overloads.map(o => o.parameters.map(p => ({
+		for (const o of overloads) {
+			const params = o.parameters.map(p => ({
 				name: p.name,
 				type: p.type,
 				byRef: false,
 				isArray: false,
-			}))));
+			}));
+			const existing = signatures.get(name);
+			if (existing) {
+				existing.push(params);
+			} else {
+				signatures.set(name, [params]);
+			}
 		}
 	}
 
