@@ -38,7 +38,7 @@ Changelog notes in [v1.1.0]
 	- Migrated build scripts to use `bun` for faster performance.
 
 ### Changed
-- Updated `Test.4dm` to include a comprehensive macro example demonstrating all supported features.
+- Updated `realworld_smoke_test.4dm` (formerly `Test.4dm`) to include a comprehensive macro example demonstrating all supported features.
 
 ## Release Overview
 

@@ -83,9 +83,20 @@ Important modules:
 ├── client/                    # VS Code Extension
 │   ├── src/
 │   │   └── extension.ts      # Extension entry point
-│   └── testFixture/          # Test files (.4dm)
-│       ├── Test.4dm
-│       └── Test2.4dm
+│   └── testFixture/          # Test fixture files (.4dm / .h)
+│       ├── variable_redeclaration.4dm
+│       ├── function_redeclaration.4dm
+│       ├── undeclared_symbols.4dm
+│       ├── function_arguments.4dm
+│       ├── return_values.4dm
+│       ├── void_return_usage.4dm
+│       ├── deprecated_calls.4dm
+│       ├── array_size.4dm
+│       ├── include_resolution.4dm
+│       ├── symbol_extraction.4dm
+│       ├── syntax_patterns.4dm
+│       ├── regression_tests.4dm
+│       └── realworld_smoke_test.4dm
 │
 ├── server/                    # Language Server
 │   ├── src/
