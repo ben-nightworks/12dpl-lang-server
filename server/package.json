@@ -4,17 +4,21 @@
 	"version": "1.0.0",
 	"author": "Ben Olsen",
 	"license": "MIT",
-	"engines": {
-		"node": "*"
-	},
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ben-nightworks/12dpl-lang-server"
 	},
 	"dependencies": {
+		"antlr4": "^4.13.0",
 		"vscode-languageserver": "^7.0.0",
 		"vscode-languageserver-textdocument": "^1.0.4",
-		"antlr4":"^4.13.0"
+		"xml2js": "^0.6.2"
 	},
-	"scripts": {}
+	"scripts": {
+		"postinstall": "bun copy-resources.js",
+		"generate-antlr": "java -jar antlr-4.13.1-complete.jar -Dlanguage=TypeScript -visitor -o src/antlr/src src/proglang12d.g4"
+	},
+	"devDependencies": {
+		"@types/xml2js": "^0.4.14"
+	}
 }

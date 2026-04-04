@@ -4,7 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as path from 'path';
-import { workspace, ExtensionContext } from 'vscode';
+import { ExtensionContext, window, workspace } from 'vscode';
+import { registerCompileFeatures } from './compileFeature';
+import { registerFormattingFeatures } from './formattingFeature';
 
 import {
 	LanguageClient,
@@ -15,22 +17,30 @@ import {
 
 let client: LanguageClient;
 
+/** VS Code extension activation entrypoint. Registers LSP client and compile commands. */
 export function activate(context: ExtensionContext) {
+
+	// Register formatting features
+	registerFormattingFeatures(context);
+
+	// Register compile commands, status bar, and related UI
+	registerCompileFeatures(context);
+
 	// The server is implemented in node
 	const serverModule = context.asAbsolutePath(
 		path.join('server', 'out', 'server.js')
 	);
 
 
-	//let debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] };
+	const debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] };
 	// If the extension is launched in debug mode then the debug server options are used
 	// Otherwise the run options are used
 	const serverOptions: ServerOptions = {
 		run: { module: serverModule, transport: TransportKind.ipc },
 		debug: {
 			module: serverModule,
-			transport: TransportKind.ipc//,
-			//options: debugOptions
+			transport: TransportKind.ipc,
+			options: debugOptions
 		}
 	};
 
@@ -46,7 +56,7 @@ export function activate(context: ExtensionContext) {
 
 	// Create the language client and start the client.
 	client = new LanguageClient(
-		'12dpl-ls',
+		'12dpl',
 		'12d Programming Language Server',
 		serverOptions,
 		clientOptions

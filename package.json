@@ -2,14 +2,21 @@
 	"name": "12dpl-lang-server",
 	"description": "A language server for 12dPL",
 	"author": "Ben Olsen",
+	"contributors": [
+		{
+			"name": "Kamal Jarada",
+			"email": "kamal.jarada@example.com"
+		}
+	],
 	"license": "MIT",
 	"displayName": "12dPL Language Server",
-	"version": "1.0.3",
+	"version": "1.3.1",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ben-nightworks/12dpl-lang-server"
 	},
 	"publisher": "nightworks",
+	"icon": "Images/28466b9b-7829-401e-8016-de0e5078d6e7.png",
 	"categories": [],
 	"keywords": [
 		"programming language",
@@ -20,9 +27,62 @@
 	},
 	"main": "./client/out/extension",
 	"activationEvents": [
-        "onLanguage:12dPL"
-    ],
+		"onLanguage:12dpl",
+		"onCommand:12dpl.compile",
+		"onCommand:12dpl.compileWithFlags"
+	],
 	"contributes": {
+		"configurationDefaults": {
+			"[12dpl]": {
+				"editor.defaultFormatter": "nightworks.12dpl-lang-server"
+			}
+		},
+		"commands": [
+			{
+				"command": "12dpl.compile",
+				"title": "12dPL: Compile Current File",
+				"icon": "$(play)"
+			},
+			{
+				"command": "12dpl.compileWithFlags",
+				"title": "12dPL: Compile Current File (Select Flags)",
+				"icon": "$(gear)"
+			}
+		],
+		"menus": {
+			"explorer/context": [
+				{
+					"command": "12dpl.compile",
+					"when": "resourceExtname == .4dm"
+				},
+				{
+					"command": "12dpl.compileWithFlags",
+					"when": "resourceExtname == .4dm"
+				}
+			],
+			"editor/context": [
+				{
+					"command": "12dpl.compile",
+					"when": "resourceExtname == .4dm"
+				},
+				{
+					"command": "12dpl.compileWithFlags",
+					"when": "resourceExtname == .4dm"
+				}
+			],
+			"editor/title": [
+				{
+					"command": "12dpl.compile",
+					"when": "resourceExtname == .4dm",
+					"group": "navigation"
+				},
+				{
+					"command": "12dpl.compileWithFlags",
+					"when": "resourceExtname == .4dm",
+					"group": "navigation"
+				}
+			]
+		},
 		"languages": [
 			{
 				"id": "12dpl",
@@ -36,6 +96,16 @@
 					".h"
 				],
 				"configuration": "./language-configuration.json"
+			},
+			{
+				"id": "mtfsnippet",
+				"aliases": [
+					"12d MTF Snippet"
+				],
+				"extensions": [
+					".mtfsnippet"
+				],
+				"configuration": "./language-configuration.json"
 			}
 		],
 		"grammars": [
@@ -43,12 +113,74 @@
 				"language": "12dpl",
 				"scopeName": "source.12dpl",
 				"path": "./syntax/12dpl.tmLanguage.json"
+			},
+			{
+				"language": "mtfsnippet",
+				"scopeName": "source.mtfsnippet",
+				"path": "./syntax/mtfsnippet.tmLanguage.json"
+			}
+		],
+		"snippets": [
+			{
+				"language": "12dpl",
+				"path": "./snippets/12dpl.tmSnippets.json"
 			}
 		],
 		"configuration": {
 			"type": "object",
 			"title": "12dPL",
 			"properties": {
+				"12dpl.compiler.availableFlags": {
+					"scope": "resource",
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"default": [
+						"-p",
+						"-proto",
+						"-nocpp",
+						"-nolines",
+						"-allow_id_calls",
+						"-allow_old_calls",
+						"-keep_cpp"
+					],
+					"description": "List of cc4d compiler flags to show as checkboxes when compiling. Each entry may include arguments, e.g. '-log \"build.log\"' or '-codepage 1252'."
+				},
+				"12dpl.compiler.path": {
+					"scope": "window",
+					"type": "string",
+					"default": "C:\\Program Files\\12d\\12dmodel\\15.00\\nt.x64\\",
+					"description": "Path to the folder containing the cc4d.exe compiler. Example: C:\\Program Files\\12d\\12dmodel\\15.00\\nt.x64\\"
+				},
+				"12dpl.compiler.includePaths": {
+					"scope": "window",
+					"type": "array",
+					"items": { "type": "string" },
+					"default": [],
+					"description": "List of folders to prepend to the PATH environment variable before running the compiler (useful for include directories). Use platform paths; on Windows use semicolon-separated PATH semantics."
+				},
+				"12dpl.compiler.defaultFlags": {
+					"scope": "resource",
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"default": [],
+					"description": "Default cc4d flags to preselect in the compile checkbox picker. Last selection is remembered per-workspace."
+				},
+				"12dpl.formatOnSave": {
+					"scope": "resource",
+					"type": "boolean",
+					"default": false,
+					"description": "Auto-format 12dPL files when they are saved."
+				},
+				"12dpl.indentSize": {
+					"scope": "resource",
+					"type": "number",
+					"default": 4,
+					"description": "Indent size (spaces) used by the 12dPL formatter."
+				},
 				"langServer.maxNumberOfProblems": {
 					"scope": "resource",
 					"type": "number",
@@ -73,10 +205,10 @@
 				"name": "12dPL",
 				"owner": "12dPL",
 				"fileLocation": [
-                    "relative",
-                    "${fileDirname}"
-                ],
-                "pattern": {
+					"relative",
+					"${fileDirname}"
+				],
+				"pattern": {
 					"regexp": "^\"(.*?)\",(.*?)line (.*?)\\.(.*?)\\: (.*?)\\: (.*)",
 					"file": 1,
 					"line": 3,
@@ -88,20 +220,26 @@
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "npm run compile",
-		"compile": "tsc -b",
-		"watch": "tsc -b -w",
+		"vscode:prepublish": "bun run compile && bun server/copy-resources.js",
+		"generate-antlr": "cd server && bun run generate-antlr",
+		"sync-types": "bun server/sync-grammar-types.js",
+		"build": "bun run compile",
+		"compile": "bun x tsc -b && bun server/copy-resources.js",
+		"watch": "bun x tsc -b -w",
 		"lint": "eslint ./client/src ./server/src --ext .ts,.tsx",
-		"postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
-		"test": "sh ./scripts/e2e.sh"
+		"postinstall": "cd client && bun install && cd ../server && bun install && cd ..",
+		"test": "bun test tests",
+		"test:unit": "bun test tests",
+		"test:compile": "bun run compile",
+		"test:all": "bun run compile && bun test tests",
+		"test:e2e": "sh ./scripts/e2e.sh"
 	},
 	"devDependencies": {
-		"@types/mocha": "^9.1.0",
 		"@types/node": "^16.11.7",
 		"@typescript-eslint/eslint-plugin": "^5.42.0",
 		"@typescript-eslint/parser": "^5.42.0",
+		"@vscode/vsce": "^3.7.1",
 		"eslint": "^8.26.0",
-		"mocha": "^9.2.1",
-		"typescript": "^4.9.4"
+		"typescript": "^4.9.5"
 	}
 }

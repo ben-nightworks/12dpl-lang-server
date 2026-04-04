@@ -1,0 +1,36 @@
+// PARAMETER WIDTH REAL "Layback width" 0.6
+// PARAMETER DEPTH REAL "Layback depth" -0.04
+// PARAMETER STYLE_TYPE CHOICE2 "Style" $(_PROJECT_ATTRIBUTE[Pavement/Value])
+
+@ def_tok WIDTH 0.5
+
+@ if_tok_eq_val $(TEST) 
+
+// drop into DW
+insert "SAL" "grey" 0.001 0 unknown named_position "MODIFIER_START" 0 named_position "MODIFIER_START" 0.5 absolute extra_start extra_end
+insert "SAI" "grey" 0.5 $(DEPTH) unknown named_position "MODIFIER_START" 0 named_position "MODIFIER_START" 0.5 absolute extra_start extra_end
+insert "SAT" "grey" 0.03 0.15 unknown named_position "MODIFIER_START" 0 named_position "MODIFIER_START" 0.5 absolute extra_start extra_end
+insert "SAB" "grey" 0.18 0 unknown named_position "MODIFIER_START" 0 named_position "MODIFIER_START" 0.5 absolute extra_start extra_end
+
+// push out links
+width "SAT" named_position "MODIFIER_START" 0 named_position "MODIFIER_START" 0.5 0.03 $(WIDTH) absolute extra_start extra_end
+width "SAB" named_position "MODIFIER_START" 0 named_position "MODIFIER_START" 0.5 0.18 0.0 extra_start extra_end absolute 
+height "SAT" named_position "MODIFIER_START" 0 named_position "MODIFIER_START" 0.5 0.15 0.2 extra_start extra_end absolute 
+height "SAB" named_position "MODIFIER_START" 0 named_position "MODIFIER_START" 0.5 0 extra_start extra_end 0 absolute
+
+// DW to -0.5
+insert "SKL" "grey" 0.001 0 unknown named_position "MODIFIER_START" 0.5 named_position "MODIFIER_END" -0.5 absolute extra_start extra_end
+insert "SKI" "grey" 0.5 $(DEPTH) unknown named_position "MODIFIER_START" 0.5 named_position "MODIFIER_END" -0.5 absolute extra_start extra_end
+insert "SKB" "grey" $(WIDTH) 0.2 unknown named_position "MODIFIER_START" 0.5 named_position "MODIFIER_END" -0.5 absolute extra_start extra_end
+
+//back out -0.5 to end
+insert "SAL" "grey" 0.001 0 unknown named_position "MODIFIER_END" -0.5 named_position "MODIFIER_END" 0.0 absolute extra_start extra_end
+insert "SAI" "grey" 0.5 $(DEPTH) unknown named_position "MODIFIER_END" -0.5 named_position "MODIFIER_END" 0.0 absolute extra_start extra_end
+insert "SAT" "grey" 0.03 0.15 unknown named_position "MODIFIER_END" -0.5 named_position "MODIFIER_END" 0.0 absolute extra_start extra_end
+insert "SAB" "grey" 0.18 0 unknown named_position "MODIFIER_END" -0.5 named_position "MODIFIER_END" 0.0 absolute extra_start extra_end
+
+// push out links
+width extra_start extra_end "SAT" named_position "MODIFIER_END" -0.5 named_position "MODIFIER_END" 0.0 $(WIDTH) 0.03 absolute
+width extra_start extra_end "SAB" named_position "MODIFIER_END" -0.5 named_position "MODIFIER_END" 0.0 0.0 0.18 absolute
+height "SAT" named_position "MODIFIER_END" -0.5 named_position "MODIFIER_END" 0.0 0.2 0.15 absolute extra_start extra_end
+height "SAB" named_position "MODIFIER_END" -0.5 named_position "MODIFIER_END" 0.0 0 0 absolute extra_start extra_end

@@ -50,7 +50,6 @@ postfixExpression
     :   primaryExpression
     ('[' expression ']'
     | '(' argumentExpressionList? ')'
-    | ('.' | '->') Identifier
     | '++'
     | '--'
     )*
@@ -65,17 +64,15 @@ unaryExpression
     ('++' |  '--' )*
     (postfixExpression
     |   unaryOperator castExpression
-    |   '&&' Identifier // GCC extension address of label
     )
     ;
 
 unaryOperator
-    :   '&' | '*' | '+' | '-' | '~' | '!'
+    :   '+' | '-' | '!'
     ;
 
 castExpression
     :   unaryExpression
-    |   DigitSequence // for
     ;
 
 multiplicativeExpression
@@ -125,7 +122,6 @@ conditionalExpression
 assignmentExpression
     :   conditionalExpression
     |   unaryExpression assignmentOperator assignmentExpression
-    |   DigitSequence // for
     ;
 
 assignmentOperator
@@ -141,20 +137,23 @@ constantExpression
     ;
 
 declaration
-    :   declarationSpecifiers ';'
+    :   declarationSpecifiers initDeclaratorList ';'
+    ;
+
+initDeclaratorList
+    :   initDeclarator (',' initDeclarator)*
+    ;
+
+initDeclarator
+    :   declarator ('=' initializer)?
     ;
 
 declarationSpecifiers
     :   declarationSpecifier+
     ;
 
-declarationSpecifiers2
-    :   declarationSpecifier+
-    ;
-
 declarationSpecifier
     :   typeSpecifier
-    |   builtInTypeSpecifier
     ;
 
 typeSpecifier
@@ -162,10 +161,16 @@ typeSpecifier
     |   'Text'
     |   'Integer'
     |   'Real'
+	|   builtInTypeSpecifier
+	|   builtInSetTypeSpecifier
+	|   builtInMultiSetTypeSpecifier
+	|   builtInMapTypeSpecifier
+	|   builtInMultiMapTypeSpecifier
     ;
 
 builtInTypeSpecifier
-    : 'Element'
+    : builtInWidgetTypeSpecifier
+    | 'Element'
     | 'Model'
     | 'Dynamic_Element'
     | 'Tin'
@@ -177,89 +182,28 @@ builtInTypeSpecifier
     | 'Segment'
     | 'File'
     | 'View'
-    | 'Panel'
-    | 'Vertical_Group'
-    | 'Horizontal_Group'
-    | 'Message_Box'
-    | 'Model_Box'
-    | 'Named_Tick_Box'
-    | 'Button'
     | 'Widget'
     | 'Map_File'
-    | 'Select_Button'
-    | 'Select_Box'
-    | 'Select_Boxes'
-    | 'Angle_Box'
-    | 'Choice_Box'
-    | 'Colour_Box'
-    | 'Directory_Box'
-    | 'Real_Box'
-    | 'File_Box'
-    | 'Input_Box'
-    | 'Integer_Box'
-    | 'Justify_Box'
-    | 'Linestyle_Box'
-    | 'Map_File_Box'
-    | 'Name_Box'
-    | 'Plotter_Box'
-    | 'Report_Box'
-    | 'Template_Box'
-    | 'Sheet_Size_Box'
-    | 'Text_Style_Box'
-    | 'Text_Units_Box'
-    | 'Tick_Box'
-    | 'Tin_Box'
-    | 'View_Box'
-    | 'XYZ_Box'
     | 'Apply_Many_Function'
     | 'Kerb_Return_Function'
     | 'Function'
     | 'Macro_Function'
     | 'Apply_Function'
-    | 'Function_Box'
-    | 'Widget_Pages'
-    | 'Sheet_Panel'
-    | 'List_Box'
-    | 'Draw_Box'
-    | 'Screen_Text'
-    | 'Text_Edit_Box'
-    | 'Overlay_Widget'
-    | 'Tab_Box'
-    | 'ListCtrl_Box'
-    | 'Bitmap_List_Box'
     | 'Undo_List'
     | 'Undo'
     | 'Textstyle_Data'
-    | 'Textstyle_Data_Box'
-    | 'Source_Box'
-    | 'Target_Box'
     | 'SDR_Attribute'
     | 'Dynamic_Integer'
     | 'Dynamic_Real'
-    | 'Spiral'
-    | 'Parabola'
-    | 'Billboard_Box'
-    | 'Texture_Box'
-    | 'Bitmap_Fill_Box'
-    | 'Date_Time_Box'
-    | 'HyperLink_Box'
     | 'Uid'
     | 'Attributes'
-    | 'Symbol_Box'
-    | 'Chainage_Box'
-    | 'Graph_Box'
-    | 'Attributes_Box'
     | 'Equality_Info'
     | 'Equality_Label'
-    | 'New_Select_Box'
-    | 'Polygon_Box'
-    | 'New_XYZ_Box'
     | 'Vector2'
     | 'Vector3'
     | 'Vector4'
     | 'Matrix3'
     | 'Matrix4'
-    | 'GridCtrl_Box'
     | 'XML_Document'
     | 'XML_Node'
     | 'Plot_Parameter_File'
@@ -274,16 +218,332 @@ builtInTypeSpecifier
     | 'Query_Condition'
     | 'Parameter_Collection'
     | 'Manual_Condition'
-    | 'Tree_Box'
-    | 'Tree_Page'
-    | 'Colour_Message_Box'
     | 'Unknown'
     | 'Log_Line'
-    | 'Log_Box'
-    | 'Slider_Box'
     | 'Function_Property_Collection'
     | 'Curve'
+    | 'Integer64'
+    | 'Guid'
+    | 'Attribute_Blob'
+    | 'Attribute'
+    | 'Functions'
+    | 'Database_Results'
+    | 'Transactions'
+    | 'Dynamic_Integer64'
+    | 'Colour'
+    | 'Time'
+    | 'Drainage_Network'
+    | 'Integer_Set'
+    | 'List'
+    | 'Process_Handle'
+    | 'Real_Set'
+    | 'Selection'
+    | 'String'
+    | 'Text_Set'
+    | 'Spiral'
+    | 'Parabola'
     ;
+
+builtInWidgetTypeSpecifier
+    : 'Panel'
+    | 'Sheet_Panel'
+    | 'Vertical_Group'
+    | 'Horizontal_Group'
+    | 'Widget_Pages'
+    | 'Button'
+    | 'Select_Button'
+    | 'Message_Box'
+    | 'Colour_Message_Box'
+    | 'Log_Box'
+    | 'Angle_Box'
+    | 'Attributes_Box'
+    | 'Billboard_Box'
+    | 'Bitmap_Fill_Box'
+    | 'Bitmap_List_Box'
+    | 'Chainage_Box'
+    | 'Choice_Box'
+    | 'Colour_Box'
+    | 'Date_Time_Box'
+    | 'Directory_Box'
+    | 'Draw_Box'
+    | 'File_Box'
+    | 'Function_Box'
+    | 'Graph_Box'
+    | 'GridCtrl_Box'
+    | 'HyperLink_Box'
+    | 'Input_Box'
+    | 'Integer_Box'
+    | 'Justify_Box'
+    | 'Linestyle_Box'
+    | 'List_Box'
+    | 'ListCtrl_Box'
+    | 'Map_File_Box'
+    | 'Model_Box'
+    | 'Name_Box'
+    | 'Named_Tick_Box'
+    | 'New_Select_Box'
+    | 'New_XYZ_Box'
+    | 'Overlay_Widget'
+    | 'Plotter_Box'
+    | 'Polygon_Box'
+    | 'Projection_Box'
+    | 'Real_Box'
+    | 'Report_Box'
+    | 'Screen_Text'
+    | 'Select_Box'
+    | 'Select_Boxes'
+    | 'Sheet_Size_Box'
+    | 'Slider_Box'
+    | 'Source_Box'
+    | 'Symbol_Box'
+    | 'Tab_Box'
+    | 'Target_Box'
+    | 'Template_Box'
+    | 'Text_Edit_Box'
+    | 'Text_Style_Box'
+    | 'Text_Units_Box'
+    | 'Textstyle_Data_Box'
+    | 'Texture_Box'
+    | 'Tick_Box'
+    | 'Time_Zone_Box'
+    | 'Time_Zone_Box_Box'
+    | 'Tin_Box'
+    | 'Tree_Box'
+    | 'Tree_Page'
+    | 'View_Box'
+    | 'XYZ_Box'
+    ;
+
+builtInSetTypeSpecifier
+	: 'Integer_Set'
+	| 'Integer64_Set'
+	| 'Real_Set'
+	| 'Text_Set'
+	| 'Uid_Set'
+	| 'Guid_Set'
+	| 'Point_Set'
+	| 'Vector2_Set'
+	| 'Vector3_Set'
+	| 'Vector4_Set'
+	;
+builtInMultiSetTypeSpecifier
+	: 'Integer_Multiset'
+	| 'Integer64_Multiset'
+	| 'Real_Multiset'
+	| 'Text_Multiset'
+	| 'Uid_Multiset'
+	| 'Guid_Multiset'
+	| 'Point_Multiset'
+	| 'Vector2_Multiset'
+	| 'Vector3_Multiset'
+	| 'Vector4_Multiset'
+	;
+builtInMapTypeSpecifier
+	: 'Integer_Integer_Map'
+	| 'Integer64_Integer_Map'
+	| 'Real_Integer_Map'
+	| 'Text_Integer_Map'
+	| 'Uid_Integer_Map'
+	| 'Guid_Integer_Map'
+	| 'Point_Integer_Map'
+	| 'Vector2_Integer_Map'
+	| 'Vector3_Integer_Map'
+	| 'Vector4_Integer_Map'
+	| 'Integer_Integer64_Map'
+	| 'Integer64_Integer64_Map'
+	| 'Real_Integer64_Map'
+	| 'Text_Integer64_Map'
+	| 'Uid_Integer64_Map'
+	| 'Guid_Integer64_Map'
+	| 'Point_Integer64_Map'
+	| 'Vector2_Integer64_Map'
+	| 'Vector3_Integer64_Map'
+	| 'Vector4_Integer64_Map'
+	| 'Integer_Real_Map'
+	| 'Integer64_Real_Map'
+	| 'Real_Real_Map'
+	| 'Text_Real_Map'
+	| 'Uid_Real_Map'
+	| 'Guid_Real_Map'
+	| 'Point_Real_Map'
+	| 'Vector2_Real_Map'
+	| 'Vector3_Real_Map'
+	| 'Vector4_Real_Map'
+	| 'Integer_Text_Map'
+	| 'Integer64_Text_Map'
+	| 'Real_Text_Map'
+	| 'Text_Text_Map'
+	| 'Uid_Text_Map'
+	| 'Guid_Text_Map'
+	| 'Point_Text_Map'
+	| 'Vector2_Text_Map'
+	| 'Vector3_Text_Map'
+	| 'Vector4_Text_Map'
+	| 'Integer_Uid_Map'
+	| 'Integer64_Uid_Map'
+	| 'Real_Uid_Map'
+	| 'Text_Uid_Map'
+	| 'Uid_Uid_Map'
+	| 'Guid_Uid_Map'
+	| 'Point_Uid_Map'
+	| 'Vector2_Uid_Map'
+	| 'Vector3_Uid_Map'
+	| 'Vector4_Uid_Map'
+	| 'Integer_Guid_Map'
+	| 'Integer64_Guid_Map'
+	| 'Real_Guid_Map'
+	| 'Text_Guid_Map'
+	| 'Uid_Guid_Map'
+	| 'Guid_Guid_Map'
+	| 'Point_Guid_Map'
+	| 'Vector2_Guid_Map'
+	| 'Vector3_Guid_Map'
+	| 'Vector4_Guid_Map'
+	| 'Integer_Point_Map'
+	| 'Integer64_Point_Map'
+	| 'Real_Point_Map'
+	| 'Text_Point_Map'
+	| 'Uid_Point_Map'
+	| 'Guid_Point_Map'
+	| 'Point_Point_Map'
+	| 'Vector2_Point_Map'
+	| 'Vector3_Point_Map'
+	| 'Vector4_Point_Map'
+	| 'Integer_Vector2_Map'
+	| 'Integer64_Vector2_Map'
+	| 'Real_Vector2_Map'
+	| 'Text_Vector2_Map'
+	| 'Uid_Vector2_Map'
+	| 'Guid_Vector2_Map'
+	| 'Point_Vector2_Map'
+	| 'Vector2_Vector2_Map'
+	| 'Vector3_Vector2_Map'
+	| 'Vector4_Vector2_Map'
+	| 'Integer_Vector3_Map'
+	| 'Integer64_Vector3_Map'
+	| 'Real_Vector3_Map'
+	| 'Text_Vector3_Map'
+	| 'Uid_Vector3_Map'
+	| 'Guid_Vector3_Map'
+	| 'Point_Vector3_Map'
+	| 'Vector2_Vector3_Map'
+	| 'Vector3_Vector3_Map'
+	| 'Vector4_Vector3_Map'
+	| 'Integer_Vector4_Map'
+	| 'Integer64_Vector4_Map'
+	| 'Real_Vector4_Map'
+	| 'Text_Vector4_Map'
+	| 'Uid_Vector4_Map'
+	| 'Guid_Vector4_Map'
+	| 'Point_Vector4_Map'
+	| 'Vector2_Vector4_Map'
+	| 'Vector3_Vector4_Map'
+	| 'Vector4_Vector4_Map'
+	;
+builtInMultiMapTypeSpecifier
+	: 'Integer_Integer_Multimap'
+	| 'Integer64_Integer_Multimap'
+	| 'Real_Integer_Multimap'
+	| 'Text_Integer_Multimap'
+	| 'Uid_Integer_Multimap'
+	| 'Guid_Integer_Multimap'
+	| 'Point_Integer_Multimap'
+	| 'Vector2_Integer_Multimap'
+	| 'Vector3_Integer_Multimap'
+	| 'Vector4_Integer_Multimap'
+	| 'Integer_Integer64_Multimap'
+	| 'Integer64_Integer64_Multimap'
+	| 'Real_Integer64_Multimap'
+	| 'Text_Integer64_Multimap'
+	| 'Uid_Integer64_Multimap'
+	| 'Guid_Integer64_Multimap'
+	| 'Point_Integer64_Multimap'
+	| 'Vector2_Integer64_Multimap'
+	| 'Vector3_Integer64_Multimap'
+	| 'Vector4_Integer64_Multimap'
+	| 'Integer_Real_Multimap'
+	| 'Integer64_Real_Multimap'
+	| 'Real_Real_Multimap'
+	| 'Text_Real_Multimap'
+	| 'Uid_Real_Multimap'
+	| 'Guid_Real_Multimap'
+	| 'Point_Real_Multimap'
+	| 'Vector2_Real_Multimap'
+	| 'Vector3_Real_Multimap'
+	| 'Vector4_Real_Multimap'
+	| 'Integer_Text_Multimap'
+	| 'Integer64_Text_Multimap'
+	| 'Real_Text_Multimap'
+	| 'Text_Text_Multimap'
+	| 'Uid_Text_Multimap'
+	| 'Guid_Text_Multimap'
+	| 'Point_Text_Multimap'
+	| 'Vector2_Text_Multimap'
+	| 'Vector3_Text_Multimap'
+	| 'Vector4_Text_Multimap'
+	| 'Integer_Uid_Multimap'
+	| 'Integer64_Uid_Multimap'
+	| 'Real_Uid_Multimap'
+	| 'Text_Uid_Multimap'
+	| 'Uid_Uid_Multimap'
+	| 'Guid_Uid_Multimap'
+	| 'Point_Uid_Multimap'
+	| 'Vector2_Uid_Multimap'
+	| 'Vector3_Uid_Multimap'
+	| 'Vector4_Uid_Multimap'
+	| 'Integer_Guid_Multimap'
+	| 'Integer64_Guid_Multimap'
+	| 'Real_Guid_Multimap'
+	| 'Text_Guid_Multimap'
+	| 'Uid_Guid_Multimap'
+	| 'Guid_Guid_Multimap'
+	| 'Point_Guid_Multimap'
+	| 'Vector2_Guid_Multimap'
+	| 'Vector3_Guid_Multimap'
+	| 'Vector4_Guid_Multimap'
+	| 'Integer_Point_Multimap'
+	| 'Integer64_Point_Multimap'
+	| 'Real_Point_Multimap'
+	| 'Text_Point_Multimap'
+	| 'Uid_Point_Multimap'
+	| 'Guid_Point_Multimap'
+	| 'Point_Point_Multimap'
+	| 'Vector2_Point_Multimap'
+	| 'Vector3_Point_Multimap'
+	| 'Vector4_Point_Multimap'
+	| 'Integer_Vector2_Multimap'
+	| 'Integer64_Vector2_Multimap'
+	| 'Real_Vector2_Multimap'
+	| 'Text_Vector2_Multimap'
+	| 'Uid_Vector2_Multimap'
+	| 'Guid_Vector2_Multimap'
+	| 'Point_Vector2_Multimap'
+	| 'Vector2_Vector2_Multimap'
+	| 'Vector3_Vector2_Multimap'
+	| 'Vector4_Vector2_Multimap'
+	| 'Integer_Vector3_Multimap'
+	| 'Integer64_Vector3_Multimap'
+	| 'Real_Vector3_Multimap'
+	| 'Text_Vector3_Multimap'
+	| 'Uid_Vector3_Multimap'
+	| 'Guid_Vector3_Multimap'
+	| 'Point_Vector3_Multimap'
+	| 'Vector2_Vector3_Multimap'
+	| 'Vector3_Vector3_Multimap'
+	| 'Vector4_Vector3_Multimap'
+	| 'Integer_Vector4_Multimap'
+	| 'Integer64_Vector4_Multimap'
+	| 'Real_Vector4_Multimap'
+	| 'Text_Vector4_Multimap'
+	| 'Uid_Vector4_Multimap'
+	| 'Guid_Vector4_Multimap'
+	| 'Point_Vector4_Multimap'
+	| 'Vector2_Vector4_Multimap'
+	| 'Vector3_Vector4_Multimap'
+	| 'Vector4_Vector4_Multimap'
+	;
+
+
 
 specifierQualifierList
     :   typeSpecifier specifierQualifierList?
@@ -295,9 +555,9 @@ declarator
 
 directDeclarator
     :   Identifier
+    |   directDeclarator '[' constantExpression? ']'
     |   directDeclarator '(' parameterTypeList ')'
     |   directDeclarator '(' identifierList? ')'
-//    |   Identifier ':' DigitSequence  // bit field
     ;
 
 nestedParenthesesBlock
@@ -315,7 +575,10 @@ parameterList
     ;
 
 parameterDeclaration
-    :   declarationSpecifiers2
+    :   declarationSpecifiers Identifier?
+    |   declarationSpecifiers '&' Identifier
+    |   declarationSpecifiers Identifier '[' ']' // Array parameter
+    |   declarationSpecifiers '&' Identifier '[' ']' // Pass-by-reference array parameter
     ;
 
 identifierList
@@ -371,7 +634,7 @@ statement
 labeledStatement
     :   Identifier ':' statement
     |   'case' constantExpression ':' statement
-    |   'default' ':' statement
+    |   'default' ':' compoundStatement
     ;
 
 compoundStatement
@@ -402,15 +665,12 @@ iterationStatement
     |   For '(' forCondition ')' statement
     ;
 
-//    |   'for' '(' expression? ';' expression?  ';' forUpdate? ')' statement
-//    |   For '(' declaration  expression? ';' expression? ')' statement
-
 forCondition
 	:   (forDeclaration | expression?) ';' forExpression? ';' forExpression?
 	;
 
 forDeclaration
-    :   declarationSpecifiers
+    :   declarationSpecifiers initDeclaratorList
     ;
 
 forExpression
@@ -467,7 +727,6 @@ Switch : 'switch';
 Void : 'void';
 While : 'while';
 
-
 LeftParen : '(';
 RightParen : ')';
 LeftBracket : '[';
@@ -503,7 +762,6 @@ Semi : ';';
 Comma : ',';
 
 Assign : '=';
-// '*=' | '/=' | '%=' | '+=' | '-=' | '<<=' | '>>=' | '&=' | '^=' | '|='
 StarAssign : '*=';
 DivAssign : '/=';
 ModAssign : '%=';
@@ -519,10 +777,22 @@ Equal : '==';
 NotEqual : '!=';
 
 Dot : '.';
-Ellipsis : '...';
 
+Constant
+    :   IntegerConstant
+    |   FloatingConstant
+    |   CharacterConstant
+    ;
+
+// Identifier must be AFTER Constant so that hex/binary literals (0x1F, 0b1010)
+// win ties over digit-prefixed identifiers. ANTLR uses longest-match first,
+// then rule-order for same-length ties.
 Identifier
     :   IdentifierNondigit
+        (   IdentifierNondigit
+        |   Digit
+        )*
+    |   Digit+ IdentifierNondigit    // 12dpl allows digit-prefixed identifiers like 2d_string
         (   IdentifierNondigit
         |   Digit
         )*
@@ -532,7 +802,6 @@ fragment
 IdentifierNondigit
     :   Nondigit
     |   UniversalCharacterName
-    //|   // other implementation-defined characters...
     ;
 
 fragment
@@ -556,19 +825,13 @@ HexQuad
     :   HexadecimalDigit HexadecimalDigit HexadecimalDigit HexadecimalDigit
     ;
 
-Constant
-    :   IntegerConstant
-    |   FloatingConstant
-    //|   EnumerationConstant
-    |   CharacterConstant
-    ;
-
 fragment
 IntegerConstant
     :   DecimalConstant IntegerSuffix?
     |   OctalConstant IntegerSuffix?
     |   HexadecimalConstant IntegerSuffix?
     |	BinaryConstant
+    |   DecimalConstant 'LL' // Explicit support for 64-bit integer suffix
     ;
 
 fragment
@@ -644,6 +907,7 @@ fragment
 DecimalFloatingConstant
     :   FractionalConstant ExponentPart? FloatingSuffix?
     |   DigitSequence ExponentPart FloatingSuffix?
+    |   DigitSequence '.' // Allow 6.
     ;
 
 fragment
@@ -735,15 +999,7 @@ HexadecimalEscapeSequence
     ;
 
 StringLiteral
-    :   EncodingPrefix? '"' SCharSequence? '"'
-    ;
-
-fragment
-EncodingPrefix
-    :   'u8'
-    |   'u'
-    |   'U'
-    |   'L'
+    :   '"' SCharSequence? '"'
     ;
 
 fragment
@@ -766,35 +1022,6 @@ ComplexDefine
 
 IncludeDirective
     :   '#' Whitespace? 'include' Whitespace? ('"' ~[\r\n]* '"' | '<' ~[\r\n]* '>' ) Whitespace? Newline
-        -> skip
-    ;
-
-// ignore the following asm blocks:
-/*
-    asm
-    {
-        mfspr x, 286;
-    }
- */
-AsmBlock
-    :   'asm' ~'{'* '{' ~'}'* '}'
-	-> skip
-    ;
-
-// ignore the lines generated by c preprocessor
-// sample line : '#line 1 "/home/dm/files/dk1.h" 1'
-LineAfterPreprocessing
-    :   '#line' Whitespace* ~[\r\n]*
-        -> skip
-    ;
-
-LineDirective
-    :   '#' Whitespace? DecimalConstant Whitespace? StringLiteral ~[\r\n]*
-        -> skip
-    ;
-
-PragmaDirective
-    :   '#' Whitespace? 'pragma' Whitespace ~[\r\n]*
         -> skip
     ;
 

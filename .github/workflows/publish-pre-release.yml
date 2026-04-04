@@ -1,0 +1,90 @@
+name: Create Release and Build VSIX
+
+on:
+  push:
+    branches:
+      - pre-release
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.1.0)'
+        required: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get version
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+          elif [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION=${{ github.event.inputs.version }}
+          else
+            VERSION=$(cat package.json | grep '"version"' | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      
+      - name: Install dependencies
+        run: bun install
+      
+      - name: Compile TypeScript
+        run: bun run compile
+      
+      - name: Create VSIX package
+        run: |
+          bunx @vscode/vsce package
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          body: |
+            # 12dPL Language Server v${{ steps.version.outputs.version }}
+            
+            12dPL language server with:
+            - ▶️ Compile `.4dm` → `.4do` (Play button)
+            - ✅ Auto-formatting on save (C++ style)
+            - ✅ 90+ type documentation with hover support
+            - ✅ 2,714+ auto-completions
+            - ✅ Real-time validation (ANTLR parser)
+            - ✅ Smart reserved word detection
+            - ✅ Bun build system (3-5x faster)
+            
+            ## Installation
+            1. Download the VSIX file
+            2. Open VS Code
+            3. Press Ctrl+Shift+P → "Extensions: Install from VSIX"
+            4. Select the downloaded file
+            
+            ## Contributors
+            - Ben Olsen
+            - Kamal Jarada
+            
+            See [README.md](https://github.com/${{ github.repository }}/blob/main/README.md) for full details.
+          files: |
+            *.vsix
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsix-package
+          path: '*.vsix'
+          retention-days: 30
