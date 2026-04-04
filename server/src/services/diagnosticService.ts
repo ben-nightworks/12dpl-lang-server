@@ -68,7 +68,8 @@ export class DiagnosticService {
 			const knownSymbols = await this.buildKnownSymbols(uri);
 			const undeclaredDiagnostics = validateUndeclaredIdentifiers(
 				parseResult.tree,
-				knownSymbols
+				knownSymbols,
+				parseResult.conditionalLines
 			);
 			diagnostics.push(...undeclaredDiagnostics);
 

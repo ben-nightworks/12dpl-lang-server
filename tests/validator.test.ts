@@ -41,7 +41,7 @@ function ValidateWithSymbols(text: string, knownSymbols: KnownSymbols): Diagnost
 	const diagnostics: Diagnostic[] = [];
 	diagnostics.push(...validateDeprecatedCalls(result));
 	diagnostics.push(...syntaxDiagnostics(result));
-	diagnostics.push(...validateUndeclaredIdentifiers(result.tree, knownSymbols));
+	diagnostics.push(...validateUndeclaredIdentifiers(result.tree, knownSymbols, result.conditionalLines));
 	return diagnostics;
 }
 
@@ -2839,5 +2839,136 @@ void main()
 		expect(diagnostics.length).toBe(1);
 		expect(diagnostics[0].message).toContain("requires a size");
 		expect(diagnostics[0].message).toContain("models");
+	});
+});
+
+// ─── Conditional lines — false positive suppression ─────────────────────
+
+describe("Conditional line suppression", () => {
+	test("does not flag undeclared identifiers inside #if conditional blocks", () => {
+		const code = `
+#define DEBUG 0
+#if DEBUG == 1
+	Print_line("test");
+#endif
+void main()
+{
+	Integer x = 1;
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set(["DEBUG"]),
+		});
+		const undeclaredErrors = diagnostics.filter(d =>
+			d.message.includes("is not declared")
+		);
+		expect(undeclaredErrors.length).toBe(0);
+	});
+
+	test("does not flag undeclared function calls inside #ifdef blocks", () => {
+		const code = `
+#ifdef FEATURE_FLAG
+	some_unknown_function();
+#endif
+void main()
+{
+	Integer x = 1;
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set(),
+		});
+		const undeclaredErrors = diagnostics.filter(d =>
+			d.message.includes("is not declared")
+		);
+		expect(undeclaredErrors.length).toBe(0);
+	});
+
+	test("still flags undeclared identifiers outside conditional blocks", () => {
+		const code = `
+#if DEBUG == 1
+	Print_line("test");
+#endif
+void main()
+{
+	Integer x = unknown_var;
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set(["DEBUG"]),
+		});
+		const undeclaredErrors = diagnostics.filter(d =>
+			d.message.includes("is not declared")
+		);
+		expect(undeclaredErrors.length).toBe(1);
+		expect(undeclaredErrors[0].message).toContain("unknown_var");
+	});
+});
+
+// ─── Function-like macro argument suppression ────────────────────────────
+
+describe("Function-like macro argument suppression", () => {
+	test("does not flag arguments of function-like macro calls", () => {
+		const code = `
+#define MY_MACRO(x) (1 << (x))
+void main()
+{
+	Integer a = MY_MACRO(SOME_CONSTANT);
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set(["MY_MACRO"]),
+		});
+		const undeclaredErrors = diagnostics.filter(d =>
+			d.message.includes("is not declared")
+		);
+		expect(undeclaredErrors.length).toBe(0);
+	});
+
+	test("still flags undeclared arguments of regular function calls", () => {
+		const code = `
+void main()
+{
+	Integer a = some_func(UNKNOWN_ARG);
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(["some_func"]),
+			variables: new Set(),
+			defines: new Set(),
+		});
+		const undeclaredErrors = diagnostics.filter(d =>
+			d.message.includes("is not declared")
+		);
+		expect(undeclaredErrors.length).toBe(1);
+		expect(undeclaredErrors[0].message).toContain("UNKNOWN_ARG");
+	});
+
+	test("does not flag arguments of function-like define from include file", () => {
+		const code = `
+#define String_Super_Bit(n) (1 << n)
+#define Att_ZCoord_Value 1
+void main()
+{
+	Integer flag = String_Super_Bit(ZCoord_Value);
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set(["String_Super_Bit", "Att_ZCoord_Value"]),
+		});
+		const undeclaredErrors = diagnostics.filter(d =>
+			d.message.includes("is not declared")
+		);
+		expect(undeclaredErrors.length).toBe(0);
 	});
 });
