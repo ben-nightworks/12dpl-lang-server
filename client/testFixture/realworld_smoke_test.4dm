@@ -29,6 +29,7 @@ void My_function(Text_Text_Map map)
 // -----------------------------------------------------------
 //
 //-------------------------------------------------------------------------
+Integer create_rgb_local(Integer r, Integer g, Integer b)
 {
 	return((1 << 31) | (r << 16) | (g << 8) | b);
 }
@@ -47,6 +48,8 @@ void My_function(Text_Text_Map map)
 //                  4  right spiral length
 //
 // -----------------------------------------------------------
+void get_hip_info(Element align,Integer hip,Integer &type,
+Real xval[],Real yval[],Real lengths[])
 {
 	Text hip_type;
 	Integer ret;
