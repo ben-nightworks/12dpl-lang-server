@@ -20,3 +20,4 @@ export { validateReturnStatements } from './validation.ReturnValue';
 export { validateVoidFunctionReturnValues } from './validation.VoidReturnValue';
 export { validateFunctionArguments } from './validation.FunctionArguments';
 export type { FunctionSignatureMap } from './validation.FunctionArguments';
+export { validateArraySize } from './validation.ArraySize';
