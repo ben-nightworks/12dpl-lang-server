@@ -34,6 +34,7 @@ import { registerDefinitionProvider } from './providers/definitionProvider';
 import { registerHoverProvider } from './providers/hoverProvider';
 import { registerFormattingProvider } from './providers/formattingProvider';
 import { registerValidationProvider } from './providers/validationProvider';
+import { registerDocumentSymbolProvider } from './providers/documentSymbolProvider';
 
 // Create a connection for the server, using Node's IPC as a transport.
 const connection = createConnection(ProposedFeatures.all);
@@ -111,7 +112,8 @@ connection.onInitialize((params: InitializeParams) => {
 			},
 			hoverProvider: true,
 			definitionProvider: true,
-			documentFormattingProvider: true
+			documentFormattingProvider: true,
+			documentSymbolProvider: true
 		}
 	};
 	if (hasWorkspaceFolderCapability) {
@@ -176,6 +178,7 @@ registerDefinitionProvider({ connection, documents, symbolResolver });
 registerHoverProvider({ connection, documents, symbolResolver, prototypeService });
 registerFormattingProvider({ connection, documents });
 registerValidationProvider({ connection, documents, diagnosticService, prototypeService });
+registerDocumentSymbolProvider({ connection, documents, documentService });
 
 // Make the text document manager listen on the connection
 documents.listen(connection);
