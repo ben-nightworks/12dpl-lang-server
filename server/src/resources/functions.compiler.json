@@ -84997,6 +84997,161 @@
     "description": "12dPL function Get_size"
   },
   {
+    "name": "Create_super_align",
+    "id": 2120,
+    "returnType": "Element",
+    "parameters": [],
+    "description": "Create an Element of type Super_Alignment. The function return value gives the actual Element created. If the Super Alignment string could not be created, then the returned Element will be null."
+  },
+  {
+    "name": "Create_super_align",
+    "id": 2121,
+    "returnType": "Element",
+    "parameters": [
+      {
+        "name": "seed",
+        "type": "Element"
+      }
+    ],
+    "description": "Create an Element of type Super_Alignment, and set the colour, name, style etc. of the new string to be the same as those from the Element seed. If the Super Alignment string could not be created, then the returned Element will be null."
+  },
+  {
+    "name": "Create_process",
+    "id": 2635,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "program_name",
+        "type": "Text"
+      },
+      {
+        "name": "command_line",
+        "type": "Text"
+      },
+      {
+        "name": "start_directory",
+        "type": "Text"
+      },
+      {
+        "name": "flags",
+        "type": "Integer"
+      },
+      {
+        "name": "inherit",
+        "type": "Integer"
+      },
+      {
+        "name": "&handle",
+        "type": "Process_Handle"
+      }
+    ],
+    "description": "This function calls the Microsoft CreateProcess function as defined in http://msdn.microsoft.com/en-us/library/ms682425%28v=vs.85%29.aspx. The 12d function gives access to the Microsoft CreateProcess arguments that are in bold (and also not have a // in front of them): BOOL WINAPI CreateProcess( __in_opt LPCTSTR lpApplicationName, __inout_opt LPTSTR lpCommandLine, // __in_opt LPSECURITY_ATTRIBUTES lpProcessAttributes, // __in_opt LPSECURITY_ATTRIBUTES lpThreadAttributes, __in BOOL bInheritHandles, __in DWORD dwCreationFlags, // __in_opt LPVOID lpEnvironment, __in_opt LPCTSTR lpCurrentDirectory, // __in LPSTARTUPINFO lpStartupInfo, // __out LPPROCESS_INFORMATION lpProcessInformation ); where program_name is passed as lpApplicationName, command_line is passed as dwCreationFlags lpCommandLine, start_directory is passed as lpCurrentDirectory, flags is passed as dwCreationFlags and inherit is passed as bInheritHandles. The handle to the created process is returned in Unknown handle. The macro can check if the process is still running by calling Process_exists. A function return value of zero indicates the function was successful. Note: The difference between this function and Create_process(Text program_name,Text command_line,Text start_directory,Integer flags,Integer wait,Integer inherit) is that a handle to the process is created and returned as handle and this can be checked to see if the process is still running. So there is no wait flag but there is more flexibility since the macro can check with Process_exists and decide when, and when not to wait. Note: Create_process can not be called from 12d Model Practise version."
+  },
+  {
+    "name": "Get_end_length",
+    "id": 2843,
+    "returnType": "Real",
+    "parameters": [
+      {
+        "name": "curve",
+        "type": "Curve"
+      }
+    ],
+    "description": "Get the end length of Curve curve and return it as the function return value."
+  },
+  {
+    "name": "View_remove_plot_data_textstyle",
+    "id": 3083,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "view",
+        "type": "View"
+      },
+      {
+        "name": "model_name",
+        "type": "Text"
+      },
+      {
+        "name": "prefix",
+        "type": "Text"
+      },
+      {
+        "name": "&internal_return",
+        "type": "Integer"
+      }
+    ],
+    "description": "Intended for 12D developers use only"
+  },
+  {
+    "name": "Get_name",
+    "id": 431,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "tin",
+        "type": "Tin"
+      },
+      {
+        "name": "&tin_name",
+        "type": "Text"
+      }
+    ],
+    "description": "Get the name of the Tin tin. The tin name is returned in the Text tin_name. A function return value of zero indicates success. If tin is null, the function return value is non-zero. Tin_models(Tin tin, Dynamic_Text &models_used) Name Integer Tin_models(Tin tin, Dynamic_Text &models_used) Description Get the names of all the models that were used to create the Tin tin. The model names are returned in the Dynamic_Text models_used. A function return value of zero indicates that the view names were returned successfully."
+  },
+  {
+    "name": "Get_size",
+    "id": 1352,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "&actual_width",
+        "type": "Integer"
+      },
+      {
+        "name": "&actual_height",
+        "type": "Integer"
+      }
+    ],
+    "description": "Get the width and height in pixels of the Draw_Box drawing area on the panel and return the values in actual_width and actual_height. See 5.61.10.11 Draw_Box for the calculations of width and height. A function return value of zero indicates the width and height were successfully returned."
+  },
+  {
+    "name": "Create_button",
+    "id": 7672,
+    "returnType": "Button",
+    "parameters": [
+      {
+        "name": "title_text",
+        "type": "Text"
+      },
+      {
+        "name": "reply",
+        "type": "Text"
+      },
+      {
+        "name": "bitmap_name",
+        "type": "Text"
+      }
+    ],
+    "description": "Create a Widget of type Button. The Button is created with image using file named bitmap_name and title_text a the text on the Button. The Text reply is the command that is sent by the Button back to the macro via Wait_on_widgets when the Button is clicked on. See Wait_on_widgets(Integer &id,Text &cmd,Text &msg). The function return value is the created Button. Panels and Widgets Page 1155 12d Model Macro Manual"
+  },
+  {
+    "name": "Set_anchor",
+    "id": 2822,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "curve",
+        "type": "Curve"
+      },
+      {
+        "name": "point",
+        "type": "Point"
+      }
+    ],
+    "description": "For the end of the Curve curve where the radius is infinity, set the co-ordinates of that position to point. For a leading transition, the anchor point is the start of curve. For a trailing transition, the anchor point is the end of curve. Page 238 Curve Chapter 5 12dPL Library Calls A function return value of zero indicates that the function call was successful."
+  },
+  {
     "name": "Get_size",
     "id": 1644,
     "returnType": "Integer",
@@ -88030,7 +88185,7 @@
     "returnType": "Integer",
     "parameters": [
       {
-        "name": "",
+        "name": "element",
         "type": "Element"
       },
       {
@@ -92034,7 +92189,7 @@
   },
   {
     "name": "Get_text_xy",
-    "id": 454,
+    "id": 100454,
     "returnType": "Integer",
     "parameters": [
       {
@@ -109134,31 +109289,31 @@
         "type": "Element"
       },
       {
-        "name": "x",
+        "name": "x[]",
         "type": "Real"
       },
       {
-        "name": "y",
+        "name": "y[]",
         "type": "Real"
       },
       {
-        "name": "z",
+        "name": "z[]",
         "type": "Real"
       },
       {
-        "name": "r",
+        "name": "r[]",
         "type": "Real"
       },
       {
-        "name": "f",
+        "name": "b[]",
         "type": "Integer"
       },
       {
-        "name": "num_pts",
+        "name": "num_verts",
         "type": "Integer"
       },
       {
-        "name": "offset",
+        "name": "start_vert",
         "type": "Integer"
       }
     ],
@@ -112270,7 +112425,7 @@
   },
   {
     "name": "Set_face_data",
-    "id": 80,
+    "id": 10080,
     "returnType": "Integer",
     "parameters": [
       {
@@ -112278,15 +112433,15 @@
         "type": "Element"
       },
       {
-        "name": "x",
+        "name": "x[]",
         "type": "Real"
       },
       {
-        "name": "y",
+        "name": "y[]",
         "type": "Real"
       },
       {
-        "name": "z",
+        "name": "z[]",
         "type": "Real"
       },
       {
@@ -112298,7 +112453,7 @@
   },
   {
     "name": "Set_face_data",
-    "id": 81,
+    "id": 10081,
     "returnType": "Integer",
     "parameters": [
       {
@@ -112306,15 +112461,15 @@
         "type": "Element"
       },
       {
-        "name": "x",
+        "name": "x[]",
         "type": "Real"
       },
       {
-        "name": "y",
+        "name": "y[]",
         "type": "Real"
       },
       {
-        "name": "z",
+        "name": "z[]",
         "type": "Real"
       },
       {
@@ -112322,7 +112477,7 @@
         "type": "Integer"
       },
       {
-        "name": "offset",
+        "name": "start_point",
         "type": "Integer"
       }
     ],
@@ -124888,7 +125043,7 @@
   },
   {
     "name": "Set_text_xy",
-    "id": 462,
+    "id": 100462,
     "returnType": "Integer",
     "parameters": [
       {
