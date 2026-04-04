@@ -229,25 +229,24 @@ void test_forloop_scopes() {
 }
 
 // ============================================================================
-// TEST 13: Function prototypes - current behavior snapshot
-// Rule: Function prototypes should ideally not be flagged as variable re-declarations,
-// but the current validator still reports those prototype lines as re-declarations
-// when a variable with the same name exists earlier in the scope.
-// Note: "some_value" is also intentionally undeclared here, so this test is not
-// currently expected to be diagnostics-free.
+// TEST 13: Function prototypes do not conflict with variables
+// Rule: Function prototypes (declarators with parentheses) are not treated as
+// variable re-declarations. The function redeclaration validator handles
+// function-vs-function conflicts separately.
+// Note: "some_value" is intentionally undeclared here (caught by undeclared validator).
 // ============================================================================
 void test_function_prototypes() {
 	Time my_time = some_value;  // ERROR: 'some_value' is not declared
-	Time my_time();       // CURRENTLY FLAGGED: false positive variable re-declaration
+	Time my_time();       // OK: function prototype, not a variable re-declaration
 
 	Integer get_value = 5;
-	Integer get_value();  // CURRENTLY FLAGGED: false positive variable re-declaration
+	Integer get_value();  // OK: function prototype, not a variable re-declaration
 
 	Text fetch_name = "test";
-	Text fetch_name();    // CURRENTLY FLAGGED: false positive variable re-declaration
+	Text fetch_name();    // OK: function prototype, not a variable re-declaration
 
 	Real calculate;
-	Real calculate();     // CURRENTLY FLAGGED: false positive variable re-declaration
+	Real calculate();     // OK: function prototype, not a variable re-declaration
 }
 
 // ============================================================================
