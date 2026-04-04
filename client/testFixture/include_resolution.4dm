@@ -27,7 +27,7 @@
 
 // ──────────────────────────────────────────────────────────────────────────────
 // TEST 1: Symbols from same-folder include → accessible
-// set_ups.h defines #define constants like TRUE, FALSE, CREATE_RGB, etc.
+// set_ups.h defines constants like TRUE/FALSE and helper functions like create_rgb().
 // ──────────────────────────────────────────────────────────────────────────────
 
 void test_same_folder_include()
@@ -58,13 +58,13 @@ void test_include_directory()
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// TEST 4: #define constants from includes → accessible
-// set_ups.h defines many #define constants including CREATE_RGB macro.
+// TEST 4: Helper functions from includes → accessible
+// set_ups.h defines create_rgb(Integer,Integer,Integer).
 // ──────────────────────────────────────────────────────────────────────────────
 
 void test_define_from_include()
 {
-	Integer rgb = CREATE_RGB(255, 128, 0);  // OK: macro from set_ups.h
+	Integer rgb = create_rgb(255, 128, 0);  // OK: function from set_ups.h
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

@@ -198,14 +198,14 @@ void test_literal_promotion_overload()
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// TEST 11: Unknown function — silently skipped → OK (no diagnostic)
+// TEST 11: Unknown function — no argument error, but undeclared-symbol error
 // If a function is not in local definitions or prototype database,
 // the argument validator skips it (undeclared symbols validator handles it).
 // ──────────────────────────────────────────────────────────────────────────────
 
 void test_unknown_function()
 {
-	unknown_function(1, 2, 3); // No argument error (undeclared handled elsewhere)
+	unknown_function(1, 2, 3); // No argument error here; full pipeline still reports undeclared function
 }
 
 void main()
@@ -226,6 +226,7 @@ void main()
 //   TEST 4:  one_int(msg) — type mismatch (Text vs Integer)
 //   TEST 4:  takes_real(msg) — type mismatch (Text vs Real)
 //   TEST 7:  overloaded(1,2,3) — no matching overload
+//   TEST 11: unknown_function(1,2,3) — undeclared function (from undeclared-symbol validator)
 //
 // OK (no diagnostic):
 //   TEST 1:  Correct argument counts
@@ -235,6 +236,6 @@ void main()
 //   TEST 8:  Widget subtyping (Panel→Widget)
 //   TEST 9:  Return type resolution nested in arguments
 //   TEST 10: Literal promotion in overload context
-//   TEST 11: Unknown function (skipped by this validator)
+//   TEST 11: No argument-count/type diagnostic from this validator
 //
 // ============================================================================

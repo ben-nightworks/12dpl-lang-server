@@ -13,12 +13,14 @@
 // ============================================================================
 
 // ──────────────────────────────────────────────────────────────────────────────
-// TEST 1: Time() call → WARNING (deprecated)
+// TEST 1: Time() call → WARNING + syntax error
+// `Time()` is token-detected as deprecated, but it also parses as invalid code
+// because `Time` is now a type name.
 // ──────────────────────────────────────────────────────────────────────────────
 
 void test_time_deprecated()
 {
-	Time();                      // WARNING: Time() is deprecated
+	Time();                      // WARNING: deprecated, plus syntax error from parser
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -41,12 +43,12 @@ void test_get_time()
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// TEST 4: Time() in different expression contexts → WARNING (each)
+// TEST 4: Time() in different expression contexts → WARNING + syntax error
 // ──────────────────────────────────────────────────────────────────────────────
 
 void test_time_in_contexts()
 {
-	Time a = Time();             // WARNING: Time() is deprecated
+	Time a = Time();             // WARNING: deprecated, plus syntax error from parser
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -66,6 +68,10 @@ void main()
 // ============================================================================
 // EXPECTED DIAGNOSTICS SUMMARY
 // ============================================================================
+//
+// ERRORS:
+//   TEST 1: Syntax error at `Time()`
+//   TEST 4: Syntax errors around `Time a = Time()`
 //
 // WARNINGS:
 //   TEST 1: Time() call — deprecated

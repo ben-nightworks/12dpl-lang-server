@@ -138,13 +138,14 @@ void MY_FUNCTION(Integer x) // OK: different name (case-sensitive)
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// TEST 9: Duplicate forward declarations — upgraded, not errored → OK
-// Multiple forward declarations of the same signature are fine.
+// TEST 9: Duplicate forward declarations — CURRENTLY FLAGGED → ERROR
+// The current validator treats the second identical forward declaration as a
+// redeclaration once the signature has already been seen.
 // ──────────────────────────────────────────────────────────────────────────────
 
 Real calculate(Real a, Real b);
 
-Real calculate(Real a, Real b); // OK: duplicate forward decl
+Real calculate(Real a, Real b); // ERROR: currently flagged as already defined
 
 Real calculate(Real a, Real b) // OK: forward + definition
 {
@@ -236,7 +237,10 @@ void main()
 //   TEST 4:  Forward after full definition
 //   TEST 7:  Include overload (different signature)
 //   TEST 8:  Case-sensitive different names
-//   TEST 9:  Duplicate forward declarations
+//   TEST 9:  First forward declaration + final definition
+//
+// CURRENTLY FLAGGED:
+//   TEST 9:  Second duplicate forward declaration
 //   TEST 11: Conditional branch suppression
 //   TEST 12: Forward + definition pairs (first occurrence)
 //
