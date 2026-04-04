@@ -130,6 +130,7 @@ import * as path from 'path';
 		options: IncludeTraversalOptions & { includeDirectories?: string[] } = {}
 	): string[] {
 		const maxFiles = options.maxFiles ?? 500;
+		const entryDir = path.dirname(entryFileFsPath);
 		const visited = new Set<string>();
 		const results: string[] = [];
 
@@ -154,7 +155,7 @@ import * as path from 'path';
 			const includes = extractIncludePaths(text);
 			for (const inc of includes) {
 				if (results.length >= maxFiles) break;
-				const resolved = resolveIncludeToFsPathWithDirs(cur, inc, options.includeDirectories);
+				const resolved = resolveIncludeToFsPathWithDirs(cur, inc, [entryDir, ...(options.includeDirectories ?? [])]);
 				if (!resolved) {
 					console.warn(`Could not resolve include "${inc}" in file "${cur}"`);
 					continue;
