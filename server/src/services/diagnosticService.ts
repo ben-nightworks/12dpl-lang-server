@@ -61,7 +61,7 @@ export class DiagnosticService {
 			diagnostics.push(...redeclDiagnostics);
 
 			// 3b. Function redeclaration checking (issue #44)
-			const funcRedeclDiagnostics = validateFunctionRedeclarations(parseResult.tree, includeDeclarations);
+			const funcRedeclDiagnostics = validateFunctionRedeclarations(parseResult.tree, includeDeclarations, parseResult.conditionalLines);
 			diagnostics.push(...funcRedeclDiagnostics);
 
 			// 3c. Undeclared identifier checking

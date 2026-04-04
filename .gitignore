@@ -71,4 +71,6 @@ macros/
 macros_mattmonk/
 ### Compiled Macros
 *.4do
+### Temp files
+*.tmp
 # End

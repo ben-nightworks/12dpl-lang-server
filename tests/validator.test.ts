@@ -30,7 +30,7 @@ function ValidateWithIncludes(text: string, includeDeclarations: SymbolDeclarati
 	const synErrs = syntaxDiagnostics(result);
 	if (synErrs.length === 0) {
 		const varRedecl = validateVariableRedeclarations(result.tree, includeDeclarations, result.conditionalLines);
-		const funcRedecl = validateFunctionRedeclarations(result.tree, includeDeclarations);
+		const funcRedecl = validateFunctionRedeclarations(result.tree, includeDeclarations, result.conditionalLines);
 		return [...synErrs, ...varRedecl, ...funcRedecl];
 	}
 	return synErrs;
@@ -704,6 +704,48 @@ void process(Integer x, Integer y) {
 			d.severity === 1 /* Error */ && d.message.includes("already defined")
 		);
 		// Different param count = valid overload
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("does not flag function redeclaration in #if/#else conditional branches", () => {
+		const code = `
+#if USE_NEW == 1
+void FW_Print_Create_log_line(Text &msg)
+{
+	Integer x = 1;
+}
+#else
+void FW_Print_Create_log_line(Text &msg)
+{
+	Integer y = 2;
+}
+#endif
+`;
+		const diagnostics = ValidateWithIncludes(code, []);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("does not flag function redeclaration in #ifdef conditional branches", () => {
+		const code = `
+#ifdef FEATURE_FLAG
+void my_func()
+{
+	Integer x = 1;
+}
+#endif
+void my_func()
+{
+	Integer y = 2;
+}
+`;
+		const diagnostics = ValidateWithIncludes(code, []);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		// One definition is on a conditional line, so no error
 		expect(redeclErrors.length).toBe(0);
 	});
 });
