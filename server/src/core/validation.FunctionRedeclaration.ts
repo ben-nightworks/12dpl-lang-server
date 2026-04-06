@@ -66,7 +66,8 @@ function isFunctionDeclarator(declaratorCtx: any): boolean {
  */
 export function validateFunctionRedeclarations(
 	tree: any,
-	includeDeclarations: SymbolDeclaration[] = []
+	includeDeclarations: SymbolDeclaration[] = [],
+	conditionalLines?: Set<number>
 ): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];
 	// Map from name → array of { signature, line, column, name, isForwardDecl }
@@ -91,13 +92,16 @@ export function validateFunctionRedeclarations(
 		const info = extractIdentifierFromDeclarator(declaratorCtx);
 		if (!info) return;
 
+		// Skip functions defined on conditional lines (#if/#ifdef kept branches)
+		const isOnConditionalLine = conditionalLines?.has(info.line) ?? false;
+
 		const paramSig = extractParamSignature(declaratorCtx);
 		const existing = definedFunctions.get(info.name);
 
 		// 1. Always check against include files — every occurrence that matches is an error
 		let hasIncludeConflict = false;
 		const includeOverloads = includeFunctions.get(info.name);
-		if (includeOverloads) {
+		if (includeOverloads && !isOnConditionalLine) {
 			const includeMatch = includeOverloads.find(o => o.signature === paramSig);
 			if (includeMatch) {
 				hasIncludeConflict = true;
@@ -123,9 +127,9 @@ export function validateFunctionRedeclarations(
 					duplicate.column = info.column;
 				} else if (!duplicate.isForwardDecl && isForwardDecl) {
 					// Forward declaration after a full definition — silently ignore
-				} else if (!hasIncludeConflict) {
+				} else if (!hasIncludeConflict && !isOnConditionalLine && !conditionalLines?.has(duplicate.line)) {
 					// Two definitions or two forward declarations with same signature — error
-					// (skip if already reported as include conflict)
+					// (skip if already reported as include conflict or on conditional lines)
 					diagnostics.push({
 						severity: DiagnosticSeverity.Error,
 						range: {

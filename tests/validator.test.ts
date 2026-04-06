@@ -30,7 +30,7 @@ function ValidateWithIncludes(text: string, includeDeclarations: SymbolDeclarati
 	const synErrs = syntaxDiagnostics(result);
 	if (synErrs.length === 0) {
 		const varRedecl = validateVariableRedeclarations(result.tree, includeDeclarations, result.conditionalLines);
-		const funcRedecl = validateFunctionRedeclarations(result.tree, includeDeclarations);
+		const funcRedecl = validateFunctionRedeclarations(result.tree, includeDeclarations, result.conditionalLines);
 		return [...synErrs, ...varRedecl, ...funcRedecl];
 	}
 	return synErrs;
@@ -41,7 +41,7 @@ function ValidateWithSymbols(text: string, knownSymbols: KnownSymbols): Diagnost
 	const diagnostics: Diagnostic[] = [];
 	diagnostics.push(...validateDeprecatedCalls(result));
 	diagnostics.push(...syntaxDiagnostics(result));
-	diagnostics.push(...validateUndeclaredIdentifiers(result.tree, knownSymbols));
+	diagnostics.push(...validateUndeclaredIdentifiers(result.tree, knownSymbols, result.conditionalLines));
 	return diagnostics;
 }
 
@@ -332,6 +332,36 @@ void main() {
 		// "Time test();" is a function prototype, not a variable declaration.
 		// Its parameters should not be treated as variable declarations,
 		// but the prototype name itself is still registered as a declaration.
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already declared")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("does not flag variable followed by same-name function prototype", () => {
+		const code = `
+void main() {
+    Time my_time = some_value;
+    Time my_time();
+    Integer get_value = 5;
+    Integer get_value();
+}
+`;
+		const diagnostics = Validate(code);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already declared")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("does not flag function prototype followed by same-name variable", () => {
+		const code = `
+void main() {
+    Real calculate();
+    Real calculate = 3.14;
+}
+`;
+		const diagnostics = Validate(code);
 		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
 		);
@@ -704,6 +734,48 @@ void process(Integer x, Integer y) {
 			d.severity === 1 /* Error */ && d.message.includes("already defined")
 		);
 		// Different param count = valid overload
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("does not flag function redeclaration in #if/#else conditional branches", () => {
+		const code = `
+#if USE_NEW == 1
+void FW_Print_Create_log_line(Text &msg)
+{
+	Integer x = 1;
+}
+#else
+void FW_Print_Create_log_line(Text &msg)
+{
+	Integer y = 2;
+}
+#endif
+`;
+		const diagnostics = ValidateWithIncludes(code, []);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("does not flag function redeclaration in #ifdef conditional branches", () => {
+		const code = `
+#ifdef FEATURE_FLAG
+void my_func()
+{
+	Integer x = 1;
+}
+#endif
+void my_func()
+{
+	Integer y = 2;
+}
+`;
+		const diagnostics = ValidateWithIncludes(code, []);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		// One definition is on a conditional line, so no error
 		expect(redeclErrors.length).toBe(0);
 	});
 });
@@ -2839,5 +2911,136 @@ void main()
 		expect(diagnostics.length).toBe(1);
 		expect(diagnostics[0].message).toContain("requires a size");
 		expect(diagnostics[0].message).toContain("models");
+	});
+});
+
+// ─── Conditional lines — false positive suppression ─────────────────────
+
+describe("Conditional line suppression", () => {
+	test("does not flag undeclared identifiers inside #if conditional blocks", () => {
+		const code = `
+#define DEBUG 0
+#if DEBUG == 1
+	Print_line("test");
+#endif
+void main()
+{
+	Integer x = 1;
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set(["DEBUG"]),
+		});
+		const undeclaredErrors = diagnostics.filter(d =>
+			d.message.includes("is not declared")
+		);
+		expect(undeclaredErrors.length).toBe(0);
+	});
+
+	test("does not flag undeclared function calls inside #ifdef blocks", () => {
+		const code = `
+#ifdef FEATURE_FLAG
+	some_unknown_function();
+#endif
+void main()
+{
+	Integer x = 1;
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set(),
+		});
+		const undeclaredErrors = diagnostics.filter(d =>
+			d.message.includes("is not declared")
+		);
+		expect(undeclaredErrors.length).toBe(0);
+	});
+
+	test("still flags undeclared identifiers outside conditional blocks", () => {
+		const code = `
+#if DEBUG == 1
+	Print_line("test");
+#endif
+void main()
+{
+	Integer x = unknown_var;
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set(["DEBUG"]),
+		});
+		const undeclaredErrors = diagnostics.filter(d =>
+			d.message.includes("is not declared")
+		);
+		expect(undeclaredErrors.length).toBe(1);
+		expect(undeclaredErrors[0].message).toContain("unknown_var");
+	});
+});
+
+// ─── Function-like macro argument suppression ────────────────────────────
+
+describe("Function-like macro argument suppression", () => {
+	test("does not flag arguments of function-like macro calls", () => {
+		const code = `
+#define MY_MACRO(x) (1 << (x))
+void main()
+{
+	Integer a = MY_MACRO(SOME_CONSTANT);
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set(["MY_MACRO"]),
+		});
+		const undeclaredErrors = diagnostics.filter(d =>
+			d.message.includes("is not declared")
+		);
+		expect(undeclaredErrors.length).toBe(0);
+	});
+
+	test("still flags undeclared arguments of regular function calls", () => {
+		const code = `
+void main()
+{
+	Integer a = some_func(UNKNOWN_ARG);
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(["some_func"]),
+			variables: new Set(),
+			defines: new Set(),
+		});
+		const undeclaredErrors = diagnostics.filter(d =>
+			d.message.includes("is not declared")
+		);
+		expect(undeclaredErrors.length).toBe(1);
+		expect(undeclaredErrors[0].message).toContain("UNKNOWN_ARG");
+	});
+
+	test("does not flag arguments of function-like define from include file", () => {
+		const code = `
+#define String_Super_Bit(n) (1 << n)
+#define Att_ZCoord_Value 1
+void main()
+{
+	Integer flag = String_Super_Bit(ZCoord_Value);
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set(["String_Super_Bit", "Att_ZCoord_Value"]),
+		});
+		const undeclaredErrors = diagnostics.filter(d =>
+			d.message.includes("is not declared")
+		);
+		expect(undeclaredErrors.length).toBe(0);
 	});
 });

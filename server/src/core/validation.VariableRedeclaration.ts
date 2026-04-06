@@ -75,7 +75,7 @@ export function validateVariableRedeclarations(
 
 		const existing = scopeVars.get(info.name);
 		if (existing) {
-			if (existing.isFunction && isFunction) return;
+			if (existing.isFunction || isFunction) return;
 			if (condLines.has(existing.line) || condLines.has(info.line)) return;
 			diagnostics.push({
 				severity: DiagnosticSeverity.Error,
