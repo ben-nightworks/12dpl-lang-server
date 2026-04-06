@@ -7,7 +7,7 @@ This is a **VS Code Language Server Protocol (LSP) extension** for **12dPL**, th
 - **Publisher:** nightworks
 - **Language ID:** `12dpl`
 - **File extensions:** `.4dm` (source), `.h` (headers), `.4do` (compiled output), `.mtfsnippet` (MTF snippets)
-- **License:** MIT
+- **License:** GPL-3.0-only
 
 ## Architecture
 

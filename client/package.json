@@ -2,7 +2,7 @@
 	"name": "12dpl-lsp-client",
 	"description": "12dPL Language Server Extension",
 	"author": "Ben Olsen",
-	"license": "MIT",
+	"license": "GPL-3.0-only",
 	"version": "0.0.1",
 	"publisher": "nightworks",
 	"repository": {

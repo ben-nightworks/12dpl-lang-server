@@ -156,7 +156,7 @@ There are a few available settings that are defined for the language server that
 
 ## 📄 License
 
-MIT License - See `LICENSE` file for details
+GPL-3.0-only. Commercial use is allowed, but redistributed copies and derivative works must remain open source under GPL-3.0 and include corresponding source. See `LICENSE` for details.
 
 ## 👥 Contributing
 
