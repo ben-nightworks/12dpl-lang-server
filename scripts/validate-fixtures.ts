@@ -379,7 +379,8 @@ function buildFunctionReturnTypes(
 		const overloads = prototypes.getPrototypes(name);
 		if (overloads.length > 0) {
 			const allVoid = overloads.every(o => o.returnType === 'void');
-			returnTypes.set(name, allVoid ? 'void' : overloads[0].returnType);
+			const nonVoid = overloads.find(o => o.returnType !== 'void');
+			returnTypes.set(name, allVoid ? 'void' : (nonVoid ?? overloads[0]).returnType);
 		}
 	}
 

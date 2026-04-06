@@ -1963,6 +1963,23 @@ void main() {
 		const diagnostics = ValidateVoidReturnValues(code);
 		expect(diagnostics.length).toBe(0);
 	});
+
+	test("does not flag mixed-overload function when non-void overload exists", () => {
+		// Simulates Prompt() which has both void(1-param) and Integer(2-param) overloads.
+		// When not all overloads are void, the function should NOT be treated as void.
+		const externalReturnTypes = new Map<string, string>();
+		externalReturnTypes.set("Prompt", "Integer"); // non-void wins
+
+		const code = `
+void main() {
+	Integer x = Prompt("Enter value: ");
+	if (Prompt("Continue? ") != 0) {
+	}
+}
+`;
+		const diagnostics = ValidateVoidReturnValues(code, externalReturnTypes);
+		expect(diagnostics.length).toBe(0);
+	});
 });
 
 // ─── Function argument validation (#45) ─────────────────────────────────────
