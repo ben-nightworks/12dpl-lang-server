@@ -15,6 +15,7 @@ import {
 	ProposedFeatures,
 	InitializeParams,
 	DidChangeConfigurationNotification,
+	DidChangeWatchedFilesNotification,
 	TextDocumentSyncKind,
 	InitializeResult
 } from 'vscode-languageserver/node';
@@ -29,6 +30,7 @@ import { PrototypeService } from './services/prototypeService';
 import { IncludeService } from './services/includeService';
 import { DiagnosticService } from './services/diagnosticService';
 import { SymbolResolver } from './services/symbolResolver';
+import { WorkspaceScanService } from './services/workspaceScanService';
 import { registerCompletionProvider } from './providers/completionProvider';
 import { registerDefinitionProvider } from './providers/definitionProvider';
 import { registerHoverProvider } from './providers/hoverProvider';
@@ -88,6 +90,14 @@ async function getIncludeDirs(uri: string): Promise<string[]> {
 const includeService = new IncludeService(documentService, documents, getIncludeDirs);
 const diagnosticService = new DiagnosticService(documentService, includeService, prototypeService);
 const symbolResolver = new SymbolResolver(documentService, includeService, prototypeService);
+const workspaceScanService = new WorkspaceScanService(
+	connection,
+	documents,
+	documentService,
+	diagnosticService,
+	prototypeService,
+	getIncludeDirs
+);
 
 // ─── Capability negotiation ─────────────────────────────────────────────────
 
@@ -129,12 +139,17 @@ connection.onInitialize((params: InitializeParams) => {
 connection.onInitialized(() => {
 	if (hasConfigurationCapability) {
 		connection.client.register(DidChangeConfigurationNotification.type, undefined);
+
+		// Register for watched file changes (client sends these for .4dm and .h files).
+		connection.client.register(DidChangeWatchedFilesNotification.type, undefined);
 	}
 	if (hasWorkspaceFolderCapability) {
 		connection.workspace.onDidChangeWorkspaceFolders((_event) => {
-			connection.console.log('Workspace folder change event received.');
+			workspaceScanService.handleWorkspaceFoldersChanged().catch(() => {});
 		});
 	}
+
+	workspaceScanService.initialize().catch(() => {});
 });
 
 // ─── Settings ───────────────────────────────────────────────────────────────
@@ -150,6 +165,7 @@ const documentSettings: Map<string, Thenable<ServerSettings>> = new Map();
 connection.onDidChangeConfiguration(change => {
 	if (hasConfigurationCapability) {
 		documentSettings.clear();
+		workspaceScanService.handleConfigurationChanged().catch(() => {});
 	} else {
 		globalSettings = <ServerSettings>(
 			(change.settings.langServer || defaultSettings)
@@ -160,15 +176,21 @@ connection.onDidChangeConfiguration(change => {
 // ─── Document lifecycle ─────────────────────────────────────────────────────
 
 documents.onDidClose(e => {
-	documentSettings.delete(e.document.uri);
-	documentService.clear(e.document.uri);
-	includeService.invalidate(e.document.uri);
+	const closedUri = e.document.uri;
+	documentSettings.delete(closedUri);
+	documentService.clear(closedUri);
+	includeService.invalidate(closedUri);
+	workspaceScanService.handleDocumentClose(closedUri).catch(() => {});
 });
 
 documents.onDidChangeContent(change => {
 	const doc = change.document;
 	documentService.update(doc.uri, doc.version, doc.getText());
 	includeService.invalidate(doc.uri);
+});
+
+connection.onDidChangeWatchedFiles(async (params) => {
+	await workspaceScanService.handleWatchedFilesChanged(params);
 });
 
 // ─── Register providers ─────────────────────────────────────────────────────

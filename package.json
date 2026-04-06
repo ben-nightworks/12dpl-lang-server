@@ -1,15 +1,16 @@
 {
 	"name": "12dpl-lang-server",
-	"description": "Language server and VS Code extension for 12dPL, the programming language of 12d Model.",
+	"description": "A language server for 12dPL",
 	"author": "Ben Olsen",
 	"contributors": [
 		{
-			"name": "Kamal Jarada"
+			"name": "Kamal Jarada",
+			"email": "kamaljarada@gmail.com"
 		}
 	],
 	"license": "MIT",
-	"displayName": "12dPL Language",
-	"version": "1.4.1",
+	"displayName": "12dPL Language Server",
+	"version": "1.3.1",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ben-nightworks/12dpl-lang-server"
@@ -25,6 +26,12 @@
 		"vscode": "^1.82.0"
 	},
 	"main": "./client/out/extension",
+	"activationEvents": [
+		"onLanguage:12dpl",
+		"onCommand:12dpl.compile",
+		"onCommand:12dpl.compileWithFlags",
+		"workspaceContains:**/*.4dm"
+	],
 	"contributes": {
 		"configurationDefaults": {
 			"[12dpl]": {
@@ -89,24 +96,7 @@
 					".4dm",
 					".h"
 				],
-				"configuration": "./language-configuration.json",
-				"icon": {
-					"light": "./Images/4dm.svg",
-					"dark": "./Images/4dm.svg"
-				}
-			},
-			{
-				"id": "12dpl-compiled",
-				"aliases": [
-					"12dPL Compiled"
-				],
-				"extensions": [
-					".4do"
-				],
-				"icon": {
-					"light": "./Images/4do.svg",
-					"dark": "./Images/4do.svg"
-				}
+				"configuration": "./language-configuration.json"
 			},
 			{
 				"id": "mtfsnippet",
@@ -167,9 +157,7 @@
 				"12dpl.compiler.includePaths": {
 					"scope": "window",
 					"type": "array",
-					"items": {
-						"type": "string"
-					},
+					"items": { "type": "string" },
 					"default": [],
 					"description": "List of folders to prepend to the PATH environment variable before running the compiler (useful for include directories). Use platform paths; on Windows use semicolon-separated PATH semantics."
 				},
@@ -181,6 +169,12 @@
 					},
 					"default": [],
 					"description": "Default cc4d flags to preselect in the compile checkbox picker. Last selection is remembered per-workspace."
+				},
+				"12dpl.scanWorkspace": {
+					"scope": "window",
+					"type": "boolean",
+					"default": false,
+					"description": "Scan all .4dm files in the workspace for errors and warnings without needing to open them."
 				},
 				"12dpl.formatOnSave": {
 					"scope": "resource",
@@ -233,12 +227,9 @@
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "bun run bundle",
-		"bundle": "bun scripts/bundle.ts",
-		"publish": "vsce publish --no-dependencies",
-		"publish:pre-release": "vsce publish --pre-release --no-dependencies",
-		"vsce-package": "vsce package --no-dependencies",
+		"vscode:prepublish": "bun run compile && bun server/copy-resources.js",
 		"generate-antlr": "cd server && bun run generate-antlr",
+		"sync-types": "bun server/sync-grammar-types.js",
 		"build": "bun run compile",
 		"compile": "bun x tsc -b && bun server/copy-resources.js",
 		"watch": "bun x tsc -b -w",
@@ -250,14 +241,11 @@
 		"test:all": "bun run compile && bun test tests",
 		"test:e2e": "sh ./scripts/e2e.sh"
 	},
-	"bundledDependencies": [],
 	"devDependencies": {
 		"@types/node": "latest",
 		"@typescript-eslint/eslint-plugin": "latest",
 		"@typescript-eslint/parser": "latest",
 		"@vscode/vsce": "latest",
-		"bun-types": "^1.3.11",
-		"esbuild": "^0.28.0",
 		"eslint": "latest",
 		"typescript": "latest"
 	}

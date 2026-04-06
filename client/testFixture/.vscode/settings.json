@@ -1,5 +1,6 @@
 {
     "12dpl.compiler.includePaths": [
         "${workspaceFolder}/indirect_includes/"
-    ]
+    ],
+    "12dpl.scanWorkspace": true
 }

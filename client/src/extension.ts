@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as path from 'path';
-import { ExtensionContext, window, workspace } from 'vscode';
+import { ExtensionContext, window, workspace, ExtensionMode, ConfigurationTarget } from 'vscode';
 import { registerCompileFeatures } from './compileFeature';
 import { registerFormattingFeatures } from './formattingFeature';
 
@@ -18,7 +18,7 @@ import {
 let client: LanguageClient;
 
 /** VS Code extension activation entrypoint. Registers LSP client and compile commands. */
-export function activate(context: ExtensionContext) {
+export async function activate(context: ExtensionContext) {
 
 	// Register formatting features
 	registerFormattingFeatures(context);
@@ -49,8 +49,11 @@ export function activate(context: ExtensionContext) {
 		// Register the server for plain text documents
 		documentSelector: [{ scheme: 'file', language: '12dpl' }],
 		synchronize: {
-			// Notify the server about file changes to '.clientrc files contained in the workspace
-			fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
+			// Notify the server about file changes to 12dPL source files and .clientrc
+			fileEvents: [
+				workspace.createFileSystemWatcher('**/*.4dm'),
+				workspace.createFileSystemWatcher('**/.clientrc')
+			]
 		}
 	};
 
@@ -61,6 +64,16 @@ export function activate(context: ExtensionContext) {
 		serverOptions,
 		clientOptions
 	);
+
+	// Auto-enable workspace scanning and verbose tracing in debug/development mode
+	if (context.extensionMode === ExtensionMode.Development) {
+		try {
+			await workspace.getConfiguration('12dpl').update('scanWorkspace', true, ConfigurationTarget.Global);
+			await workspace.getConfiguration('langServer.trace').update('server', 'verbose', ConfigurationTarget.Global);
+		} catch {
+			// Silently ignore if settings are not writable
+		}
+	}
 
 	// Start the client. This will also launch the server
 	client.start();

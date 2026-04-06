@@ -53,22 +53,44 @@ import * as path from 'path';
 	/** Converts a `file://` URI to a local filesystem path (best-effort). */
 	export function fileUriToFsPath(uri: string): string | null {
 		if (!uri.startsWith('file://')) return null;
-		// Handles Windows URIs like file:///d%3A/path or file:///d:/path
-		let p = uri.replace(/^file:\/\//, '');
-		// Remove one leading slash for windows drive paths.
-		if (process.platform === 'win32') {
-			if (p.startsWith('/'))
-				p = p.slice(1);
+		try {
+			const url = new URL(uri);
+			let p = decodeURIComponent(url.pathname);
+
+			if (process.platform === 'win32') {
+				if (url.hostname) {
+					return path.normalize(`\\\\${url.hostname}${p.replace(/\//g, '\\')}`);
+				}
+				if (/^\/[A-Za-z]:/.test(p)) {
+					p = p.slice(1);
+				}
+			}
+
+			return path.normalize(p);
+		} catch {
+			return null;
 		}
-		p = decodeURIComponent(p);
-		return path.normalize(p);
 	}
 
 	/** Converts a filesystem path into a `file://` URI. */
 	export function fsPathToFileUri(fsPath: string): string {
 		const abs = path.resolve(fsPath);
 		const withForwardSlashes = abs.replace(/\\/g, '/');
-		return `file:///${encodeURI(withForwardSlashes)}`;
+
+		if (process.platform === 'win32') {
+			const driveMatch = /^([A-Za-z]):(\/.*)?$/.exec(withForwardSlashes);
+			if (driveMatch) {
+				const drive = driveMatch[1].toLowerCase();
+				const rest = (driveMatch[2] ?? '')
+					.split('/')
+					.filter((segment, index) => !(index === 0 && segment === ''))
+					.map(segment => encodeURIComponent(segment))
+					.join('/');
+				return rest ? `file:///${drive}%3A/${rest}` : `file:///${drive}%3A`;
+			}
+		}
+
+		return `file://${withForwardSlashes.split('/').map(segment => encodeURIComponent(segment)).join('/')}`;
 	}
 
 	/** Extracts all `#include` paths from a document. */

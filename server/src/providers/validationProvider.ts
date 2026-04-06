@@ -26,9 +26,11 @@ export function registerValidationProvider(opts: {
 		validateTextDocument(change.document.uri);
 	});
 
-	documents.onDidClose(e => {
-		connection.sendDiagnostics({ uri: e.document.uri, diagnostics: [] });
+	documents.onDidOpen(change => {
+		validateTextDocument(change.document.uri);
 	});
+
+	// Note: onDidClose is handled in server.ts where workspace-scan settings are available.
 
 	connection.onDidChangeConfiguration(() => {
 		documents.all().forEach(doc => validateTextDocument(doc.uri));
