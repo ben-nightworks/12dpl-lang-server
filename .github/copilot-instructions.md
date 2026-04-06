@@ -316,6 +316,10 @@ When creating PRs via `gh pr create`, use **only plain ASCII text** in the title
 - `*` or `-` for bullets
 - Straight quotes `"` `'` only
 
+## Testing Requirements
+
+All code changes **must** include corresponding tests. This applies to new features, bug fixes, validation rules, and refactors that change behaviour. Run `bun run test` to verify all tests pass before considering a change complete.
+
 ## Common Development Tasks
 
 ### Adding a new LSP feature
@@ -347,6 +351,7 @@ When creating PRs via `gh pr create`, use **only plain ASCII text** in the title
 1. Create `.4dm` or `.h` files in `client/testFixture/`
 2. Reference them in test files with `path.resolve(__dirname, '..', 'client', 'testFixture', 'filename.4dm')`
 3. Fixtures should be valid 12dPL unless specifically testing error cases
+4. Add the fixture and its expected diagnostics to the `fixture-diagnostic-audit` skill in `.github/skills/fixture-diagnostic-audit/SKILL.md` under the "Fixture Diagnostic Reference" section
 
 ### Debugging the language server
 1. Set `langServer.trace.server` to `"verbose"` in VS Code settings
