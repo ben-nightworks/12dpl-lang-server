@@ -1,16 +1,15 @@
 {
 	"name": "12dpl-lang-server",
-	"description": "A language server for 12dPL",
+	"description": "Language server and VS Code extension for 12dPL, the programming language of 12d Model.",
 	"author": "Ben Olsen",
 	"contributors": [
 		{
-			"name": "Kamal Jarada",
-			"email": "kamal.jarada@example.com"
+			"name": "Kamal Jarada"
 		}
 	],
 	"license": "MIT",
-	"displayName": "12dPL Language Server",
-	"version": "1.3.1",
+	"displayName": "12dPL Language",
+	"version": "1.4.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ben-nightworks/12dpl-lang-server"
