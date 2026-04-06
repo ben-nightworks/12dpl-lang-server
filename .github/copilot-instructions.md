@@ -307,6 +307,15 @@ The extension can invoke the **cc4d.exe** compiler (Windows-only):
 - All pull requests should target **`dev`** (`--base dev`).
 - Feature/fix branches should be created from `dev`.
 
+### Pull Request Text
+
+When creating PRs via `gh pr create`, use **only plain ASCII text** in the title and body. Do **not** use Unicode characters such as em-dashes (`—`), curly quotes, arrows (`→`, `←`), check marks (`✓`), bullets (`•`), or any non-ASCII symbols. These render as garbled/gibberish text in some terminal and GitHub contexts. Use ASCII equivalents instead:
+
+- `--` instead of `—`
+- `->` instead of `→`
+- `*` or `-` for bullets
+- Straight quotes `"` `'` only
+
 ## Common Development Tasks
 
 ### Adding a new LSP feature
