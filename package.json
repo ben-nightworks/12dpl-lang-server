@@ -9,7 +9,7 @@
 	],
 	"license": "MIT",
 	"displayName": "12dPL Language",
-	"version": "1.4.0",
+	"version": "1.4.1",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ben-nightworks/12dpl-lang-server"
@@ -25,11 +25,6 @@
 		"vscode": "^1.82.0"
 	},
 	"main": "./client/out/extension",
-	"activationEvents": [
-		"onLanguage:12dpl",
-		"onCommand:12dpl.compile",
-		"onCommand:12dpl.compileWithFlags"
-	],
 	"contributes": {
 		"configurationDefaults": {
 			"[12dpl]": {
@@ -142,7 +137,6 @@
 				"path": "./snippets/12dpl.tmSnippets.json"
 			}
 		],
-
 		"configuration": {
 			"type": "object",
 			"title": "12dPL",
@@ -173,7 +167,9 @@
 				"12dpl.compiler.includePaths": {
 					"scope": "window",
 					"type": "array",
-					"items": { "type": "string" },
+					"items": {
+						"type": "string"
+					},
 					"default": [],
 					"description": "List of folders to prepend to the PATH environment variable before running the compiler (useful for include directories). Use platform paths; on Windows use semicolon-separated PATH semantics."
 				},
@@ -237,9 +233,11 @@
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "bun run compile && bun server/copy-resources.js",
+		"vscode:prepublish": "bun run bundle",
+		"bundle": "bun scripts/bundle.ts",
 		"publish": "vsce publish --no-dependencies",
 		"publish:pre-release": "vsce publish --pre-release --no-dependencies",
+		"vsce-package": "vsce package --no-dependencies",
 		"generate-antlr": "cd server && bun run generate-antlr",
 		"build": "bun run compile",
 		"compile": "bun x tsc -b && bun server/copy-resources.js",
@@ -258,6 +256,8 @@
 		"@typescript-eslint/eslint-plugin": "latest",
 		"@typescript-eslint/parser": "latest",
 		"@vscode/vsce": "latest",
+		"bun-types": "^1.3.11",
+		"esbuild": "^0.28.0",
 		"eslint": "latest",
 		"typescript": "latest"
 	}
