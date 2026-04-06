@@ -28,29 +28,15 @@ macros_mattmonk
 macros_mattmonk/**
 tests/**
 docs/**
+scripts/**
 client/testFixture/**
 server/src/**
-node_modules/**
+
+# Node modules (bundled into single files)
+**/node_modules/**
 
 # Server build/tooling files (not needed at runtime)
 server/antlr-*.jar
 server/copy-resources.js
 server/package-lock.json
-
-# Server node_modules - whitelist only runtime deps
-server/node_modules/**
-!server/node_modules/antlr4/**
-!server/node_modules/vscode-jsonrpc/**
-!server/node_modules/vscode-languageserver/**
-!server/node_modules/vscode-languageserver-protocol/**
-!server/node_modules/vscode-languageserver-textdocument/**
-!server/node_modules/vscode-languageserver-types/**
-
-# Client node_modules - whitelist only runtime deps
-client/node_modules/**
-!client/node_modules/vscode-jsonrpc/**
-!client/node_modules/vscode-languageclient/**
-!client/node_modules/vscode-languageserver-protocol/**
-!client/node_modules/vscode-languageserver-types/**
-!client/node_modules/{minimatch,brace-expansion,balanced-match}/**
-!client/node_modules/{semver}/**
+server/package.json
