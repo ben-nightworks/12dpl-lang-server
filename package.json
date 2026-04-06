@@ -238,6 +238,8 @@
 	},
 	"scripts": {
 		"vscode:prepublish": "bun run compile && bun server/copy-resources.js",
+		"publish": "vsce publish --no-dependencies",
+		"publish:pre-release": "vsce publish --pre-release --no-dependencies",
 		"generate-antlr": "cd server && bun run generate-antlr",
 		"build": "bun run compile",
 		"compile": "bun x tsc -b && bun server/copy-resources.js",
@@ -250,6 +252,7 @@
 		"test:all": "bun run compile && bun test tests",
 		"test:e2e": "sh ./scripts/e2e.sh"
 	},
+	"bundledDependencies": [],
 	"devDependencies": {
 		"@types/node": "latest",
 		"@typescript-eslint/eslint-plugin": "latest",
