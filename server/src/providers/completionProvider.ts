@@ -28,6 +28,34 @@ type IncludePathContext = {
 };
 
 /**
+ * Computes the character range [start, end) on a line that should be replaced
+ * when a preprocessor directive completion (#include / #define) is accepted.
+ *
+ * The key insight: `#` is not a word character, so `getWordAtPosition` returns
+ * only the text *after* the `#`.  If we used `insertText` without a `textEdit`,
+ * VS Code would replace just the word portion and leave the original `#` in
+ * place, producing `##include ...`.  By including the preceding `#` in the
+ * replacement range we avoid the double-hash.
+ *
+ * Examples (| marks cursor):
+ *   "#inc|"    → { start: 0, end: 4 }  (includes the `#`)
+ *   "#|"       → { start: 0, end: 1 }  (just the `#`)
+ *   "inc|"     → { start: 0, end: 3 }  (no preceding `#`, plain word)
+ *   "  #inc|"  → { start: 2, end: 6 }  (handles leading whitespace)
+ */
+export function getDirectiveReplacementRange(
+	lineText: string,
+	charPos: number
+): { start: number; end: number } {
+	let wordStart = charPos;
+	while (wordStart > 0 && /[a-zA-Z0-9_]/.test(lineText[wordStart - 1])) {
+		wordStart--;
+	}
+	const start = (wordStart > 0 && lineText[wordStart - 1] === '#') ? wordStart - 1 : wordStart;
+	return { start, end: charPos };
+}
+
+/**
  * Detects whether the cursor is currently inside a `#include "..."` or `#include <...>` path.
  * When present, completion should suggest filesystem paths instead of symbols.
  */
@@ -101,7 +129,15 @@ function listIncludePathCompletionItems(opts: {
 			label,
 			kind: entry.isDirectory() ? CompletionItemKind.Folder : CompletionItemKind.File,
 			detail: entry.isDirectory() ? 'Include folder' : 'Include file',
+			// filterText must be the full relative path (e.g. "subfolder/foo.h") so
+			// that VS Code's prefix filter — which derives its prefix from the
+			// textEdit range text ("subfolder/") — keeps the item visible.
+			filterText: insertPath,
 			textEdit: TextEdit.replace(range as any, insertPath),
+			// After accepting a folder, re-trigger completions so the user
+			// immediately sees the contents of that folder without having to
+			// type another character.
+			...(entry.isDirectory() ? { command: { command: 'editor.action.triggerSuggest', title: 'Re-trigger completions' } } : {})
 		});
 	}
 
@@ -356,6 +392,40 @@ const detailText = primaryFn.signature ?? '';
 		// 4. Prototypes (pre-built by PrototypeService)
 		const prototypeItems = prototypeService.getCompletionItems();
 
+		// Compute the replacement range for preprocessor directive completions.
+		// When the user has typed `#inc` the word is just `inc` (# is not a word
+		// character), so without an explicit textEdit VS Code would replace only
+		// `inc`, leaving the original `#` in place and producing `##include...`.
+		// Using a textEdit that spans back to include the `#` fixes the double-hash.
+		//
+		// Filter text must also start with `#` when the range covers the `#`,
+		// otherwise VS Code uses `#inc` as the matching prefix (derived from the
+		// textEdit start position) but filters against `filterText: 'include'`,
+		// which doesn't start with `#` and causes the item to be hidden.
+		const directiveLine = textDocumentPosition.position.line;
+		const directiveChar = textDocumentPosition.position.character;
+		let includeFilterText = 'include';
+		let defineFilterText = 'define';
+		let includeTextEdit: TextEdit | undefined;
+		let defineTextEdit: TextEdit | undefined;
+		if (doc) {
+			const directiveLineText = doc.getText().split('\n')[directiveLine] ?? '';
+			const dirRange = getDirectiveReplacementRange(directiveLineText, directiveChar);
+			const editRange = {
+				start: { line: directiveLine, character: dirRange.start },
+				end: { line: directiveLine, character: dirRange.end }
+			};
+			includeTextEdit = TextEdit.replace(editRange as any, '#include $0');
+			defineTextEdit = TextEdit.replace(editRange as any, '#define ${1:NAME} ${2:value}$0');
+			// When the range starts at a '#', VS Code derives the matching prefix as
+			// '#...' so filterText must also start with '#' to survive client-side
+			// filtering.
+			if (directiveLineText[dirRange.start] === '#') {
+				includeFilterText = '#include';
+				defineFilterText = '#define';
+			}
+		}
+
 		// Combine with keyword completions
 		const keywordItems: CompletionItem[] = [
 			{
@@ -364,7 +434,8 @@ const detailText = primaryFn.signature ?? '';
 				detail: 'Preprocessor include directive',
 				insertTextFormat: InsertTextFormat.Snippet,
 				insertText: '#include "${1:header.h}"$0',
-				filterText: 'include',
+				...(includeTextEdit ? { textEdit: includeTextEdit } : {}),
+				filterText: includeFilterText,
 				data: { source: 'keyword', kind: 'directive', name: '#include' }
 			},
 			{
@@ -373,7 +444,8 @@ const detailText = primaryFn.signature ?? '';
 				detail: 'Preprocessor include directive',
 				insertTextFormat: InsertTextFormat.Snippet,
 				insertText: '#include "${1:header.h}"$0',
-				filterText: 'include',
+				...(includeTextEdit ? { textEdit: includeTextEdit } : {}),
+				filterText: includeFilterText,
 				data: { source: 'keyword', kind: 'directive', name: '#include' }
 			},
 			{
@@ -382,7 +454,8 @@ const detailText = primaryFn.signature ?? '';
 				detail: 'Preprocessor macro definition',
 				insertTextFormat: InsertTextFormat.Snippet,
 				insertText: '#define ${1:NAME} ${2:value}$0',
-				filterText: 'define',
+				...(defineTextEdit ? { textEdit: defineTextEdit } : {}),
+				filterText: defineFilterText,
 				data: { source: 'keyword', kind: 'directive', name: '#define' }
 			},
 			{
@@ -391,7 +464,8 @@ const detailText = primaryFn.signature ?? '';
 				detail: 'Preprocessor macro definition',
 				insertTextFormat: InsertTextFormat.Snippet,
 				insertText: '#define ${1:NAME} ${2:value}$0',
-				filterText: 'define',
+				...(defineTextEdit ? { textEdit: defineTextEdit } : {}),
+				filterText: defineFilterText,
 				data: { source: 'keyword', kind: 'directive', name: '#define' }
 			},
 			{ label: 'if', kind: CompletionItemKind.Keyword, detail: 'Conditional statement', data: 1 },

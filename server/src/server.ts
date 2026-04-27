@@ -108,7 +108,8 @@ connection.onInitialize((params: InitializeParams) => {
 		capabilities: {
 			textDocumentSync: TextDocumentSyncKind.Full,
 			completionProvider: {
-				resolveProvider: true
+				resolveProvider: true,
+				triggerCharacters: ['"', "'", '<', '/']
 			},
 			hoverProvider: true,
 			definitionProvider: true,
