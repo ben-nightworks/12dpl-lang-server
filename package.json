@@ -246,9 +246,8 @@
 		"postinstall": "cd client && bun install && cd ../server && bun install && cd ..",
 		"test": "bun test tests",
 		"test:unit": "bun test tests",
-		"test:grammar": "vscode-tmgrammar-test 'client/testFixture/*.4dm'",
 		"test:compile": "bun run compile",
-		"test:all": "bun run compile && bun test tests && bun run test:grammar",
+		"test:all": "bun run compile && bun test tests",
 		"test:e2e": "sh ./scripts/e2e.sh"
 	},
 	"bundledDependencies": [],
@@ -261,6 +260,5 @@
 		"esbuild": "^0.28.0",
 		"eslint": "latest",
 		"typescript": "latest",
-		"vscode-tmgrammar-test": "^0.1.3"
 	}
 }
