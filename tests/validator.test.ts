@@ -3155,3 +3155,93 @@ void main()
 		expect(undeclaredErrors.length).toBe(0);
 	});
 });
+
+// ─── Standalone macro usage as statement (#106) ──────────────────────────────
+
+describe("Standalone macro usage as statement (#106)", () => {
+	test("no-arg macro used as standalone statement does not produce a syntax error", () => {
+		const code = `
+void func()
+{
+#define MACRO_EXAMPLE Integer test = 1;
+
+	MACRO_EXAMPLE
+
+	someOtherfunction();
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("no-arg macro used as standalone statement is not flagged as undeclared", () => {
+		const code = `
+void func()
+{
+#define MY_MACRO Integer x = 0;
+
+	MY_MACRO
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set(),
+		});
+		const undeclaredErrors = diagnostics.filter(d => d.message.includes("MY_MACRO"));
+		expect(undeclaredErrors.length).toBe(0);
+	});
+
+	test("function-like macro used as standalone statement does not produce a syntax error", () => {
+		const code = `
+#define LOG(msg) Print(msg);
+
+void func()
+{
+	LOG("hello")
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("code following the standalone macro is still parsed and validated", () => {
+		const code = `
+void func()
+{
+#define MACRO_EXAMPLE Integer test = 1;
+
+	MACRO_EXAMPLE
+
+	someOtherfunction();
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set(),
+		});
+		const fnErrors = diagnostics.filter(d => d.message.includes("someOtherfunction"));
+		expect(fnErrors.length).toBe(1);
+		expect(fnErrors[0].message).toContain("not declared");
+	});
+
+	test("multiple standalone macros in a row do not produce syntax errors", () => {
+		const code = `
+#define SETUP_A Integer a = 1;
+#define SETUP_B Integer b = 2;
+
+void func()
+{
+	SETUP_A
+	SETUP_B
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+});
