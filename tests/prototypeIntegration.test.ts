@@ -18,7 +18,7 @@ import {
 	validateFunctionArguments,
 	validateVoidFunctionReturnValues,
 } from "../server/src/core/validators";
-import type { FunctionSignatureMap } from "../server/src/core/validators";
+import type { FunctionSignatureMap, OverloadReturnType } from "../server/src/core/validators";
 import type { KnownSymbols } from "../server/src/core/types";
 
 // ─── Shared service — loaded once ────────────────────────────────────────────
@@ -51,13 +51,24 @@ function buildSignatureMap(): FunctionSignatureMap {
 	return map;
 }
 
-function buildReturnTypes(): Map<string, string> {
+function buildReturnTypes(): Map<string, OverloadReturnType[]> {
+	const map = new Map<string, OverloadReturnType[]>();
+	for (const name of service.getAllNames()) {
+		const overloads = service.getPrototypes(name);
+		if (overloads.length > 0) {
+			map.set(name, overloads.map(o => ({ paramCount: o.parameters.length, returnType: o.returnType })));
+		}
+	}
+	return map;
+}
+
+function buildSimpleReturnTypes(): Map<string, string> {
 	const map = new Map<string, string>();
 	for (const name of service.getAllNames()) {
 		const overloads = service.getPrototypes(name);
 		if (overloads.length > 0) {
 			const allVoid = overloads.every(o => o.returnType === "void");
-			map.set(name, allVoid ? "void" : overloads[0].returnType);
+			map.set(name, allVoid ? "void" : (overloads.find(o => o.returnType !== "void") ?? overloads[0]).returnType);
 		}
 	}
 	return map;
@@ -89,7 +100,7 @@ function validateArgs(text: string, signatures: FunctionSignatureMap, returnType
 	return validateFunctionArguments(result.tree, signatures, returnTypes) as Diagnostic[];
 }
 
-function validateVoidReturns(text: string, returnTypes: Map<string, string>): Diagnostic[] {
+function validateVoidReturns(text: string, returnTypes: Map<string, OverloadReturnType[]>): Diagnostic[] {
 	const result = parse(text);
 	if (result.syntaxErrors.length > 0) return syntaxDiags(text);
 	return validateVoidFunctionReturnValues(result.tree, returnTypes) as Diagnostic[];
@@ -308,7 +319,7 @@ void main()
 	result = Sin(x);
 }
 `;
-		const diagnostics = validateArgs(code, buildSignatureMap(), buildReturnTypes());
+		const diagnostics = validateArgs(code, buildSignatureMap(), buildSimpleReturnTypes());
 		const sinDiags = diagnostics.filter(d => d.message.toLowerCase().includes("sin"));
 		expect(sinDiags.length).toBe(0);
 	});
@@ -322,7 +333,7 @@ void main()
 	result = Sin(t);
 }
 `;
-		const diagnostics = validateArgs(code, buildSignatureMap(), buildReturnTypes());
+		const diagnostics = validateArgs(code, buildSignatureMap(), buildSimpleReturnTypes());
 		const sinDiags = diagnostics.filter(d => d.message.toLowerCase().includes("sin"));
 		expect(sinDiags.length).toBe(1);
 		expect(sinDiags[0].message).toContain("mismatch");
@@ -337,7 +348,7 @@ void main()
 	Sin(x, y);
 }
 `;
-		const diagnostics = validateArgs(code, buildSignatureMap(), buildReturnTypes());
+		const diagnostics = validateArgs(code, buildSignatureMap(), buildSimpleReturnTypes());
 		const sinDiags = diagnostics.filter(d => d.message.toLowerCase().includes("sin"));
 		expect(sinDiags.length).toBe(1);
 		expect(sinDiags[0].message).toContain("expects");
@@ -351,7 +362,7 @@ void main()
 	Print(i);
 }
 `;
-		const diagnostics = validateArgs(code, buildSignatureMap(), buildReturnTypes());
+		const diagnostics = validateArgs(code, buildSignatureMap(), buildSimpleReturnTypes());
 		const printDiags = diagnostics.filter(d => d.message.toLowerCase().includes("print"));
 		expect(printDiags.length).toBe(0);
 	});
@@ -364,7 +375,7 @@ void main()
 	Print(r);
 }
 `;
-		const diagnostics = validateArgs(code, buildSignatureMap(), buildReturnTypes());
+		const diagnostics = validateArgs(code, buildSignatureMap(), buildSimpleReturnTypes());
 		const printDiags = diagnostics.filter(d => d.message.toLowerCase().includes("print"));
 		expect(printDiags.length).toBe(0);
 	});
@@ -377,7 +388,7 @@ void main()
 	Print(msg);
 }
 `;
-		const diagnostics = validateArgs(code, buildSignatureMap(), buildReturnTypes());
+		const diagnostics = validateArgs(code, buildSignatureMap(), buildSimpleReturnTypes());
 		const printDiags = diagnostics.filter(d => d.message.toLowerCase().includes("print"));
 		expect(printDiags.length).toBe(0);
 	});
@@ -391,7 +402,7 @@ void main()
 	Print(p);
 }
 `;
-		const diagnostics = validateArgs(code, buildSignatureMap(), buildReturnTypes());
+		const diagnostics = validateArgs(code, buildSignatureMap(), buildSimpleReturnTypes());
 		const printDiags = diagnostics.filter(d => d.message.toLowerCase().includes("print"));
 		expect(printDiags.length).toBe(1);
 		expect(printDiags[0].message).toContain("mismatch");
@@ -405,7 +416,7 @@ void main()
 	Exit(code);
 }
 `;
-		const diagnostics = validateArgs(code, buildSignatureMap(), buildReturnTypes());
+		const diagnostics = validateArgs(code, buildSignatureMap(), buildSimpleReturnTypes());
 		const exitDiags = diagnostics.filter(d => d.message.toLowerCase().includes("exit"));
 		expect(exitDiags.length).toBe(0);
 	});
@@ -420,7 +431,7 @@ void main()
 	result = Absolute(val);
 }
 `;
-		const diagnostics = validateArgs(code, buildSignatureMap(), buildReturnTypes());
+		const diagnostics = validateArgs(code, buildSignatureMap(), buildSimpleReturnTypes());
 		const absDiags = diagnostics.filter(d => d.message.toLowerCase().includes("absolute"));
 		expect(absDiags.length).toBe(0);
 	});
@@ -435,7 +446,7 @@ void main()
 	result = Sin(i);
 }
 `;
-		const diagnostics = validateArgs(code, buildSignatureMap(), buildReturnTypes());
+		const diagnostics = validateArgs(code, buildSignatureMap(), buildSimpleReturnTypes());
 		const sinDiags = diagnostics.filter(d => d.message.toLowerCase().includes("sin"));
 		expect(sinDiags.length).toBe(0);
 	});
@@ -507,18 +518,23 @@ void main()
 
 	test("all Print overloads are recognised as void in the return types map", () => {
 		const returnTypes = buildReturnTypes();
-		// Print is void for ALL overloads — the map should mark it as void
-		expect(returnTypes.get("Print")).toBe("void");
+		const printOverloads = returnTypes.get("Print");
+		expect(printOverloads).toBeDefined();
+		expect(printOverloads!.every(o => o.returnType === "void")).toBe(true);
 	});
 
 	test("Sin is recognised as non-void in the return types map", () => {
 		const returnTypes = buildReturnTypes();
-		expect(returnTypes.get("Sin")).not.toBe("void");
-		expect(returnTypes.get("Sin")).toBe("Real");
+		const sinOverloads = returnTypes.get("Sin");
+		expect(sinOverloads).toBeDefined();
+		expect(sinOverloads!.some(o => o.returnType !== "void")).toBe(true);
+		expect(sinOverloads!.find(o => o.returnType !== "void")!.returnType).toBe("Real");
 	});
 
 	test("Exit is recognised as void in the return types map", () => {
 		const returnTypes = buildReturnTypes();
-		expect(returnTypes.get("Exit")).toBe("void");
+		const exitOverloads = returnTypes.get("Exit");
+		expect(exitOverloads).toBeDefined();
+		expect(exitOverloads!.every(o => o.returnType === "void")).toBe(true);
 	});
 });

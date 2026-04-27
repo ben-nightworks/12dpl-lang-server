@@ -35,7 +35,7 @@ import {
 	validateReturnStatements,
 	validateArraySize,
 } from '../server/src/core/validators';
-import type { FunctionSignatureMap } from '../server/src/core/validators';
+import type { FunctionSignatureMap, OverloadReturnType } from '../server/src/core/validators';
 import type { KnownSymbols, SymbolDeclaration, ParameterSymbolInfo } from '../server/src/core/types';
 import { PrototypeService } from '../server/src/services/prototypeService';
 
@@ -44,7 +44,7 @@ type Diagnostic = { severity?: number; range: any; message: string };
 type IncludeAnalysis = {
 	declarations: SymbolDeclaration[];
 	defineNames: Set<string>;
-	functionReturnTypes: Map<string, string>;
+	functionReturnTypes: Map<string, OverloadReturnType[]>;
 };
 
 // ─── Target directories ──────────────────────────────────────────────────────
@@ -213,7 +213,7 @@ function resolveIncludesForFile(filePath: string, text: string): string[] {
 function buildIncludeAnalysis(headerPath: string, visited = new Set<string>()): IncludeAnalysis {
 	const normalizedPath = path.normalize(headerPath);
 	if (!fs.existsSync(normalizedPath) || visited.has(normalizedPath)) {
-		return { declarations: [], defineNames: new Set<string>(), functionReturnTypes: new Map<string, string>() };
+		return { declarations: [], defineNames: new Set<string>(), functionReturnTypes: new Map<string, OverloadReturnType[]>() };
 	}
 	visited.add(normalizedPath);
 
@@ -223,7 +223,7 @@ function buildIncludeAnalysis(headerPath: string, visited = new Set<string>()): 
 	const views = deriveViews(table.root);
 	const decls: SymbolDeclaration[] = [];
 	const defineNames = new Set<string>();
-	const functionReturnTypes = new Map<string, string>();
+	const functionReturnTypes = new Map<string, OverloadReturnType[]>();
 	const dummyRange = { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } };
 	const sourceFile = path.basename(headerPath);
 
@@ -240,7 +240,9 @@ function buildIncludeAnalysis(headerPath: string, visited = new Set<string>()): 
 			})) ?? [];
 			decls.push({ name, kind: 'function', range: dummyRange, definedInFsPath: sourceFile, params });
 			if (d.returnType) {
-				functionReturnTypes.set(name, d.returnType);
+				const existing = functionReturnTypes.get(name) ?? [];
+				existing.push({ paramCount: d.params?.length ?? 0, returnType: d.returnType });
+				functionReturnTypes.set(name, existing);
 			}
 		}
 	}
@@ -254,8 +256,10 @@ function buildIncludeAnalysis(headerPath: string, visited = new Set<string>()): 
 		for (const defineName of nested.defineNames) {
 			defineNames.add(defineName);
 		}
-		for (const [name, returnType] of nested.functionReturnTypes) {
-			functionReturnTypes.set(name, returnType);
+		for (const [name, overloads] of nested.functionReturnTypes) {
+			const existing = functionReturnTypes.get(name) ?? [];
+			existing.push(...overloads);
+			functionReturnTypes.set(name, existing);
 		}
 	}
 
@@ -371,15 +375,20 @@ function buildFunctionReturnTypes(
 	text: string,
 	includeAnalysis: IncludeAnalysis,
 	prototypes: PrototypeService
-): Map<string, string> {
-	const returnTypes = new Map<string, string>();
+): Map<string, OverloadReturnType[]> {
+	const returnTypes = new Map<string, OverloadReturnType[]>();
+
+	const addOverload = (name: string, paramCount: number, returnType: string) => {
+		const existing = returnTypes.get(name) ?? [];
+		existing.push({ paramCount, returnType });
+		returnTypes.set(name, existing);
+	};
 
 	// Prototypes
 	for (const name of prototypes.getAllNames()) {
 		const overloads = prototypes.getPrototypes(name);
-		if (overloads.length > 0) {
-			const allVoid = overloads.every(o => o.returnType === 'void');
-			returnTypes.set(name, allVoid ? 'void' : overloads[0].returnType);
+		for (const overload of overloads) {
+			addOverload(name, overload.parameters.length, overload.returnType);
 		}
 	}
 
@@ -388,17 +397,30 @@ function buildFunctionReturnTypes(
 	const table = collectSymbolTable(result, text);
 	const views = deriveViews(table.root);
 	for (const [name, dList] of views.allFunctions) {
-		if (dList.length > 0 && dList[0].returnType) {
-			returnTypes.set(name, dList[0].returnType);
+		for (const decl of dList) {
+			if (decl.returnType) {
+				addOverload(name, decl.params?.length ?? 0, decl.returnType);
+			}
 		}
 	}
-	for (const [name, returnType] of includeAnalysis.functionReturnTypes) {
+	for (const [name, overloads] of includeAnalysis.functionReturnTypes) {
 		if (!returnTypes.has(name)) {
-			returnTypes.set(name, returnType);
+			returnTypes.set(name, overloads);
 		}
 	}
 
 	return returnTypes;
+}
+
+function flattenReturnTypes(overloadMap: Map<string, OverloadReturnType[]>): Map<string, string> {
+	const result = new Map<string, string>();
+	for (const [name, overloads] of overloadMap) {
+		if (overloads.length > 0) {
+			const nonVoid = overloads.find(o => o.returnType !== 'void');
+			result.set(name, nonVoid ? nonVoid.returnType : overloads[0].returnType);
+		}
+	}
+	return result;
 }
 
 // ─── Full validation pipeline ────────────────────────────────────────────────
@@ -437,7 +459,7 @@ function validateFile(filePath: string, prototypes: PrototypeService): Diagnosti
 		const includeAnalysis: IncludeAnalysis = {
 			declarations: [],
 			defineNames: new Set<string>(),
-			functionReturnTypes: new Map<string, string>(),
+			functionReturnTypes: new Map<string, OverloadReturnType[]>(),
 		};
 		for (const includeFile of resolveIncludesForFile(filePath, text)) {
 			const nested = buildIncludeAnalysis(includeFile);
@@ -445,8 +467,10 @@ function validateFile(filePath: string, prototypes: PrototypeService): Diagnosti
 			for (const defineName of nested.defineNames) {
 				includeAnalysis.defineNames.add(defineName);
 			}
-			for (const [name, returnType] of nested.functionReturnTypes) {
-				includeAnalysis.functionReturnTypes.set(name, returnType);
+			for (const [name, overloads] of nested.functionReturnTypes) {
+				const existing = includeAnalysis.functionReturnTypes.get(name) ?? [];
+				existing.push(...overloads);
+				includeAnalysis.functionReturnTypes.set(name, existing);
 			}
 		}
 
@@ -458,7 +482,8 @@ function validateFile(filePath: string, prototypes: PrototypeService): Diagnosti
 
 		const funcSigs = buildFunctionSignatures(text, includeAnalysis, prototypes);
 		const funcRetTypes = buildFunctionReturnTypes(text, includeAnalysis, prototypes);
-		pushDiagnostics(validateFunctionArguments(result.tree, funcSigs, funcRetTypes));
+		const simpleRetTypes = flattenReturnTypes(funcRetTypes);
+		pushDiagnostics(validateFunctionArguments(result.tree, funcSigs, simpleRetTypes));
 		pushDiagnostics(validateVoidFunctionReturnValues(result.tree, funcRetTypes));
 		pushDiagnostics(validateReturnStatements(result.tree));
 		pushDiagnostics(validateArraySize(result.tree));

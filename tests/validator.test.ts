@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { parse } from "../server/src/core/parsePipeline";
 import { collectSymbolTable, deriveViews } from "../server/src/core/symbolCollector";
 import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls, validateVoidFunctionReturnValues, FunctionSignatureMap, validateFunctionArguments, validateReturnStatements, validateArraySize } from "../server/src/core/validators";
+import type { OverloadReturnType } from "../server/src/core/validators";
 import type { SymbolDeclaration, KnownSymbols, DerivedSymbolViews, ParameterSymbolInfo } from "../server/src/core/types";
 
 // The core validators return vscode-languageserver Diagnostic objects.
@@ -1762,7 +1763,7 @@ void Do_thing(Integer x, Integer y)
 });
 // ─── Void function return value validation (#46) ───────────────────────────
 
-function ValidateVoidReturnValues(text: string, externalReturnTypes: Map<string, string> = new Map()): Diagnostic[] {
+function ValidateVoidReturnValues(text: string, externalReturnTypes: Map<string, OverloadReturnType[]> = new Map()): Diagnostic[] {
 	const result = parse(text);
 	const synErrs = syntaxDiagnostics(result);
 	if (synErrs.length > 0) return synErrs;
@@ -1917,9 +1918,9 @@ Integer main() {
 	});
 
 	test("resolves external function return types", () => {
-		const externalReturnTypes = new Map<string, string>();
-		externalReturnTypes.set("ext_void_func", "void");
-		externalReturnTypes.set("ext_int_func", "Integer");
+		const externalReturnTypes = new Map<string, OverloadReturnType[]>();
+		externalReturnTypes.set("ext_void_func", [{ paramCount: 0, returnType: "void" }]);
+		externalReturnTypes.set("ext_int_func", [{ paramCount: 0, returnType: "Integer" }]);
 
 		const code = `
 void main() {
@@ -1962,6 +1963,116 @@ void main() {
 `;
 		const diagnostics = ValidateVoidReturnValues(code);
 		expect(diagnostics.length).toBe(0);
+	});
+
+	test("does not flag mixed-overload function when non-void overload exists", () => {
+		// Simulates Prompt() which has both void(1-param) and Integer(2-param) overloads.
+		// The validator should match by argument count to pick the right return type.
+		const externalReturnTypes = new Map<string, OverloadReturnType[]>();
+		externalReturnTypes.set("Prompt", [
+			{ paramCount: 1, returnType: "void" },
+			{ paramCount: 2, returnType: "Integer" },
+			{ paramCount: 2, returnType: "Integer" },
+			{ paramCount: 2, returnType: "Integer" },
+		]);
+
+		const code = `
+void main() {
+	Integer x = Prompt("Enter value: ", "default");
+	if (Prompt("Continue? ", 1) != 0) {
+	}
+}
+`;
+		const diagnostics = ValidateVoidReturnValues(code, externalReturnTypes);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("flags void overload by argument count even if non-void overload exists (Ben's case)", () => {
+		// Ben's test case:
+		// Integer func() -- no arguments, returns Integer
+		// void func(Real value) -- one argument, returns void
+		// if(func(x)) should be flagged because the 1-argument overload returns void.
+		const externalReturnTypes = new Map<string, OverloadReturnType[]>();
+		externalReturnTypes.set("func", [
+			{ paramCount: 0, returnType: "Integer" },
+			{ paramCount: 1, returnType: "void" },
+		]);
+
+		const code = `
+void main() {
+	Real x = 1.0;
+	if (func(x)) {
+	}
+}
+`;
+		const diagnostics = ValidateVoidReturnValues(code, externalReturnTypes);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("func");
+		expect(diagnostics[0].message).toContain("void");
+	});
+
+	test("triple overload: only 2-arg is void — flags 2-arg call, not 1-arg or 3-arg", () => {
+		// triple(Integer) -> Integer, triple(Integer, Integer) -> void, triple(Integer, Integer, Integer) -> Real
+		const externalReturnTypes = new Map<string, OverloadReturnType[]>();
+		externalReturnTypes.set("triple", [
+			{ paramCount: 1, returnType: "Integer" },
+			{ paramCount: 2, returnType: "void" },
+			{ paramCount: 3, returnType: "Real" },
+		]);
+
+		const code = `
+void main() {
+	Integer a = triple(1);
+	Integer b = triple(1, 2);
+	Real c = triple(1, 2, 3);
+}
+`;
+		const diagnostics = ValidateVoidReturnValues(code, externalReturnTypes);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("triple");
+	});
+
+	test("local function definitions resolve by argument count (all-void multi-arity)", () => {
+		// Locally defined overloads: all return void, different arities — all consumed calls should warn.
+		const code = `
+void av()
+{
+}
+
+void av(Integer x)
+{
+}
+
+void test()
+{
+	Integer a = av();
+	Integer b = av(1);
+}
+`;
+		const diagnostics = ValidateVoidReturnValues(code);
+		expect(diagnostics.length).toBe(2);
+	});
+
+	test("local function definitions resolve by argument count (mixed: 0-arg non-void, 1-arg void)", () => {
+		const code = `
+Integer mf()
+{
+	return 42;
+}
+
+void mf(Integer x)
+{
+}
+
+void test()
+{
+	Integer a = mf();
+	Integer b = mf(1);
+}
+`;
+		const diagnostics = ValidateVoidReturnValues(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("mf");
 	});
 });
 
