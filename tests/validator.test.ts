@@ -2010,6 +2010,70 @@ void main() {
 		expect(diagnostics[0].message).toContain("func");
 		expect(diagnostics[0].message).toContain("void");
 	});
+
+	test("triple overload: only 2-arg is void — flags 2-arg call, not 1-arg or 3-arg", () => {
+		// triple(Integer) -> Integer, triple(Integer, Integer) -> void, triple(Integer, Integer, Integer) -> Real
+		const externalReturnTypes = new Map<string, OverloadReturnType[]>();
+		externalReturnTypes.set("triple", [
+			{ paramCount: 1, returnType: "Integer" },
+			{ paramCount: 2, returnType: "void" },
+			{ paramCount: 3, returnType: "Real" },
+		]);
+
+		const code = `
+void main() {
+	Integer a = triple(1);
+	Integer b = triple(1, 2);
+	Real c = triple(1, 2, 3);
+}
+`;
+		const diagnostics = ValidateVoidReturnValues(code, externalReturnTypes);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("triple");
+	});
+
+	test("local function definitions resolve by argument count (all-void multi-arity)", () => {
+		// Locally defined overloads: all return void, different arities — all consumed calls should warn.
+		const code = `
+void av()
+{
+}
+
+void av(Integer x)
+{
+}
+
+void test()
+{
+	Integer a = av();
+	Integer b = av(1);
+}
+`;
+		const diagnostics = ValidateVoidReturnValues(code);
+		expect(diagnostics.length).toBe(2);
+	});
+
+	test("local function definitions resolve by argument count (mixed: 0-arg non-void, 1-arg void)", () => {
+		const code = `
+Integer mf()
+{
+	return 42;
+}
+
+void mf(Integer x)
+{
+}
+
+void test()
+{
+	Integer a = mf();
+	Integer b = mf(1);
+}
+`;
+		const diagnostics = ValidateVoidReturnValues(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("mf");
+	});
 });
 
 // ─── Function argument validation (#45) ─────────────────────────────────────
