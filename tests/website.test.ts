@@ -103,12 +103,20 @@ describe("website html", () => {
 
 	test("loads site_data.js, prism, and required language components", () => {
 		expect(html).toInclude("site_data.js");
-		expect(html).toInclude("prism.min.js");
-		expect(html).toInclude("prism-clike.min.js");
-		expect(html).toInclude("prism-bash.min.js");
+		expect(html).toInclude("vendor/prism/prism.min.js");
+		expect(html).toInclude("vendor/prism/prism-clike.min.js");
+		expect(html).toInclude("vendor/prism/prism-bash.min.js");
+		expect(html).toInclude("vendor/prism/prism-tomorrow.min.css");
 		expect(html).toInclude("prism-12dpl.js");
-		expect(html).toInclude("prism-tomorrow.min.css");
 		expect(existsSync(join(publicDir, "prism-12dpl.js"))).toBe(true);
+
+		// Vendored Prism assets must be self-hosted, not loaded from a CDN.
+		const vendorDir = join(publicDir, "vendor", "prism");
+		for (const f of ["prism.min.js", "prism-clike.min.js", "prism-bash.min.js", "prism-tomorrow.min.css"]) {
+			expect(existsSync(join(vendorDir, f))).toBe(true);
+		}
+		expect(html).not.toMatch(/<script[^>]+src="https?:\/\/[^"]+"/);
+		expect(html).not.toMatch(/<link[^>]+rel="stylesheet"[^>]+href="https?:\/\/[^"]+"/);
 	});
 
 	test("Getting Started covers VS Code + extension install", () => {
