@@ -16,7 +16,8 @@ import { validateVariableRedeclarations,
 	validateVoidFunctionReturnValues,
 	validateFunctionArguments,
 	validateReturnStatements,
-	validateArraySize} from '../core/validators';
+	validateArraySize,
+	validateControlFlow} from '../core/validators';
 import type { FunctionSignatureMap, OverloadReturnType } from '../core/validators';
 import type { KnownSymbols, ParameterSymbolInfo } from '../core/types';
 
@@ -98,7 +99,10 @@ export class DiagnosticService {
 			// 3g. Array size validation (issue #73)
 			const arraySizeDiagnostics = validateArraySize(parseResult.tree);
 			diagnostics.push(...arraySizeDiagnostics);
-      
+
+			// 3h. Control flow validation (issues #96, #97, #98, #99)
+			const controlFlowDiagnostics = validateControlFlow(parseResult.tree);
+			diagnostics.push(...controlFlowDiagnostics);
 		}
 
 		return diagnostics;
