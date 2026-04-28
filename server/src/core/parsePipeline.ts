@@ -298,6 +298,41 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 	return out;
 }
 
+/**
+ * Replaces standalone macro usage lines with empty lines to prevent ANTLR parse errors.
+ *
+ * When a `#define MACRO_NAME ...` is used as a statement on its own line (e.g. `MACRO_EXAMPLE`
+ * or `LOG("hello")`), the bare identifier is not valid 12dPL grammar without a trailing
+ * semicolon. Since macro expansion happens in the compiler, we replace those lines with
+ * empty lines to preserve line numbers while avoiding false-positive syntax errors.
+ *
+ * @param strippedText - Text after `stripConditionalDirectives` (define lines already empty).
+ * @param rawText - The original document text, used to extract define names.
+ */
+export function stripStandaloneMacroUsages(strippedText: string, rawText: string): string {
+	// Collect all define names from the original (unstripped) text
+	const defineNames = new Set<string>();
+	const defineRe = /^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)/gm;
+	let m: RegExpExecArray | null;
+	while ((m = defineRe.exec(rawText)) !== null) {
+		defineNames.add(m[1]);
+	}
+	if (defineNames.size === 0) return strippedText;
+
+	// Replace lines that are ONLY a macro name (with optional args) and no trailing semicolon
+	const lines = strippedText.split('\n');
+	for (let i = 0; i < lines.length; i++) {
+		const trimmed = lines[i].trim();
+		if (!trimmed) continue;
+		// Matches: IDENTIFIER or IDENTIFIER(anything) with no trailing semicolon
+		const usageMatch = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)(\([^)]*\))?\s*$/);
+		if (usageMatch && defineNames.has(usageMatch[1])) {
+			lines[i] = '';
+		}
+	}
+	return lines.join('\n');
+}
+
 class SyntaxErrorListener implements ErrorListener<any> {
 	public errors: SyntaxError[] = [];
 
@@ -326,7 +361,8 @@ class SyntaxErrorListener implements ErrorListener<any> {
  */
 export function parse(documentText: string): ParseResult {
 	const { text: strippedText, conditionalLines } = stripConditionalDirectives(documentText);
-	const transformedText = wrapTopLevelScriptsPreservingLines(strippedText);
+	const macroStrippedText = stripStandaloneMacroUsages(strippedText, documentText);
+	const transformedText = wrapTopLevelScriptsPreservingLines(macroStrippedText);
 
 	const chars = new CharStream(transformedText);
 	const lexer = new proglang12dLexer(chars);
