@@ -17,7 +17,8 @@ import { validateVariableRedeclarations,
 	validateFunctionArguments,
 	validateReturnStatements,
 	validateArraySize,
-	validateControlFlow} from '../core/validators';
+	validateControlFlow,
+	validateAssignmentTypes} from '../core/validators';
 import type { FunctionSignatureMap, OverloadReturnType } from '../core/validators';
 import type { KnownSymbols, ParameterSymbolInfo } from '../core/types';
 
@@ -103,6 +104,10 @@ export class DiagnosticService {
 			// 3h. Control flow validation (issues #96, #97, #98, #99)
 			const controlFlowDiagnostics = validateControlFlow(parseResult.tree);
 			diagnostics.push(...controlFlowDiagnostics);
+
+			// 3i. Assignment type validation (issue #100)
+			const assignmentTypeDiagnostics = validateAssignmentTypes(parseResult.tree);
+			diagnostics.push(...assignmentTypeDiagnostics);
 		}
 
 		return diagnostics;
