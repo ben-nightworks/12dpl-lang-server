@@ -1,0 +1,2000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>12dPL — 12d Model Programming Language Docs</title>
+
+  <!-- ===== SEO / discoverability ===== -->
+  <meta name="description" content="Community reference for 12dPL, the 12d Model Programming Language. 3,126 library calls, 361 built-in types, code snippets, and a free open-source VS Code extension with autocomplete, hover docs, and diagnostics." />
+  <meta name="keywords" content="12dPL, 12d Programming Language, 12d Model, 12d macro, .4dm, .4do, civil engineering language, survey programming, cc4d, 12dpl-lang-server, 12dPL VS Code extension, 12dPL reference, 12dPL documentation, 12dPL snippets, 12dPL types, 12dPL functions" />
+  <meta name="author" content="12dpl-lang-server contributors" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="googlebot" content="index, follow" />
+  <meta name="bingbot" content="index, follow" />
+  <meta name="rating" content="general" />
+  <meta name="theme-color" content="#0ea5e9" />
+  <link rel="canonical" href="https://12dpl-docs.vercel.app/" />
+  <link rel="alternate" type="application/rss+xml" title="12dpl-lang-server commits" href="https://github.com/ben-nightworks/12dpl-lang-server/commits/main.atom" />
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+
+  <!-- ===== Open Graph (Facebook / LinkedIn / Discord / Slack) ===== -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="12dPL Docs" />
+  <meta property="og:title" content="12dPL Docs — 12d Model Programming Language reference" />
+  <meta property="og:description" content="Searchable reference for the 12d Model Programming Language: 3,126 library calls, 361 types, code snippets, plus a free VS Code extension." />
+  <meta property="og:url" content="https://12dpl-docs.vercel.app/" />
+  <meta property="og:image" content="https://12dpl-docs.vercel.app/logo.png" />
+  <meta property="og:image:alt" content="12dPL Language Server logo" />
+  <meta property="og:locale" content="en_US" />
+
+  <!-- ===== Twitter / X card ===== -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="12dPL Docs — 12d Model Programming Language reference" />
+  <meta name="twitter:description" content="Searchable reference for 12dPL: 3,126 library calls, 361 types, snippets, and a VS Code extension." />
+  <meta name="twitter:image" content="https://12dpl-docs.vercel.app/logo.png" />
+  <meta name="twitter:image:alt" content="12dPL Language Server logo" />
+
+  <!-- ===== Structured data (Schema.org / JSON-LD) ===== -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://12dpl-docs.vercel.app/#website",
+        "url": "https://12dpl-docs.vercel.app/",
+        "name": "12dPL Docs",
+        "description": "Community reference for the 12d Model Programming Language.",
+        "inLanguage": "en",
+        "license": "https://github.com/ben-nightworks/12dpl-lang-server/blob/main/LICENSE",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://12dpl-docs.vercel.app/?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "name": "12dpl-lang-server",
+        "description": "Open-source language server and VS Code extension for the 12d Model Programming Language.",
+        "codeRepository": "https://github.com/ben-nightworks/12dpl-lang-server",
+        "programmingLanguage": "12dPL",
+        "license": "https://opensource.org/licenses/MIT",
+        "author": [
+          { "@type": "Person", "name": "Ben Olsen" },
+          { "@type": "Person", "name": "Kamal Jarada" }
+        ]
+      },
+      {
+        "@type": "TechArticle",
+        "headline": "12dPL Language Reference",
+        "about": "12d Model Programming Language",
+        "url": "https://12dpl-docs.vercel.app/",
+        "inLanguage": "en",
+        "isAccessibleForFree": true,
+        "isPartOf": { "@id": "https://12dpl-docs.vercel.app/#website" }
+      }
+    ]
+  }
+  </script>
+
+  <link rel="icon" type="image/png" href="logo.png" />
+  <link rel="apple-touch-icon" href="logo.png" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header">
+  <div class="header-left">
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+      <span></span><span></span><span></span>
+    </button>
+    <a href="#home" class="logo" data-section="home">
+      <img src="logo.png" alt="12dPL Language Server" class="logo-img" width="32" height="32" />
+      <span class="logo-text">12dPL Docs</span>
+    </a>
+  </div>
+  <div class="header-center">
+    <div class="search-wrapper">
+      <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="search" id="searchInput" placeholder="Search functions, types, snippets..." autocomplete="off" />
+      <span class="search-shortcut">/</span>
+      <div id="searchResults" class="search-dropdown" hidden></div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+      <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      <svg id="moonIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a href="#" data-section="about" class="btn-outline" title="About this site &amp; legal disclaimer">About</a>
+    <a href="https://github.com/ben-nightworks/12dpl-lang-server/tree/dev" target="_blank" rel="noopener" class="btn-outline" title="View on GitHub">Language Server</a>
+    <a href="https://www.12d.com" target="_blank" rel="noopener" class="btn-outline">12d Solutions</a>
+  </div>
+</header>
+
+<!-- ===== LAYOUT ===== -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <ul class="nav-list">
+      <li class="nav-section-label">Getting Started</li>
+      <li><a href="#" data-section="home" class="nav-link active">Introduction</a></li>
+      <li><a href="#" data-section="getting-started" class="nav-link">Install VS Code &amp; Extension</a></li>
+      <li><a href="#" data-section="compiling" class="nav-link">Compiling &amp; Running</a></li>
+
+      <li class="nav-section-label">Language Reference</li>
+      <li><a href="#" data-section="basic-structure" class="nav-link">Basic Structure</a>
+        <ul class="nav-sub">
+          <li><a href="#" data-section="names" class="nav-link">Names &amp; Reserved Words</a></li>
+          <li><a href="#" data-section="comments" class="nav-link">Comments &amp; Whitespace</a></li>
+          <li><a href="#" data-section="preprocessing" class="nav-link">Preprocessing (#include)</a></li>
+        </ul>
+      </li>
+      <li><a href="#" data-section="variables" class="nav-link">Variables &amp; Types</a>
+        <ul class="nav-sub">
+          <li><a href="#" data-section="math-types" class="nav-link">Mathematical Types</a></li>
+          <li><a href="#" data-section="geometric-types" class="nav-link">Geometric Types</a></li>
+          <li><a href="#" data-section="db-handles" class="nav-link">Database Handles</a></li>
+          <li><a href="#" data-section="internal-types" class="nav-link">Internal Types</a></li>
+          <li><a href="#" data-section="interface-types" class="nav-link">Interface Types</a></li>
+          <li><a href="#" data-section="file-types" class="nav-link">File Types</a></li>
+          <li><a href="#" data-section="odbc-types" class="nav-link">ODBC Types</a></li>
+          <li><a href="#" data-section="arrays" class="nav-link">Arrays</a></li>
+          <li><a href="#" data-section="constants" class="nav-link">Constants</a></li>
+        </ul>
+      </li>
+      <li><a href="#" data-section="operators" class="nav-link">Operators</a></li>
+      <li><a href="#" data-section="flow-control" class="nav-link">Flow Control</a>
+        <ul class="nav-sub">
+          <li><a href="#" data-section="if-else" class="nav-link">if / else</a></li>
+          <li><a href="#" data-section="switch" class="nav-link">switch</a></li>
+          <li><a href="#" data-section="loops" class="nav-link">Loops</a></li>
+          <li><a href="#" data-section="goto" class="nav-link">goto &amp; labels</a></li>
+        </ul>
+      </li>
+      <li><a href="#" data-section="functions" class="nav-link">Functions</a>
+        <ul class="nav-sub">
+          <li><a href="#" data-section="main-function" class="nav-link">main()</a></li>
+          <li><a href="#" data-section="user-functions" class="nav-link">User-Defined Functions</a></li>
+          <li><a href="#" data-section="prototypes" class="nav-link">Prototypes</a></li>
+          <li><a href="#" data-section="pass-by-ref" class="nav-link">Pass by Value / Reference</a></li>
+          <li><a href="#" data-section="overloading" class="nav-link">Overloading</a></li>
+          <li><a href="#" data-section="recursion" class="nav-link">Recursion</a></li>
+          <li><a href="#" data-section="scopes" class="nav-link">Blocks &amp; Scopes</a></li>
+        </ul>
+      </li>
+
+      <li class="nav-section-label">Library Reference</li>
+      <li><a href="#" data-section="lib-overview" class="nav-link">Library Overview</a></li>
+      <li><a href="#" data-section="lib-text" class="nav-link">Text Functions</a></li>
+      <li><a href="#" data-section="lib-math" class="nav-link">Math Functions</a></li>
+      <li><a href="#" data-section="lib-io" class="nav-link">Input / Output</a></li>
+      <li><a href="#" data-section="lib-elements" class="nav-link">Elements &amp; Models</a></li>
+      <li><a href="#" data-section="lib-panels" class="nav-link">Panels &amp; Widgets</a></li>
+      <li><a href="#" data-section="lib-dynamic" class="nav-link">Dynamic Arrays</a></li>
+      <li><a href="#" data-section="all-calls" class="nav-link">Browse All Calls</a></li>
+      <li><a href="#" data-section="types" class="nav-link">Type Reference</a></li>
+
+      <li class="nav-section-label">Resources</li>
+      <li><a href="#" data-section="snippets" class="nav-link">Snippets Gallery</a></li>
+      <li><a href="#" data-section="examples" class="nav-link">Code Examples</a></li>
+      <li><a href="#" data-section="type-summary" class="nav-link">Type Quick Reference</a></li>
+    </ul>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="content" id="mainContent">
+
+    <!-- HOME -->
+    <section id="home" class="doc-section active">
+      <div class="hero">
+        <div class="badge">12d Model v15.0</div>
+        <h1>The 12d Model Programming Language</h1>
+        <p class="lead">A C++-based macro language for civil and survey engineering. Browse the complete library reference, type system, and code snippets pulled directly from the official manual and the open-source language server.</p>
+        <div class="hero-actions">
+          <a href="#" data-section="getting-started" class="btn-primary">Get started</a>
+          <a href="#" data-section="all-calls" class="btn-outline">Browse all calls</a>
+          <a href="#" data-section="snippets" class="btn-outline">View snippets</a>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card">
+            <span class="stat-num" data-stat="functions">3,126</span>
+            <span class="stat-label">Library calls</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-num" data-stat="types">361</span>
+            <span class="stat-label">Built-in types</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-num" data-stat="snippets">23</span>
+            <span class="stat-label">Code snippets</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-num">1,643</span>
+            <span class="stat-label">Manual pages</span>
+          </div>
+        </div>
+      </div>
+
+      <h2>Where to start</h2>
+      <div class="card-grid">
+        <div class="card" data-goto="getting-started">
+          <div class="card-icon">🚀</div>
+          <h3>Quick Start</h3>
+          <p>Install VS Code and the 12dPL extension to get full language support.</p>
+        </div>
+        <div class="card" data-goto="variables">
+          <div class="card-icon">📦</div>
+          <h3>Variable Types</h3>
+          <p>Mathematical, geometric, database and interface types.</p>
+        </div>
+        <div class="card" data-goto="flow-control">
+          <div class="card-icon">🔀</div>
+          <h3>Flow Control</h3>
+          <p>if/else, switch, while, for, do-while, break, continue, goto.</p>
+        </div>
+        <div class="card" data-goto="functions">
+          <div class="card-icon">⚙️</div>
+          <h3>Functions</h3>
+          <p>User-defined functions, overloading, recursion and scoping rules.</p>
+        </div>
+        <div class="card" data-goto="all-calls">
+          <div class="card-icon">📚</div>
+          <h3>Library Reference</h3>
+          <p>3,000+ built-in functions covering every part of the 12d Model API.</p>
+        </div>
+        <div class="card" data-goto="types">
+          <div class="card-icon">🧩</div>
+          <h3>Type Reference</h3>
+          <p>Complete catalogue of every type the language exposes, with descriptions.</p>
+        </div>
+        <div class="card" data-goto="snippets">
+          <div class="card-icon">✂️</div>
+          <h3>Snippets</h3>
+          <p>Ready-to-paste code patterns for panels, loops, functions and more.</p>
+        </div>
+        <div class="card" data-goto="examples">
+          <div class="card-icon">💡</div>
+          <h3>Examples</h3>
+          <p>Complete, working macro programs to learn from.</p>
+        </div>
+      </div>
+
+      <h2>What is 12dPL?</h2>
+      <p>The <strong>12d Model Programming Language (12dPL)</strong>, also known as the <em>12d Model Macro Language</em> or <em>4DML</em>, is a powerful programming language that runs from within 12d Model — a leading civil and survey engineering software platform.</p>
+      <p>12dPL is based on a subset of C++ with special extensions to allow easy manipulation of 12d Model data. A large number of intrinsic functions are supplied which cover most aspects of civil modelling. Programs written in 12dPL are often called <em>macros</em>, but they are fully fledged computer programs.</p>
+
+      <div class="callout callout-info">
+        <strong>Free Training Course:</strong> A free Self-Paced Online Training (SPOT) course is available from the Civil and Survey Institute. See <a href="https://www.civilandsurveying.com/spot-12d-model-15-macro-course" target="_blank" rel="noopener">civilandsurveying.com</a>
+      </div>
+
+      <h2>Hello World</h2>
+      <pre><code class="language-12dpl">// My first 12dPL program
+void main()
+{
+    Print("Hello, 12d World!\n");
+}</code></pre>
+
+      <h2>Key Features</h2>
+      <ul>
+        <li>C++-style syntax — familiar to C, C++, and Java developers</li>
+        <li>Strong type system with automatic promotions between numeric types</li>
+        <li>Rich set of geometric types: <code>Point</code>, <code>Line</code>, <code>Arc</code>, <code>Spiral</code>, <code>Segment</code></li>
+        <li>Direct access to 12d Model database via handles (<code>Element</code>, <code>Model</code>, <code>View</code>)</li>
+        <li>GUI panel creation with <code>Panel</code>, <code>Widget</code>, and dozens of input controls</li>
+        <li>File I/O, XML, and ODBC database access</li>
+        <li>Function overloading and recursion</li>
+        <li>Over 1,000 built-in library functions</li>
+      </ul>
+    </section>
+
+    <!-- GETTING STARTED -->
+    <section id="getting-started" class="doc-section">
+      <h1>Install VS Code &amp; the 12dPL Extension</h1>
+      <p>The recommended way to write 12dPL is in <strong>Visual Studio Code</strong> with the <strong>12dPL Language</strong> extension installed. You get syntax highlighting, autocompletion for 3000+ library calls, hover documentation, go-to-definition, and inline diagnostics.</p>
+
+      <h2>Step 1 — Install VS Code</h2>
+      <p>Download and install VS Code from the official site:</p>
+      <ul>
+        <li><a href="https://code.visualstudio.com/Download" target="_blank" rel="noopener">code.visualstudio.com/Download</a></li>
+      </ul>
+      <p>Pick the installer for your platform (Windows / macOS / Linux) and run it with the default options.</p>
+
+      <h2>Step 2 — Install the 12dPL Language extension</h2>
+      <p>Inside VS Code:</p>
+      <ol>
+        <li>Open the <strong>Extensions</strong> view — <code>Ctrl+Shift+X</code> on Windows/Linux, <code>Cmd+Shift+X</code> on macOS.</li>
+        <li>Search for <strong>12dPL Language</strong> (publisher: <code>nightworks</code>).</li>
+        <li>Click <strong>Install</strong>.</li>
+      </ol>
+      <p>Or install it from the command line:</p>
+      <pre><code class="language-bash">code --install-extension nightworks.12dpl-lang-server</code></pre>
+      <p>Marketplace link: <a href="https://marketplace.visualstudio.com/items?itemName=nightworks.12dpl-lang-server" target="_blank" rel="noopener">12dPL Language on the VS Code Marketplace</a>.</p>
+
+      <h2>Step 3 — Open a 12dPL file</h2>
+      <p>Open any <code>.4dm</code> or <code>.4do</code> file in VS Code. The extension activates automatically, and you'll get colorisation, completions, and diagnostics from that point on.</p>
+
+      <div class="callout callout-info">
+        <strong>Tip:</strong> The extension works on all platforms. The <code>cc4d.exe</code> compiler itself only ships with 12d Model on Windows, so compiling and running macros (next page) is Windows-only — but you can author and lint 12dPL anywhere.
+      </div>
+    </section>
+
+    <section id="compiling" class="doc-section">
+      <h1>Compiling &amp; Running a 12dPL Program</h1>
+      <p>A 12dPL program consists of one file containing a starting function called <code>main</code>, and zero or more user-defined functions. The filename must end in <code>.4dm</code>.</p>
+
+      <h2>Step 1 — Write your macro</h2>
+      <p>Create a file called <code>mymacro.4dm</code>:</p>
+      <pre><code class="language-12dpl">void main()
+{
+    Print("Macro running!\n");
+}</code></pre>
+
+      <h2>Step 2 — Compile</h2>
+      <p>You can compile in three ways:</p>
+
+      <h3>A. From inside 12d Model</h3>
+      <pre><code class="language-text">Utilities => Macros => Compile
+Utilities => Macros => Compile/run</code></pre>
+
+      <h3>B. Drag-and-drop</h3>
+      <p>Drop a <code>.4dm</code> file onto an open 12d Model window. The <em>Compile/Run a Macro</em> panel appears automatically.</p>
+
+      <h3>C. Command line (outside 12d Model)</h3>
+      <pre><code class="language-bash">"C:\Program Files\12d\12dmodel\15.00\nt.x64\cc4d.exe" mymacro.4dm
+
+# With error log:
+"C:\Program Files\12d\12dmodel\15.00\nt.x64\cc4d.exe" -log mymacro.4dl mymacro.4dm</code></pre>
+      <p>The compiler checks syntax and, if there are no errors, creates <code>mymacro.4do</code> — the compiled object ready to run.</p>
+
+      <h2>Step 3 — Run</h2>
+      <p>To run a compiled <code>.4do</code> file from within 12d Model:</p>
+      <pre><code class="language-text">Utilities => Macros => Run</code></pre>
+      <p>Select the <code>.4do</code> file from the list, optionally add command-line arguments, and click <strong>Run</strong>.</p>
+      <p>Alternatively, drag-and-drop a <code>.4do</code> file onto 12d Model to run it directly.</p>
+
+      <div class="callout callout-info">
+        <strong>Tip:</strong> Macros can also be bound to function keys, toolbars, and custom menu entries. See the 12d Model Reference Manual for details.
+      </div>
+
+      <h2>Mouse Conventions</h2>
+      <p>In this documentation, mouse buttons are referred to as:</p>
+      <table>
+        <thead><tr><th>Symbol</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>LB</code></td><td>Left button — press and release</td></tr>
+          <tr><td><code>MB</code></td><td>Middle button / scroll wheel — press and release</td></tr>
+          <tr><td><code>RB</code></td><td>Right button — press and release</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- BASIC STRUCTURE -->
+    <section id="basic-structure" class="doc-section">
+      <h1>Basic Language Structure</h1>
+      <p>A 12dPL program is a text file (ending in <code>.4dm</code>) that contains a mandatory <code>main</code> function and zero or more user-defined functions. The language is case-sensitive.</p>
+      <p>Topics in this section:</p>
+      <ul>
+        <li><a href="#" data-section="names">Names &amp; Reserved Words</a></li>
+        <li><a href="#" data-section="comments">Comments &amp; Whitespace</a></li>
+        <li><a href="#" data-section="preprocessing">Preprocessing (#include)</a></li>
+      </ul>
+    </section>
+
+    <!-- NAMES -->
+    <section id="names" class="doc-section">
+      <h1>Names &amp; Reserved Words</h1>
+      <h2>Names</h2>
+      <p>A <em>name</em> denotes an object, function, enumerator, type, or value. Rules:</p>
+      <ul>
+        <li>Must start with an alphabetic character (<code>a–z</code>, <code>A–Z</code>)</li>
+        <li>Can contain letters, digits (<code>0–9</code>), and underscores (<code>_</code>)</li>
+        <li>No length restriction</li>
+        <li><strong>Case-sensitive</strong> — <code>MyVar</code> and <code>myvar</code> are different</li>
+        <li>Must be declared before use</li>
+      </ul>
+
+      <h2>Reserved Keywords</h2>
+      <p>The following names cannot be used for user-defined variables or functions:</p>
+
+      <h3>Built-in Types</h3>
+      <div class="keyword-grid">
+        <code>Integer</code><code>Integer64</code><code>Real</code><code>Text</code><code>Uid</code><code>Guid</code>
+        <code>Element</code><code>Model</code><code>View</code><code>Tin</code><code>Point</code><code>Line</code>
+        <code>Arc</code><code>Spiral</code><code>Parabola</code><code>Segment</code><code>Curve</code><code>Menu</code>
+        <code>Panel</code><code>Widget</code><code>Function</code><code>Macro_Function</code><code>Undo</code><code>Undo_List</code>
+        <code>Attributes</code><code>Attribute_Blob</code><code>Blob</code><code>Screen_Text</code><code>Textstyle_Data</code><code>Equality_Label</code>
+        <code>Vector2</code><code>Vector3</code><code>Vector4</code><code>Matrix3</code><code>Matrix4</code><code>Colour</code>
+        <code>Time</code><code>File</code><code>Map_File</code><code>XML_Document</code><code>XML_Node</code>
+        <code>Dynamic_Integer</code><code>Dynamic_Integer64</code><code>Dynamic_Real</code><code>Dynamic_Text</code><code>Dynamic_Element</code>
+      </div>
+
+      <h3>C++ Control Keywords</h3>
+      <div class="keyword-grid">
+        <code>break</code><code>case</code><code>continue</code><code>default</code><code>do</code><code>else</code>
+        <code>for</code><code>goto</code><code>if</code><code>return</code><code>switch</code><code>void</code>
+        <code>while</code><code>sizeof</code><code>static</code><code>struct</code><code>typedef</code>
+      </div>
+
+      <h3>Container Type Keywords</h3>
+      <p>Container keywords follow the pattern <code>$KeyType_$KeyType_Map</code>, <code>$KeyType_Set</code>, etc., where <code>$KeyType</code> is one of: <code>Integer</code>, <code>Integer64</code>, <code>Real</code>, <code>Text</code>, <code>Uid</code>, <code>Guid</code>, <code>Point</code>, <code>Vector2</code>, <code>Vector3</code>, <code>Vector4</code>.</p>
+      <p>Examples: <code>Real_Set</code>, <code>Text_Multiset</code>, <code>Integer_Text_Multimap</code></p>
+    </section>
+
+    <!-- COMMENTS -->
+    <section id="comments" class="doc-section">
+      <h1>Comments &amp; Whitespace</h1>
+      <h2>Whitespace</h2>
+      <p>Spaces, tabs, newlines, and form feeds are all whitespace and are ignored except for separating tokens or inside quoted strings. Blank lines are ignored.</p>
+
+      <h2>Comments</h2>
+      <p>12dPL supports two comment styles identical to C++:</p>
+      <pre><code class="language-12dpl">// Line comment — everything from // to end of line is ignored
+
+/* Block comment — everything between /* and */ is ignored,
+   and can span multiple lines */</code></pre>
+
+      <h3>Example</h3>
+      <pre><code class="language-12dpl">void main()
+{
+    Real y = 1; // the rest of this line is a comment
+
+    /* this comment can carry
+       over many lines until
+       we reach the termination characters */
+}</code></pre>
+    </section>
+
+    <!-- PREPROCESSING -->
+    <section id="preprocessing" class="doc-section">
+      <h1>Preprocessing (#include)</h1>
+      <p>You can include other files using the <code>#include</code> directive:</p>
+      <pre><code class="language-12dpl">#include "filename"</code></pre>
+
+      <h3>Example</h3>
+      <pre><code class="language-12dpl">// file: helpers.h
+Point Coord(Real x, Real y, Real z)
+{
+    Point p;
+    Set_x(p, x);
+    Set_y(p, y);
+    Set_z(p, z);
+    return(p);
+}
+
+// file: mymacro.4dm
+#include "helpers.h"
+
+void main()
+{
+    Point p = Coord(10.0, 20.0, 2.34);
+}</code></pre>
+
+      <div class="callout callout-info">
+        <strong>Tip:</strong> The standard file <code>set_ups.h</code> is commonly included in macros. It provides useful constants such as <code>TRUE</code>, <code>FALSE</code>, <code>CHECK_MODEL_EXISTS</code>, <code>SELECT_STRING</code>, and many more.
+      </div>
+      <pre><code class="language-12dpl">#include "set_ups.h"
+
+void main()
+{
+    // set_ups.h constants now available
+}</code></pre>
+    </section>
+
+    <!-- VARIABLES -->
+    <section id="variables" class="doc-section">
+      <h1>Variables &amp; Types</h1>
+      <p>Variables must be declared before use. A declaration consists of a type followed by a comma-separated list of names ending with a semicolon.</p>
+      <pre><code class="language-12dpl">Integer fred, joe, tom;
+Real x = 1.0, y = 2.0;
+Text message = "Hello";</code></pre>
+
+      <p>12dPL has a rich type system organised into these categories:</p>
+      <table>
+        <thead><tr><th>Category</th><th>Examples</th><th>Persistent?</th></tr></thead>
+        <tbody>
+          <tr><td>Mathematical</td><td><code>Integer</code>, <code>Real</code>, <code>Text</code>, <code>Vector3</code></td><td>No — program only</td></tr>
+          <tr><td>Geometric Construction</td><td><code>Point</code>, <code>Line</code>, <code>Arc</code>, <code>Spiral</code></td><td>No — program only</td></tr>
+          <tr><td>12d Database Handles</td><td><code>Element</code>, <code>Model</code>, <code>View</code>, <code>Tin</code></td><td>Yes — stored in project</td></tr>
+          <tr><td>12d Internal</td><td><code>Uid</code>, <code>Attributes</code>, <code>Textstyle_Data</code></td><td>Via handles</td></tr>
+          <tr><td>Interface</td><td><code>Panel</code>, <code>Widget</code>, <code>Button</code>, <code>Model_Box</code></td><td>No — program only</td></tr>
+          <tr><td>File</td><td><code>File</code>, <code>XML_Document</code>, <code>Map_File</code></td><td>Via file system</td></tr>
+          <tr><td>ODBC</td><td><code>Connection</code>, <code>Select_Query</code></td><td>Via database</td></tr>
+          <tr><td>Arrays</td><td><code>Real[100]</code>, <code>Dynamic_Element</code></td><td>No — program only</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- MATH TYPES -->
+    <section id="math-types" class="doc-section">
+      <h1>Mathematical Variable Types</h1>
+      <p>Standard variables for arithmetic calculations. They exist only during macro execution.</p>
+      <table>
+        <thead><tr><th>Type</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td><code>Integer</code></td><td>32-bit signed whole number</td><td><code>-1</code>, <code>0</code>, <code>76875</code></td></tr>
+          <tr><td><code>Integer64</code></td><td>64-bit signed whole number</td><td><code>123LL</code>, <code>-123456789123</code></td></tr>
+          <tr><td><code>Real</code></td><td>64-bit IEEE floating point (~14 significant figures)</td><td><code>-1.0</code>, <code>3.14</code>, <code>1.0e+6</code></td></tr>
+          <tr><td><code>Text</code></td><td>A sequence of characters</td><td><code>"Hello"</code></td></tr>
+          <tr><td><code>Vector2</code></td><td>Two Reals <em>(X, Y)</em></td><td></td></tr>
+          <tr><td><code>Vector3</code></td><td>Three Reals <em>(X, Y, Z)</em></td><td></td></tr>
+          <tr><td><code>Vector4</code></td><td>Four Reals <em>(X, Y, Z, W)</em></td><td></td></tr>
+          <tr><td><code>Matrix3</code></td><td>3×3 matrix of Reals (9 values)</td><td></td></tr>
+          <tr><td><code>Matrix4</code></td><td>4×4 matrix of Reals (16 values)</td><td></td></tr>
+        </tbody>
+      </table>
+
+      <h2>Automatic Promotions</h2>
+      <p>The following promotions happen automatically when matching function arguments or return types:</p>
+      <table>
+        <thead><tr><th>From</th><th>To</th></tr></thead>
+        <tbody>
+          <tr><td><code>Integer</code></td><td><code>Real</code>, <code>Integer64</code></td></tr>
+          <tr><td><code>Integer64</code></td><td><code>Real</code>, <code>Integer</code></td></tr>
+          <tr><td><code>Real</code></td><td><code>Integer</code>, <code>Integer64</code></td></tr>
+          <tr><td><code>Vector2</code></td><td><code>Vector3</code></td></tr>
+          <tr><td><code>Vector3</code></td><td><code>Vector4</code>, <code>Vector2</code></td></tr>
+          <tr><td><code>Vector4</code></td><td><code>Vector3</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-warning">
+        <strong>Note:</strong> In binary operations with mixed types the result is the higher type: <code>Integer &lt; Integer64 &lt; Real</code>. Overflow is <em>not</em> auto-promoted — <code>2048 * 2048 * 2048</code> overflows as Integer.
+      </div>
+    </section>
+
+    <!-- GEOMETRIC TYPES -->
+    <section id="geometric-types" class="doc-section">
+      <h1>Geometric Construction Types</h1>
+      <p>These are temporary in-memory objects used for geometric calculations. They are <strong>not</strong> stored in 12d Model models.</p>
+      <table>
+        <thead><tr><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>Point</code></td><td>3D point with x, y, z coordinates</td></tr>
+          <tr><td><code>Line</code></td><td>3D line joining two Points</td></tr>
+          <tr><td><code>Arc</code></td><td>A helix: projects onto a circle in the (x,y) plane, with linearly interpolated z. Not a circle in 3D space.</td></tr>
+          <tr><td><code>Spiral</code></td><td>A mathematically-defined transition curve (clothoid or cubic parabola) with continuously varying radius</td></tr>
+          <tr><td><code>Parabola</code></td><td>A vertical geometry parabola in the (chainage, height) plane</td></tr>
+          <tr><td><code>Segment</code></td><td>A union type: can be a <code>Point</code>, <code>Line</code>, <code>Arc</code>, <code>Parabola</code>, or <code>Spiral</code></td></tr>
+        </tbody>
+      </table>
+      <pre><code class="language-12dpl">Point p;
+Set_x(p, 100.0);
+Set_y(p, 200.0);
+Set_z(p, 10.5);</code></pre>
+    </section>
+
+    <!-- DB HANDLES -->
+    <section id="db-handles" class="doc-section">
+      <h1>Database Handles</h1>
+      <p>Unlike construction entities, these variables act as handles to data stored in the 12d Model project database. The data <strong>persists</strong> after the macro terminates.</p>
+      <div class="callout callout-info">
+        A handle merely <em>points to</em> project data. Setting a handle to null does not change any data — the handle simply points to nothing.
+      </div>
+      <table>
+        <thead><tr><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>Element</code></td><td>Handle to a 12d Model string/element (Super, Arc, Circle, Drainage, Tin, etc.)</td></tr>
+          <tr><td><code>Tin</code></td><td>Handle to a triangulated irregular network</td></tr>
+          <tr><td><code>Model</code></td><td>Handle to a 12d Model model (layer/group of elements)</td></tr>
+          <tr><td><code>View</code></td><td>Handle to a 12d Model view</td></tr>
+          <tr><td><code>Macro_Function</code> / <code>Function</code></td><td>Handle to a 12d Model user-defined function</td></tr>
+          <tr><td><code>Undo_List</code></td><td>A list for combining undo operations</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Element Types</h2>
+      <p>The type of an Element is returned by <code>Get_type(Element elt, Text &amp;type)</code>:</p>
+      <table>
+        <thead><tr><th>Element Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>Super</code></td><td>General string with at least (x,y,z,radius) at each vertex — preferred type</td></tr>
+          <tr><td><code>Super Alignment</code></td><td>String with full horizontal geometry via intersection point methods</td></tr>
+          <tr><td><code>Arc</code></td><td>Arc in (x,y) plane with linear z interpolation</td></tr>
+          <tr><td><code>Circle</code></td><td>Circle in (x,y) plane with constant z</td></tr>
+          <tr><td><code>Text</code></td><td>String with text at a vertex</td></tr>
+          <tr><td><code>Tin</code></td><td>Triangulated Irregular Network</td></tr>
+          <tr><td><code>Drainage</code></td><td>Drainage/sewer element</td></tr>
+          <tr><td><code>Pipeline</code></td><td>Alignment string with diameter</td></tr>
+          <tr><td><code>Plot Frame</code></td><td>Element for plan plot production</td></tr>
+        </tbody>
+      </table>
+
+      <pre><code class="language-12dpl">Element elt;
+Text elt_type;
+Get_type(elt, elt_type);
+if (elt_type == "Super") {
+    Print("It's a Super string!\n");
+}</code></pre>
+    </section>
+
+    <!-- INTERNAL TYPES -->
+    <section id="internal-types" class="doc-section">
+      <h1>12d Internal Variable Types</h1>
+      <p>These types help access and manage data stored via database handles.</p>
+      <table>
+        <thead><tr><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>Uid</code></td><td>Unique identifier for entities in the 12d Model database</td></tr>
+          <tr><td><code>Guid</code></td><td>Global unique identifier for a 12d Model project</td></tr>
+          <tr><td><code>Attributes</code></td><td>Handle to a user-defined attribute structure (attachable to Projects, Models, Elements)</td></tr>
+          <tr><td><code>SDR_Attribute</code></td><td>Special attributes for the 12d Survey Data Reduction process</td></tr>
+          <tr><td><code>Blob</code></td><td>Binary data object</td></tr>
+          <tr><td><code>Attribute_Blob</code></td><td>Binary attribute object</td></tr>
+          <tr><td><code>Screen_Text</code></td><td>Text displayed on screen</td></tr>
+          <tr><td><code>Textstyle_Data</code></td><td>Holds text formatting: colour, textstyle, justification, height</td></tr>
+          <tr><td><code>Equality_Label</code></td><td>Holds information for labelling text as an equality</td></tr>
+          <tr><td><code>Undo</code></td><td>Holds information placed on the 12d Model undo system</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- INTERFACE TYPES -->
+    <section id="interface-types" class="doc-section">
+      <h1>Interface Variable Types</h1>
+      <p>These types are used to build interactive GUI panels and communicate with macro users. All are derived from <code>Widget</code>.</p>
+
+      <h2>Core Layout Types</h2>
+      <table>
+        <thead><tr><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>Panel</code></td><td>Top-level window container for a macro's GUI</td></tr>
+          <tr><td><code>Widget</code></td><td>Base type for all UI controls</td></tr>
+          <tr><td><code>Vertical_Group</code></td><td>Stacks widgets vertically</td></tr>
+          <tr><td><code>Horizontal_Group</code></td><td>Arranges widgets horizontally</td></tr>
+          <tr><td><code>Widget_Pages</code></td><td>Multi-page panel tabs</td></tr>
+          <tr><td><code>Menu</code></td><td>User-defined 12d Model menu</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Input Controls</h2>
+      <div class="keyword-grid">
+        <code>Button</code><code>Select_Button</code><code>Angle_Box</code><code>Attributes_Box</code>
+        <code>Chainage_Box</code><code>Choice_Box</code><code>Colour_Box</code><code>Date_Time_Box</code>
+        <code>Directory_Box</code><code>Draw_Box</code><code>File_Box</code><code>Function_Box</code>
+        <code>Graph_Box</code><code>GridCtrl_Box</code><code>HyperLink_Box</code><code>Input_Box</code>
+        <code>Integer_Box</code><code>Justify_Box</code><code>Linestyle_Box</code><code>List_Box</code>
+        <code>Message_Box</code><code>Colour_Message_Box</code><code>Model_Box</code><code>Name_Box</code>
+        <code>New_Select_Box</code><code>New_XYZ_Box</code><code>Real_Box</code><code>Report_Box</code>
+        <code>Select_Box</code><code>Symbol_Box</code><code>Tab_Box</code><code>Target_Box</code>
+        <code>Text_Edit_Box</code><code>Text_Style_Box</code><code>Tick_Box</code><code>Named_Tick_Box</code>
+        <code>Tin_Box</code><code>View_Box</code><code>XYZ_Box</code><code>Tree_Box</code>
+      </div>
+    </section>
+
+    <!-- FILE TYPES -->
+    <section id="file-types" class="doc-section">
+      <h1>File Interface Variable Types</h1>
+      <table>
+        <thead><tr><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>File</code></td><td>A standard file unit for reading/writing files</td></tr>
+          <tr><td><code>Map_File</code></td><td>A file for mapping element properties</td></tr>
+          <tr><td><code>Plot_Parameter_File</code></td><td>A file for plot parameters</td></tr>
+          <tr><td><code>XML_Document</code></td><td>File contents structured as an XML document</td></tr>
+          <tr><td><code>XML_Node</code></td><td>A node within an XML document</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ODBC TYPES -->
+    <section id="odbc-types" class="doc-section">
+      <h1>ODBC Database Variable Types</h1>
+      <p>These types provide access to external ODBC databases from within a macro.</p>
+      <table>
+        <thead><tr><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>Connection</code></td><td>Connection to an ODBC data source</td></tr>
+          <tr><td><code>Select_Query</code></td><td>Retrieve data from the database</td></tr>
+          <tr><td><code>Insert_Query</code></td><td>Add data to the database</td></tr>
+          <tr><td><code>Update_Query</code></td><td>Update data in the database</td></tr>
+          <tr><td><code>Delete_Query</code></td><td>Delete data from the database</td></tr>
+          <tr><td><code>Database_Result</code></td><td>Holds the result set from a query</td></tr>
+          <tr><td><code>Transaction</code></td><td>Database transaction management</td></tr>
+          <tr><td><code>Parameter_Collection</code></td><td>Query parameters</td></tr>
+          <tr><td><code>Query_Condition</code></td><td>Conditions for a query</td></tr>
+          <tr><td><code>Manual_Condition</code></td><td>Manually specified conditions</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ARRAYS -->
+    <section id="arrays" class="doc-section">
+      <h1>Arrays</h1>
+      <p>12dPL supports two kinds of arrays: <em>fixed-size</em> and <em>dynamic</em>.</p>
+
+      <h2>Fixed Arrays</h2>
+      <p>Size is specified at declaration (can be a literal or a previously-assigned variable). Size is fixed after declaration.</p>
+      <pre><code class="language-12dpl">Real real_array[100];    // 100 Reals, indexed 1..100
+
+Integer N = 50;
+Text text_array[N];      // 50 Texts (size fixed at this line)
+
+real_array[10] = 3.14;   // access item 10</code></pre>
+
+      <div class="callout callout-warning">
+        <strong>⚠ C++ Difference:</strong> Array indices in 12dPL start at <strong>1</strong>, not 0.
+      </div>
+
+      <h2>Dynamic Arrays</h2>
+      <p>Dynamic arrays can grow or shrink at runtime. Items are accessed through function calls, not subscript notation.</p>
+      <table>
+        <thead><tr><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>Dynamic_Element</code></td><td>Variable-length array of Elements</td></tr>
+          <tr><td><code>Dynamic_Integer</code></td><td>Variable-length array of Integers</td></tr>
+          <tr><td><code>Dynamic_Integer64</code></td><td>Variable-length array of 64-bit Integers</td></tr>
+          <tr><td><code>Dynamic_Real</code></td><td>Variable-length array of Reals</td></tr>
+          <tr><td><code>Dynamic_Text</code></td><td>Variable-length array of Text values</td></tr>
+        </tbody>
+      </table>
+      <pre><code class="language-12dpl">Dynamic_Element elts;
+Integer num_elts;
+Get_elements(model, elts, num_elts);
+
+for (Integer i = 1; i <= num_elts; i++) {
+    Element e;
+    Get_item(elts, i, e);
+    // process element e
+}</code></pre>
+    </section>
+
+    <!-- CONSTANTS -->
+    <section id="constants" class="doc-section">
+      <h1>Constants (Literals)</h1>
+
+      <h2>Integer Constants</h2>
+      <p>Any sequence of decimal digits. Constants ≥ 2³¹ are automatically treated as 64-bit integers. Append <code>LL</code> to force 64-bit.</p>
+      <pre><code class="language-12dpl">Integer  a = 1;
+Integer  b = 76875;
+Integer64 big = 123LL;
+Integer64 huge = -123456789123;  // auto 64-bit</code></pre>
+
+      <h2>Real Constants</h2>
+      <p>Must include a decimal point. Optional fractional part and optional exponent (<code>e</code> or <code>E</code>).</p>
+      <pre><code class="language-12dpl">Real x = 6.;
+Real y = 1.0;
+Real z = 1.0e+1;   // 10.0
+Real w = .1e+2;    // 10.0
+// Note: 1e1 is NOT valid — decimal point is mandatory</code></pre>
+
+      <h2>Text Constants</h2>
+      <p>A sequence of characters enclosed in double quotes. Supports escape sequences:</p>
+      <pre><code class="language-12dpl">Text s1 = "Hello, world!";
+Text s2 = "She said \"hello\"";  // embedded double quote
+Text s3 = "Line1\nLine2";        // newline
+Text s4 = "back\\slash";         // backslash</code></pre>
+
+      <table>
+        <thead><tr><th>Escape</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>\n</code></td><td>Newline</td></tr>
+          <tr><td><code>\"</code></td><td>Double quote</td></tr>
+          <tr><td><code>\\</code></td><td>Backslash</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- OPERATORS -->
+    <section id="operators" class="doc-section">
+      <h1>Operators</h1>
+
+      <h2>Arithmetic Operators</h2>
+      <table>
+        <thead><tr><th>Operator</th><th>Meaning</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><code>+</code></td><td>Addition</td><td></td></tr>
+          <tr><td><code>-</code></td><td>Subtraction</td><td></td></tr>
+          <tr><td><code>*</code></td><td>Multiplication</td><td>Also dot product for vectors, matrix multiply</td></tr>
+          <tr><td><code>/</code></td><td>Division</td><td>Integer division truncates the fractional part</td></tr>
+          <tr><td><code>%</code></td><td>Modulus</td><td>Integer remainder: <code>7 % 3 == 1</code></td></tr>
+          <tr><td><code>^</code></td><td>Cross product</td><td>For Vector2 and Vector3 only</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Relational Operators</h2>
+      <table>
+        <thead><tr><th>Operator</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>==</code></td><td>Equal to</td></tr>
+          <tr><td><code>!=</code></td><td>Not equal to</td></tr>
+          <tr><td><code>&lt;</code></td><td>Less than</td></tr>
+          <tr><td><code>&lt;=</code></td><td>Less than or equal to</td></tr>
+          <tr><td><code>&gt;</code></td><td>Greater than</td></tr>
+          <tr><td><code>&gt;=</code></td><td>Greater than or equal to</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Logical Operators</h2>
+      <table>
+        <thead><tr><th>Operator</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>&amp;&amp;</code></td><td>Logical AND</td></tr>
+          <tr><td><code>||</code></td><td>Logical OR</td></tr>
+          <tr><td><code>!</code></td><td>Logical NOT</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Increment / Decrement</h2>
+      <pre><code class="language-12dpl">i++;   // post-increment: i = i + 1
+i--;   // post-decrement: i = i - 1
+++i;   // pre-increment
+--i;   // pre-decrement</code></pre>
+
+      <h2>Bitwise Operators</h2>
+      <table>
+        <thead><tr><th>Operator</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>&amp;</code></td><td>Bitwise AND</td></tr>
+          <tr><td><code>|</code></td><td>Bitwise inclusive OR</td></tr>
+          <tr><td><code>^</code></td><td>Bitwise exclusive OR (XOR)</td></tr>
+          <tr><td><code>~</code></td><td>One's complement (unary)</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Assignment Operators</h2>
+      <pre><code class="language-12dpl">x = y;     // assignment
+x += 2;    // x = x + 2
+x -= 2;    // x = x - 2
+x *= 2;    // x = x * 2
+x /= 2;    // x = x / 2
+x %= 2;    // x = x % 2</code></pre>
+
+      <h2>Operator Precedence (high → low)</h2>
+      <table>
+        <thead><tr><th>Operators</th><th>Associativity</th></tr></thead>
+        <tbody>
+          <tr><td><code>()  []</code></td><td>Left to right</td></tr>
+          <tr><td><code>!  ~  ++  --  +  -  *  &amp;</code> (unary)</td><td>Right to left</td></tr>
+          <tr><td><code>*  /  %</code></td><td>Left to right</td></tr>
+          <tr><td><code>+  -</code></td><td>Left to right</td></tr>
+          <tr><td><code>&lt;  &lt;=  &gt;  &gt;=</code></td><td>Left to right</td></tr>
+          <tr><td><code>==  !=</code></td><td>Left to right</td></tr>
+          <tr><td><code>&amp;</code></td><td>Left to right</td></tr>
+          <tr><td><code>^</code></td><td>Left to right</td></tr>
+          <tr><td><code>|</code></td><td>Left to right</td></tr>
+          <tr><td><code>&amp;&amp;</code></td><td>Left to right</td></tr>
+          <tr><td><code>||</code></td><td>Left to right</td></tr>
+          <tr><td><code>?  :</code></td><td>Right to left</td></tr>
+          <tr><td><code>=  +=  -=  *=  /=  %=</code></td><td>Right to left</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- FLOW CONTROL -->
+    <section id="flow-control" class="doc-section">
+      <h1>Flow Control</h1>
+      <p>12dPL supports the standard C++ flow control statements. In a program, a logical expression evaluates to <strong>true</strong> if its value is non-zero, <strong>false</strong> if zero.</p>
+      <ul>
+        <li><a href="#" data-section="if-else">if / else / else if</a></li>
+        <li><a href="#" data-section="flow-control">Conditional expression (<code>? :</code>)</a></li>
+        <li><a href="#" data-section="switch">switch</a></li>
+        <li><a href="#" data-section="loops">while, for, do while</a></li>
+        <li><a href="#" data-section="goto">goto and labels</a></li>
+      </ul>
+    </section>
+
+    <!-- IF/ELSE -->
+    <section id="if-else" class="doc-section">
+      <h1>if / else / else if</h1>
+      <h2>if</h2>
+      <pre><code class="language-12dpl">if (x == 5) {
+    x = x + 1;
+    y = x * y;
+}</code></pre>
+
+      <h2>if / else</h2>
+      <pre><code class="language-12dpl">if (x > 0) {
+    Print("positive\n");
+} else {
+    Print("non-positive\n");
+}</code></pre>
+
+      <h2>else if</h2>
+      <pre><code class="language-12dpl">if (x > 0) {
+    Print("positive\n");
+} else if (x < 0) {
+    Print("negative\n");
+} else {
+    Print("zero\n");
+}</code></pre>
+
+      <h2>Conditional Expression (Ternary)</h2>
+      <p>The <code>? :</code> operator provides a concise inline if-else:</p>
+      <pre><code class="language-12dpl">// y = absolute value of x
+Real y = (x >= 0) ? x : -x;</code></pre>
+    </section>
+
+    <!-- SWITCH -->
+    <section id="switch" class="doc-section">
+      <h1>switch</h1>
+      <p>Evaluates an expression and jumps to the matching <code>case</code>. Supports <code>Integer</code>, <code>Integer64</code>, <code>Real</code>, and <code>Text</code> expressions.</p>
+
+      <div class="callout callout-warning">
+        <strong>12dPL Difference from C++:</strong> Statements after each <code>case</code> label <strong>must</strong> be enclosed in curly braces <code>{}</code>.
+      </div>
+
+      <pre><code class="language-12dpl">switch (a) {
+    case 1 : {
+        x = y;
+        break;
+    }
+    case 2: {
+        x = y + 1;
+        z = x * y;
+        // no break — falls through to case 3
+    }
+    case 3: case 4: {
+        x = z + 1;
+        break;
+    }
+    default : {
+        y = z + 2;
+        break;
+    }
+}</code></pre>
+
+      <h2>switch with Text</h2>
+      <pre><code class="language-12dpl">Text cmd = "write";
+switch (cmd) {
+    case "write": {
+        Print("Writing...\n");
+        break;
+    }
+    case "read": {
+        Print("Reading...\n");
+        break;
+    }
+    default: {
+        Print("Unknown command\n");
+        break;
+    }
+}</code></pre>
+    </section>
+
+    <!-- LOOPS -->
+    <section id="loops" class="doc-section">
+      <h1>Loops</h1>
+
+      <h2>while</h2>
+      <pre><code class="language-12dpl">Integer x = 10;
+Real product = 1.0;
+while (x > 0) {
+    product = product * x;
+    x = x - 1;
+}</code></pre>
+
+      <h2>for</h2>
+      <pre><code class="language-12dpl">// Sum numbers 1..10
+Integer j = 0;
+for (Integer i = 1; i <= 10; i++) {
+    j = j + i;
+}</code></pre>
+      <p><em>Any</em> part of the <code>for</code> header can be omitted (the semicolons must remain). If the test is omitted it is taken as permanently true.</p>
+
+      <h2>do while</h2>
+      <pre><code class="language-12dpl">Integer i = 1;
+do {
+    x = x + i;
+    i++;
+} while (i < 10);</code></pre>
+
+      <h2>break</h2>
+      <p>Exits the innermost <code>for</code>, <code>while</code>, <code>do while</code>, or <code>switch</code>:</p>
+      <pre><code class="language-12dpl">for (Integer i = 1; i <= 100; i++) {
+    if (i == 50) break;  // stop at 50
+}</code></pre>
+
+      <h2>continue</h2>
+      <p>Skips to the next iteration of the innermost loop:</p>
+      <pre><code class="language-12dpl">for (Integer i = 1; i <= 10; i++) {
+    if (i % 2 == 0) continue;  // skip even numbers
+    Print(To_text(i) + "\n");
+}</code></pre>
+    </section>
+
+    <!-- GOTO -->
+    <section id="goto" class="doc-section">
+      <h1>goto and Labels</h1>
+      <p>A label is a name followed by a colon and can be attached to any statement in a function. <code>goto</code> transfers control to the labelled statement.</p>
+      <pre><code class="language-12dpl">for (Integer i = 1; i <= 10; i++) {
+    if (some_error_condition) goto error;
+}
+
+Print("Success\n");
+return;
+
+error:
+Print("An error occurred\n");</code></pre>
+
+      <div class="callout callout-warning">
+        <strong>Restriction:</strong> A <code>goto</code> cannot jump over variable declarations at the same nesting level. Use extra braces <code>{}</code> to increase nesting if needed.
+      </div>
+    </section>
+
+    <!-- FUNCTIONS -->
+    <section id="functions" class="doc-section">
+      <h1>Functions</h1>
+      <p>Functions break tasks into reusable units. Communication is via arguments, return values, and global variables.</p>
+      <ul>
+        <li><a href="#" data-section="main-function">main()</a> — entry point</li>
+        <li><a href="#" data-section="user-functions">User-Defined Functions</a></li>
+        <li><a href="#" data-section="prototypes">Function Prototypes</a></li>
+        <li><a href="#" data-section="pass-by-ref">Pass by Value / Reference</a></li>
+        <li><a href="#" data-section="overloading">Overloading</a></li>
+        <li><a href="#" data-section="recursion">Recursion</a></li>
+        <li><a href="#" data-section="scopes">Blocks &amp; Scopes</a></li>
+      </ul>
+      <p>All 12dPL supplied functions start with a capital letter. Function names are case-sensitive.</p>
+    </section>
+
+    <!-- MAIN FUNCTION -->
+    <section id="main-function" class="doc-section">
+      <h1>main() Function</h1>
+      <p>Every 12dPL program must have exactly one <code>main</code> function. It is the entry point when a macro is run.</p>
+      <pre><code class="language-12dpl">void main()
+{
+    // your program code here
+}</code></pre>
+      <p><code>main</code> is a void function — it returns nothing. It terminates when:</p>
+      <ul>
+        <li>The last line of code is executed, or</li>
+        <li>A <code>return;</code> statement is encountered</li>
+      </ul>
+    </section>
+
+    <!-- USER FUNCTIONS -->
+    <section id="user-functions" class="doc-section">
+      <h1>User-Defined Functions</h1>
+      <p>User-defined functions must be defined <em>before</em> their first call in the file (or declared via a prototype — see below).</p>
+      <pre><code class="language-12dpl">// Function definition — must come before main() or have a prototype
+Integer add_values(Integer a, Integer b)
+{
+    return(a + b);
+}
+
+void main()
+{
+    Integer result = add_values(10, 20);
+    Print(To_text(result) + "\n");  // prints 30
+}</code></pre>
+
+      <h2>Return Statement</h2>
+      <p>Non-void functions must have a <code>return</code> as their last statement. Void functions use <code>return;</code> (or just fall off the end).</p>
+      <pre><code class="language-12dpl">Integer user_function(Integer fred, Real joe, Element tom)
+{
+    // ... code ...
+    return(0);  // must be last statement in non-void function
+}</code></pre>
+    </section>
+
+    <!-- PROTOTYPES -->
+    <section id="prototypes" class="doc-section">
+      <h1>Function Prototypes</h1>
+      <p>A prototype declares a function's signature so it can be called before its definition appears in the file.</p>
+      <pre><code class="language-12dpl">// Prototype (note the semicolon and no body)
+Integer user_function(Integer fred, Real joe, Element tom);
+// or omitting parameter names:
+Integer user_function(Integer, Real, Element);
+
+void main()
+{
+    Integer r = user_function(1, 2.0, elt);  // OK — prototype exists
+}
+
+// Actual definition can appear after main
+Integer user_function(Integer fred, Real joe, Element tom)
+{
+    // ...
+    return(0);
+}</code></pre>
+
+      <div class="callout callout-info">
+        <strong>Note:</strong> Prototypes can appear more than once in a file. The <code>main</code> function and built-in library functions never need to be prototyped.
+      </div>
+    </section>
+
+    <!-- PASS BY REF -->
+    <section id="pass-by-ref" class="doc-section">
+      <h1>Passing by Value / Reference</h1>
+      <h2>By Value (default)</h2>
+      <p>A copy of the argument is passed. Changes inside the function do not affect the caller.</p>
+      <pre><code class="language-12dpl">void bad_square(Integer x)
+{
+    x = x * x;  // only modifies the local copy
+}
+
+void main()
+{
+    Integer x = 10;
+    bad_square(x);
+    // x is still 10
+}</code></pre>
+
+      <h2>By Reference (<code>&amp;</code>)</h2>
+      <p>Place <code>&amp;</code> after the type to pass by reference. Changes inside the function affect the original variable. Used whenever a function needs to return values through its arguments.</p>
+      <pre><code class="language-12dpl">void square(Integer &x)
+{
+    x = x * x;  // modifies the caller's variable
+}
+
+void main()
+{
+    Integer x = 10;
+    square(x);
+    // x is now 100
+}</code></pre>
+
+      <pre><code class="language-12dpl">// Real-world example: Get_name returns the name via a reference argument
+Text name;
+Get_name(element, name);  // name is filled in by Get_name
+Print(name + "\n");</code></pre>
+
+      <div class="callout callout-info">
+        <strong>Note:</strong> Fixed arrays are always passed by reference. Dynamic arrays are also always by reference.
+      </div>
+    </section>
+
+    <!-- OVERLOADING -->
+    <section id="overloading" class="doc-section">
+      <h1>Function Overloading</h1>
+      <p>Multiple functions can share the same name if they differ in argument count or types. 12dPL selects the correct version automatically.</p>
+      <pre><code class="language-12dpl">void swap(Integer &x, Integer &y) { Integer z = x; x = y; y = z; }
+void swap(Real &x, Real &y)      { Real    z = x; x = y; y = z; }
+void swap(Text &x, Text &y)      { Text    z = x; x = y; y = z; }
+
+void main()
+{
+    Integer ix = 1, iy = 2;
+    Real    rx = 1.0, ry = 2.0;
+    Text    tx = "a", ty = "b";
+
+    swap(ix, iy);  // calls Integer version
+    swap(rx, ry);  // calls Real version
+    swap(tx, ty);  // calls Text version
+}</code></pre>
+
+      <div class="callout callout-warning">
+        <strong>Warning:</strong> If more than one overload matches (due to automatic promotions), the compiler raises an error. Use a temporary variable to force the correct type.
+      </div>
+    </section>
+
+    <!-- RECURSION -->
+    <section id="recursion" class="doc-section">
+      <h1>Recursion</h1>
+      <p>12dPL supports recursive functions.</p>
+      <pre><code class="language-12dpl">// Fibonacci sequence
+Integer fib(Integer n)
+{
+    return n < 2 ? 1 : fib(n - 1) + fib(n - 2);
+}
+
+void main()
+{
+    for (Integer i = 0; i <= 10; i++) {
+        Print(To_text(fib(i)) + "\n");
+    }
+}</code></pre>
+    </section>
+
+    <!-- SCOPES -->
+    <section id="scopes" class="doc-section">
+      <h1>Blocks &amp; Scopes</h1>
+      <p>A block is code enclosed in <code>{}</code>. Blocks can be nested. Three scope levels exist:</p>
+      <table>
+        <thead><tr><th>Scope</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Local</strong></td><td>Declared in a block — accessible in that block and any nested blocks after the declaration</td></tr>
+          <tr><td><strong>Function</strong></td><td>Labels only — accessible anywhere in the enclosing function</td></tr>
+          <tr><td><strong>Global</strong></td><td>Declared outside all functions in an enclosing <code>{}</code> — accessible from that point onwards in the file</td></tr>
+        </tbody>
+      </table>
+
+      <pre><code class="language-12dpl">// Global variables — must be wrapped in braces
+{
+    Integer global_count;
+    Real    global_total;
+}
+
+void main()
+{
+    Integer a = 1;         // local to main
+
+    {
+        Integer x = 10;    // local to this inner block
+        global_count = x;  // OK — global_count is visible here
+    }
+    // x is NOT accessible here
+
+    {
+        Real x = 10.0;     // different x — local to this block
+        global_total = x;
+    }
+}</code></pre>
+
+      <div class="callout callout-warning">
+        Avoid reusing the same variable name in nested blocks — the inner declaration hides the outer one.
+      </div>
+    </section>
+
+    <!-- LIBRARY OVERVIEW -->
+    <section id="lib-overview" class="doc-section">
+      <h1>Library Overview</h1>
+      <p>12dPL provides over 1,000 built-in functions organized into categories. All library functions start with a capital letter. Most return <code>0</code> on success and non-zero on failure.</p>
+
+      <h2>Function Return Codes</h2>
+      <p>The general convention is:</p>
+      <ul>
+        <li><code>0</code> — success</li>
+        <li>Non-zero — error or special condition</li>
+      </ul>
+
+      <h2>Library Categories</h2>
+      <table>
+        <thead><tr><th>Category</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Text</td><td>String manipulation, conversion, formatting</td></tr>
+          <tr><td>Maths</td><td>Trigonometry, logarithms, rounding, etc.</td></tr>
+          <tr><td>Input / Output</td><td>Console output, file reading/writing, clipboard</td></tr>
+          <tr><td>System</td><td>Date/time, process management, system queries</td></tr>
+          <tr><td>Dynamic Arrays</td><td>Add, get, set, clear dynamic arrays</td></tr>
+          <tr><td>Points &amp; Geometry</td><td>Points, lines, arcs, spirals, segments</td></tr>
+          <tr><td>Segment Geometry</td><td>Length, area, distance, offset, intersection</td></tr>
+          <tr><td>Vectors &amp; Matrices</td><td>Dot product, cross product, transforms</td></tr>
+          <tr><td>Colours</td><td>Colour creation and manipulation</td></tr>
+          <tr><td>Project</td><td>Project access and properties</td></tr>
+          <tr><td>Models</td><td>Create, delete, navigate models</td></tr>
+          <tr><td>Views</td><td>Create, navigate views</td></tr>
+          <tr><td>Elements</td><td>Create, modify, query all element types</td></tr>
+          <tr><td>Super Strings</td><td>Full set of Super string manipulation functions</td></tr>
+          <tr><td>Tin</td><td>TIN creation, triangulation, queries</td></tr>
+          <tr><td>Panels &amp; Widgets</td><td>Create interactive GUI panels</td></tr>
+          <tr><td>XML</td><td>Parse and generate XML</td></tr>
+          <tr><td>ODBC</td><td>External database connectivity</td></tr>
+          <tr><td>Attributes</td><td>User-defined attributes on elements</td></tr>
+          <tr><td>Undos</td><td>Register undo operations</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- LIBRARY: TEXT -->
+    <section id="lib-text" class="doc-section">
+      <h1>Text Functions</h1>
+      <h2>Commonly Used Functions</h2>
+      <table>
+        <thead><tr><th>Function</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>To_text(value)</code></td><td>Convert Integer, Real, Uid, etc. to Text</td></tr>
+          <tr><td><code>To_integer(text, &amp;i)</code></td><td>Parse Text as Integer</td></tr>
+          <tr><td><code>To_real(text, &amp;r)</code></td><td>Parse Text as Real</td></tr>
+          <tr><td><code>Text_length(text)</code></td><td>Number of characters in the text</td></tr>
+          <tr><td><code>Text_upper(text)</code></td><td>Convert to upper case</td></tr>
+          <tr><td><code>Text_lower(text)</code></td><td>Convert to lower case</td></tr>
+          <tr><td><code>Text_trim(text)</code></td><td>Remove leading and trailing whitespace</td></tr>
+          <tr><td><code>Text_substr(text, start, len)</code></td><td>Extract a substring</td></tr>
+          <tr><td><code>Text_pos(text, pattern)</code></td><td>Find position of pattern in text</td></tr>
+        </tbody>
+      </table>
+
+      <h2>String Concatenation</h2>
+      <pre><code class="language-12dpl">Text a = "Hello";
+Text b = " World";
+Text c = a + b;                    // "Hello World"
+Text msg = "Count: " + To_text(42); // "Count: 42"</code></pre>
+
+      <h2>Example</h2>
+      <pre><code class="language-12dpl">void main()
+{
+    Text name;
+    Get_name(element, name);
+    Integer n = Text_length(name);
+    Print("Name: " + name + " (" + To_text(n) + " chars)\n");
+}</code></pre>
+    </section>
+
+    <!-- LIBRARY: MATH -->
+    <section id="lib-math" class="doc-section">
+      <h1>Math Functions</h1>
+      <table>
+        <thead><tr><th>Function</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>Abs(x)</code></td><td>Absolute value</td></tr>
+          <tr><td><code>Sqrt(x)</code></td><td>Square root</td></tr>
+          <tr><td><code>Sin(angle)</code></td><td>Sine (radians)</td></tr>
+          <tr><td><code>Cos(angle)</code></td><td>Cosine (radians)</td></tr>
+          <tr><td><code>Tan(angle)</code></td><td>Tangent (radians)</td></tr>
+          <tr><td><code>Atan2(y, x)</code></td><td>Arc tangent of y/x in radians</td></tr>
+          <tr><td><code>Log(x)</code></td><td>Natural logarithm</td></tr>
+          <tr><td><code>Log10(x)</code></td><td>Base-10 logarithm</td></tr>
+          <tr><td><code>Exp(x)</code></td><td>e raised to the power x</td></tr>
+          <tr><td><code>Pow(x, y)</code></td><td>x raised to the power y</td></tr>
+          <tr><td><code>Floor(x)</code></td><td>Round down to nearest integer</td></tr>
+          <tr><td><code>Ceil(x)</code></td><td>Round up to nearest integer</td></tr>
+          <tr><td><code>Round(x)</code></td><td>Round to nearest integer</td></tr>
+          <tr><td><code>Max(a, b)</code></td><td>Larger of two values</td></tr>
+          <tr><td><code>Min(a, b)</code></td><td>Smaller of two values</td></tr>
+          <tr><td><code>Pi()</code></td><td>Returns π (3.14159…)</td></tr>
+        </tbody>
+      </table>
+
+      <pre><code class="language-12dpl">Real pi = Pi();
+Real angle_rad = 45.0 * pi / 180.0;
+Real s = Sin(angle_rad);
+Real c = Cos(angle_rad);
+Print("sin(45°) = " + To_text(s) + "\n");</code></pre>
+    </section>
+
+    <!-- LIBRARY: I/O -->
+    <section id="lib-io" class="doc-section">
+      <h1>Input / Output</h1>
+
+      <h2>Console Output</h2>
+      <pre><code class="language-12dpl">Print("Hello\n");                       // write to output window
+Print("Value = " + To_text(42) + "\n");
+Clear_console();                        // clear the output window</code></pre>
+
+      <h2>File Operations</h2>
+      <pre><code class="language-12dpl">File f;
+File_open("output.txt", "w", "ccs=UNICODE", f);
+File_write_line(f, "First line");
+File_write_line(f, "Second line: " + To_text(value));
+File_flush(f);
+File_close(f);</code></pre>
+
+      <h2>File Prompt</h2>
+      <pre><code class="language-12dpl">Text file_name;
+File_prompt("Select output file", "*.txt", file_name);
+File f;
+File_open(file_name, "w", "ccs=UNICODE", f);</code></pre>
+
+      <h2>Message Prompts</h2>
+      <pre><code class="language-12dpl">// Show a message dialog
+Error_prompt("Something went wrong!");
+
+// Prompt for a yes/no answer
+Integer answer = Yes_no_prompt("Continue?");</code></pre>
+    </section>
+
+    <!-- LIBRARY: ELEMENTS -->
+    <section id="lib-elements" class="doc-section">
+      <h1>Elements &amp; Models</h1>
+
+      <h2>Getting Element Information</h2>
+      <pre><code class="language-12dpl">Element elt;
+Text    name, type;
+Integer colour, num_verts;
+Model   model;
+
+Get_name(elt, name);      // get element name
+Get_type(elt, type);      // get element type string ("Super", "Tin", etc.)
+Get_colour(elt, colour);  // get colour index
+Get_points(elt, num_verts); // get number of vertices
+Get_model(elt, model);    // get the model containing this element</code></pre>
+
+      <h2>Modifying Elements</h2>
+      <pre><code class="language-12dpl">Set_name(elt, "New Name");
+Set_colour(elt, 3);
+Element_draw(elt);  // redraw the element on screen immediately</code></pre>
+
+      <h2>Iterating Elements in a Model</h2>
+      <pre><code class="language-12dpl">Model model = Get_model("My Model");
+Dynamic_Element elts;
+Integer num_elts;
+
+Get_elements(model, elts, num_elts);
+
+for (Integer i = 1; i <= num_elts; i++) {
+    Element e;
+    Get_item(elts, i, e);
+    Text name;
+    Get_name(e, name);
+    Print(name + "\n");
+}</code></pre>
+
+      <h2>Super String Vertex Coordinates</h2>
+      <pre><code class="language-12dpl">Element super_str;
+Integer n;
+Get_points(super_str, n);
+
+for (Integer i = 1; i <= n; i++) {
+    Real x, y, z;
+    Get_super_vertex_coord(super_str, i, x, y, z);
+    Print("  [" + To_text(i) + "] x=" + To_text(x)
+          + " y=" + To_text(y) + " z=" + To_text(z) + "\n");
+}</code></pre>
+    </section>
+
+    <!-- LIBRARY: PANELS -->
+    <section id="lib-panels" class="doc-section">
+      <h1>Panels &amp; Widgets</h1>
+      <p>12dPL provides a complete GUI framework for building interactive macro dialogs.</p>
+
+      <h2>Basic Panel Pattern</h2>
+      <pre><code class="language-12dpl">#include "set_ups.h"
+
+void main()
+{
+    // 1. Create the panel and widgets
+    Panel panel        = Create_panel("My Panel Title");
+    Message_Box msg    = Create_message_box("Ready");
+    Input_Box input    = Create_input_box("Name", msg);
+    Button ok_btn      = Create_finish_button("OK", "ok_reply");
+
+    // 2. Layout with groups
+    Vertical_Group vg  = Create_vertical_group(0);
+    Append(input, vg);
+    Append(msg, vg);
+
+    Horizontal_Group hg = Create_button_group();
+    Append(ok_btn, hg);
+    Append(hg, vg);
+    Append(vg, panel);
+
+    // 3. Show the panel
+    Show_widget(panel);
+
+    // 4. Event loop
+    Integer running = 1;
+    while (running) {
+        Integer id; Text cmd, msg_text;
+        Wait_on_widgets(id, cmd, msg_text);
+
+        switch (id) {
+            case Get_id(panel): {
+                if (cmd == "Panel Quit") running = 0;
+                break;
+            }
+            case Get_id(ok_btn): {
+                if (cmd == "ok_reply") running = 0;
+                break;
+            }
+        }
+    }
+}</code></pre>
+
+      <h2>Key Panel Functions</h2>
+      <table>
+        <thead><tr><th>Function</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>Create_panel(title)</code></td><td>Create a new panel</td></tr>
+          <tr><td><code>Show_widget(panel)</code></td><td>Display the panel on screen</td></tr>
+          <tr><td><code>Wait_on_widgets(id, cmd, msg)</code></td><td>Block until a widget event occurs</td></tr>
+          <tr><td><code>Get_id(widget)</code></td><td>Get a widget's unique integer ID</td></tr>
+          <tr><td><code>Set_data(widget, text)</code></td><td>Update a widget's display text</td></tr>
+          <tr><td><code>Validate(widget, result)</code></td><td>Validate and retrieve a widget's value</td></tr>
+          <tr><td><code>Append(child, parent)</code></td><td>Add a widget to a group or panel</td></tr>
+          <tr><td><code>Set_optional(widget, 1)</code></td><td>Mark a widget as optional (greyed title)</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Common Widget Creators</h2>
+      <pre><code class="language-12dpl">Model_Box  mb = Create_model_box("Model", msg, CHECK_MODEL_EXISTS);
+File_Box   fb = Create_file_box("File", msg, CHECK_FILE_NEW, "*.txt");
+Real_Box   rb = Create_real_box("Value", msg, 0.0);
+Tick_Box   tb = Create_tick_box("Enabled", msg);
+Choice_Box cb = Create_choice_box("Option", msg, "A|B|C");
+Colour_Box colb = Create_colour_box("Colour", msg);
+Name_Box   nb   = Create_name_box("Name", msg);</code></pre>
+    </section>
+
+    <!-- LIBRARY: DYNAMIC ARRAYS -->
+    <section id="lib-dynamic" class="doc-section">
+      <h1>Dynamic Arrays</h1>
+      <p>Dynamic arrays grow at runtime and are accessed through function calls (not subscript notation). Indices start at 1.</p>
+
+      <h2>Dynamic_Text Example</h2>
+      <pre><code class="language-12dpl">Dynamic_Text items;
+Integer count = 0;
+
+// Add items
+Add_item(items, count, "Apple");
+Add_item(items, count, "Banana");
+Add_item(items, count, "Cherry");
+
+// Iterate
+for (Integer i = 1; i <= count; i++) {
+    Text item;
+    Get_item(items, i, item);
+    Print(item + "\n");
+}</code></pre>
+
+      <h2>Key Dynamic Array Functions</h2>
+      <table>
+        <thead><tr><th>Function</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>Add_item(array, &amp;count, value)</code></td><td>Append an item; count is incremented</td></tr>
+          <tr><td><code>Get_item(array, index, &amp;value)</code></td><td>Retrieve item at index (1-based)</td></tr>
+          <tr><td><code>Set_item(array, index, value)</code></td><td>Set item at index</td></tr>
+          <tr><td><code>Delete_item(array, index, &amp;count)</code></td><td>Remove item at index</td></tr>
+          <tr><td><code>Clear_items(array, &amp;count)</code></td><td>Remove all items</td></tr>
+          <tr><td><code>Get_count(array, &amp;count)</code></td><td>Get number of items</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ALL CALLS -->
+    <section id="all-calls" class="doc-section">
+      <h1>Library Reference</h1>
+      <p>Every built-in 12dPL function with its signature, parameters and description. Data is sourced from the <a href="https://github.com/ben-nightworks/12dpl-lang-server/tree/dev" target="_blank" rel="noopener">12dpl-lang-server <code>dev</code> branch</a>, which extracts the official PDF manual into a structured form.</p>
+
+      <div class="category-chips" id="categoryChips">
+        <button type="button" class="active" data-section="all-calls" data-call-category="all">All</button>
+        <button type="button" data-section="all-calls" data-call-category="elements">Elements &amp; Models</button>
+        <button type="button" data-section="all-calls" data-call-category="ui">Panels &amp; Widgets</button>
+        <button type="button" data-section="all-calls" data-call-category="text">Text</button>
+        <button type="button" data-section="all-calls" data-call-category="math">Math &amp; Vectors</button>
+        <button type="button" data-section="all-calls" data-call-category="geometry">Geometry</button>
+        <button type="button" data-section="all-calls" data-call-category="tin">Tins &amp; Drainage</button>
+        <button type="button" data-section="all-calls" data-call-category="io">I/O &amp; Files</button>
+        <button type="button" data-section="all-calls" data-call-category="arrays">Arrays</button>
+        <button type="button" data-section="all-calls" data-call-category="attributes">Attributes</button>
+        <button type="button" data-section="all-calls" data-call-category="data">XML / ODBC</button>
+        <button type="button" data-section="all-calls" data-call-category="system">System</button>
+        <button type="button" data-section="all-calls" data-call-category="misc">Other</button>
+      </div>
+
+      <div class="calls-toolbar">
+        <div class="calls-toolbar-left">
+          <input id="allCallsFilter" type="search" placeholder="Filter by name or description (e.g. Get_, Set_, Create_)" autocomplete="off" />
+        </div>
+        <div class="calls-toolbar-right calls-stats">
+          <span><strong id="allCallsCategory">All</strong></span>
+          <span>&middot;</span>
+          <span>Showing <strong id="allCallsShown">0</strong> of <strong id="allCallsTotal">0</strong></span>
+        </div>
+      </div>
+
+      <div id="allCallsList" class="calls-list"></div>
+      <button id="allCallsMore" class="btn-outline" type="button">Load More</button>
+
+      <div class="callout callout-info" style="margin-top: 24px;">
+        <strong>Raw data:</strong> <a href="data/functions.enriched.json" target="_blank" rel="noopener">functions.enriched.json</a> &middot; <a href="data/typeDocumentation.json" target="_blank" rel="noopener">typeDocumentation.json</a> &middot; <a href="data/snippets.json" target="_blank" rel="noopener">snippets.json</a>.
+      </div>
+    </section>
+
+    <!-- TYPES -->
+    <section id="types" class="doc-section">
+      <h1>Type Reference</h1>
+      <p>The 12dPL type system covers primitive numbers, geometric primitives, database handles, file handles, UI widgets and dynamic containers. Descriptions below come from the language server&rsquo;s <code>typeDocumentation.json</code> (extracted from the official manual).</p>
+
+      <div class="category-chips" id="typeCategoryChips">
+        <button type="button" class="active" data-section="types" data-type-group="all">All</button>
+        <button type="button" data-section="types" data-type-group="math">Primitives &amp; Math</button>
+        <button type="button" data-section="types" data-type-group="geometry">Geometric</button>
+        <button type="button" data-section="types" data-type-group="elements">DB Handles</button>
+        <button type="button" data-section="types" data-type-group="ui">Interface</button>
+        <button type="button" data-section="types" data-type-group="data">File / Data</button>
+        <button type="button" data-section="types" data-type-group="attributes">Internal</button>
+        <button type="button" data-section="types" data-type-group="arrays">Containers</button>
+        <button type="button" data-section="types" data-type-group="misc">Other</button>
+      </div>
+
+      <div class="calls-toolbar">
+        <div class="calls-toolbar-left">
+          <input id="typesFilter" type="search" placeholder="Filter types (e.g. Vector, Box, Element)" autocomplete="off" />
+        </div>
+        <div class="calls-toolbar-right calls-stats">
+          <span><strong id="typesCurrentGroup">All</strong></span>
+          <span>&middot;</span>
+          <span><strong id="typesShown">0</strong> types</span>
+        </div>
+      </div>
+
+      <div id="typesGrid" class="types-grid"></div>
+    </section>
+
+    <!-- SNIPPETS -->
+    <section id="snippets" class="doc-section">
+      <h1>Snippets Gallery</h1>
+      <p>Ready-to-use code snippets for the most common 12dPL constructs. These mirror the snippets bundled with the <a href="https://github.com/ben-nightworks/12dpl-lang-server/tree/dev" target="_blank" rel="noopener">VS Code language server</a>, so trigger the matching <code>prefix</code> in your editor for the same expansion. Click <em>Copy</em> to grab a snippet straight into your clipboard.</p>
+      <div id="snippetsGrid" class="snippets-grid"></div>
+    </section>
+
+    <!-- EXAMPLES -->
+    <section id="examples" class="doc-section">
+      <h1>Code Examples</h1>
+
+      <h2>Example 1 — Hello World</h2>
+      <pre><code class="language-12dpl">void main()
+{
+    Print("Hello, 12d World!\n");
+}</code></pre>
+
+      <h2>Example 2 — Write Model Elements to a File</h2>
+      <pre><code class="language-12dpl">// write_model.4dm
+// Writes all element names in a model to a report file
+
+Integer write_out_model(Model model, File file)
+{
+    Text model_name;
+    Dynamic_Element model_elts;
+    Integer num_elts, ierr;
+
+    ierr = Get_name(model, model_name);
+    if (ierr != 0) return(ierr);
+
+    Uid model_uid;
+    Get_id(model, model_uid);
+    File_write_line(file, "Model uid " + To_text(model_uid));
+
+    Get_elements(model, model_elts, num_elts);
+    File_write_line(file, "There are " + To_text(num_elts)
+                         + " elements in: " + model_name);
+
+    for (Integer i = 1; i <= num_elts; i++) {
+        Element e;
+        Get_item(model_elts, i, e);
+
+        Text ename, etype;
+        Get_name(e, ename);
+        Get_type(e, etype);
+
+        Integer num_verts;
+        Get_points(e, num_verts);
+
+        File_write_line(file, ename + "\t" + etype
+                             + "\t" + To_text(num_verts) + " verts");
+    }
+
+    File_flush(file);
+    File_close(file);
+    return(0);
+}
+
+void main()
+{
+    Text model_name;
+    Model model;
+    while (!Model_exists(model)) {
+        Model_prompt("Select a model", model_name);
+        model = Get_model(model_name);
+    }
+
+    Text file_name;
+    File_prompt("Enter file name", "*.rpt", file_name);
+
+    File f;
+    File_open(file_name, "w", "ccs=UNICODE", f);
+    write_out_model(model, f);
+}</code></pre>
+
+      <h2>Example 3 — Interactive Panel with String Selection</h2>
+      <pre><code class="language-12dpl">// string_info.4dm
+// Panel to select a Super string and report its vertex count and dimensions
+#include "set_ups.h"
+
+void main()
+{
+    Panel panel             = Create_panel("String Info");
+    Message_Box msg         = Create_message_box("");
+    New_Select_Box sel      = Create_new_select_box("Select string",
+                                  "Pick a string", SELECT_STRING, msg);
+    Button finish           = Create_finish_button("Finish", "finish_reply");
+
+    Vertical_Group vg       = Create_vertical_group(0);
+    Append(sel, vg);
+    Append(msg, vg);
+
+    Horizontal_Group hg     = Create_button_group();
+    Append(finish, hg);
+    Append(hg, vg);
+    Append(vg, panel);
+    Show_widget(panel);
+    Clear_console();
+
+    Integer running = 1;
+    while (running) {
+        Integer id; Text cmd, wmsg;
+        Wait_on_widgets(id, cmd, wmsg);
+
+        switch (id) {
+            case Get_id(panel): {
+                if (cmd == "Panel Quit") running = 0;
+                break;
+            }
+            case Get_id(finish): {
+                if (cmd == "finish_reply") running = 0;
+                break;
+            }
+            case Get_id(sel): {
+                if (cmd == "accept select") {
+                    Element str; Integer ierr;
+                    ierr = Validate(sel, str);
+                    if (ierr != TRUE) {
+                        Set_data(msg, "Invalid selection");
+                        break;
+                    }
+                    Integer n;
+                    Get_points(str, n);
+
+                    Integer use2d, use3d;
+                    Get_super_use_3d_level(str, use3d);
+                    Get_super_use_2d_level(str, use2d);
+
+                    Text info = To_text(n) + " vertices";
+                    if      (use3d == 1) info += " — 3D (Att_ZCoord_Array)";
+                    else if (use2d == 1) info += " — 2D (Att_ZCoord_Value)";
+                    else                info += " — no Z dimension";
+
+                    Set_data(msg, info);
+                }
+                break;
+            }
+        }
+    }
+}</code></pre>
+
+      <h2>Example 4 — Recursive Fibonacci</h2>
+      <pre><code class="language-12dpl">Integer fib(Integer n)
+{
+    return n < 2 ? 1 : fib(n - 1) + fib(n - 2);
+}
+
+void main()
+{
+    for (Integer i = 0; i <= 10; i++) {
+        Print("fib(" + To_text(i) + ") = " + To_text(fib(i)) + "\n");
+    }
+}</code></pre>
+
+      <h2>Example 5 — Change String Name and Colour</h2>
+      <pre><code class="language-12dpl">// change_string.4dm — optional Name and Colour boxes
+#include "set_ups.h"
+
+void main()
+{
+    Panel panel         = Create_panel("Change String Name &amp; Colour");
+    Message_Box msg     = Create_message_box("");
+    New_Select_Box sel  = Create_new_select_box("Select string",
+                              "Pick a string", SELECT_STRING, msg);
+    Name_Box   nb       = Create_name_box("New name", msg);
+    Colour_Box cb       = Create_colour_box("New colour", msg);
+    Button finish       = Create_finish_button("Finish", "finish_reply");
+
+    Set_optional(nb, 1);  // name is optional
+    Set_optional(cb, 1);  // colour is optional
+
+    Vertical_Group vg   = Create_vertical_group(0);
+    Append(nb, vg);
+    Append(cb, vg);
+    Append(sel, vg);
+    Append(msg, vg);
+
+    Horizontal_Group hg = Create_button_group();
+    Append(finish, hg);
+    Append(hg, vg);
+    Append(vg, panel);
+    Show_widget(panel);
+
+    Integer running = 1;
+    while (running) {
+        Integer id; Text cmd, wmsg;
+        Wait_on_widgets(id, cmd, wmsg);
+
+        switch (id) {
+            case Get_id(panel): {
+                if (cmd == "Panel Quit") running = 0;
+                break;
+            }
+            case Get_id(finish): {
+                if (cmd == "finish_reply") running = 0;
+                break;
+            }
+            case Get_id(sel): {
+                if (cmd == "accept select") {
+                    Element str; Integer ierr;
+                    ierr = Validate(sel, str);
+                    if (ierr != TRUE) { Set_data(msg, "Invalid"); break; }
+
+                    Text new_name; Integer new_colour;
+                    Integer vn = Validate(nb, new_name);
+                    Integer vc = Validate(cb, new_colour);
+
+                    if (vn == FALSE) { Set_data(msg, "Name error"); break; }
+                    if (vc == FALSE) { Set_data(msg, "Colour error"); break; }
+
+                    if (vn != NO_NAME) Set_name(str, new_name);
+                    if (vc != NO_NAME) {
+                        Set_colour(str, new_colour);
+                        Element_draw(str);
+                    }
+                    Set_data(msg, "Changes applied");
+                }
+                break;
+            }
+        }
+    }
+}</code></pre>
+    </section>
+
+    <!-- TYPE SUMMARY -->
+    <section id="type-summary" class="doc-section">
+      <h1>Type Quick Reference</h1>
+      <h2>All 12dPL Types at a Glance</h2>
+      <table>
+        <thead><tr><th>Type</th><th>Category</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>void</code></td><td>Special</td><td>Used only for functions that return no value</td></tr>
+          <tr><td><code>Integer</code></td><td>Math</td><td>32-bit signed integer</td></tr>
+          <tr><td><code>Integer64</code></td><td>Math</td><td>64-bit signed integer</td></tr>
+          <tr><td><code>Real</code></td><td>Math</td><td>64-bit IEEE floating point</td></tr>
+          <tr><td><code>Text</code></td><td>Math</td><td>String of characters</td></tr>
+          <tr><td><code>Vector2</code></td><td>Math</td><td>2D vector (X,Y)</td></tr>
+          <tr><td><code>Vector3</code></td><td>Math</td><td>3D vector (X,Y,Z)</td></tr>
+          <tr><td><code>Vector4</code></td><td>Math</td><td>4D vector (X,Y,Z,W)</td></tr>
+          <tr><td><code>Matrix3</code></td><td>Math</td><td>3×3 matrix</td></tr>
+          <tr><td><code>Matrix4</code></td><td>Math</td><td>4×4 matrix</td></tr>
+          <tr><td><code>Point</code></td><td>Geometric</td><td>3D point (temporary)</td></tr>
+          <tr><td><code>Line</code></td><td>Geometric</td><td>3D line (temporary)</td></tr>
+          <tr><td><code>Arc</code></td><td>Geometric</td><td>Helix / plan-circle (temporary)</td></tr>
+          <tr><td><code>Spiral</code></td><td>Geometric</td><td>Transition curve (temporary)</td></tr>
+          <tr><td><code>Parabola</code></td><td>Geometric</td><td>Vertical parabola (temporary)</td></tr>
+          <tr><td><code>Segment</code></td><td>Geometric</td><td>Union of Point/Line/Arc/Parabola/Spiral</td></tr>
+          <tr><td><code>Element</code></td><td>DB Handle</td><td>Handle to 12d Model string/element</td></tr>
+          <tr><td><code>Tin</code></td><td>DB Handle</td><td>Handle to triangulated irregular network</td></tr>
+          <tr><td><code>Model</code></td><td>DB Handle</td><td>Handle to a 12d Model model</td></tr>
+          <tr><td><code>View</code></td><td>DB Handle</td><td>Handle to a 12d Model view</td></tr>
+          <tr><td><code>Macro_Function</code></td><td>DB Handle</td><td>Handle to a 12d Model function</td></tr>
+          <tr><td><code>Undo_List</code></td><td>DB Handle</td><td>List for combining undos</td></tr>
+          <tr><td><code>Uid</code></td><td>Internal</td><td>Unique ID for a database entity</td></tr>
+          <tr><td><code>Guid</code></td><td>Internal</td><td>Global unique ID for a project</td></tr>
+          <tr><td><code>Attributes</code></td><td>Internal</td><td>User-defined attribute structure handle</td></tr>
+          <tr><td><code>Textstyle_Data</code></td><td>Internal</td><td>Text colour/style/height data</td></tr>
+          <tr><td><code>Panel</code></td><td>Interface</td><td>GUI panel container</td></tr>
+          <tr><td><code>Widget</code></td><td>Interface</td><td>Base UI control type</td></tr>
+          <tr><td><code>Button</code></td><td>Interface</td><td>Clickable button</td></tr>
+          <tr><td><code>Message_Box</code></td><td>Interface</td><td>Read-only text display area</td></tr>
+          <tr><td><code>Input_Box</code></td><td>Interface</td><td>Free-text input field</td></tr>
+          <tr><td><code>File</code></td><td>File</td><td>File read/write handle</td></tr>
+          <tr><td><code>XML_Document</code></td><td>File</td><td>XML document handle</td></tr>
+          <tr><td><code>Connection</code></td><td>ODBC</td><td>External database connection</td></tr>
+          <tr><td><code>Dynamic_Element</code></td><td>Array</td><td>Dynamic array of Elements</td></tr>
+          <tr><td><code>Dynamic_Real</code></td><td>Array</td><td>Dynamic array of Reals</td></tr>
+          <tr><td><code>Dynamic_Integer</code></td><td>Array</td><td>Dynamic array of Integers</td></tr>
+          <tr><td><code>Dynamic_Text</code></td><td>Array</td><td>Dynamic array of Texts</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ABOUT / LEGAL -->
+    <section id="about" class="doc-section">
+      <h1>About &amp; Legal Disclaimer</h1>
+      <p class="lead">12dPL Docs is a community-maintained reference for the 12d Model Programming Language. It is built automatically from the open-source <a href="https://github.com/ben-nightworks/12dpl-lang-server" target="_blank" rel="noopener">12dpl-lang-server</a> project so the function, type, and snippet listings stay in sync with the editor tooling.</p>
+
+      <h2>What this site is</h2>
+      <ul>
+        <li>A searchable, browsable view of the 3,000+ 12dPL library calls and ~360 built-in types.</li>
+        <li>A reference for the snippets bundled with the VS Code extension.</li>
+        <li>An overview of language structure, types, operators, flow control, and common examples.</li>
+      </ul>
+
+      <h2>What this site is <em>not</em></h2>
+      <p class="disclaimer-lead">
+        <strong>This site is not official 12dPL documentation.</strong>
+        It is a community-maintained reference and is <strong>not a replacement</strong> for the
+        official 12d Model Programming Language manual or any documentation produced by 12d Solutions Pty Ltd.
+      </p>
+
+      <h2>Legal</h2>
+      <ul class="disclaimer-list">
+        <li>
+          <strong>No affiliation.</strong> This project is independent and is not affiliated with,
+          endorsed by, sponsored by, or in any way officially connected to 12d Solutions Pty Ltd
+          or any of its subsidiaries. <em>"12d"</em>, <em>"12d Model"</em>, and related names are
+          trademarks of their respective owners and are used here for descriptive purposes only.
+        </li>
+        <li>
+          <strong>Source of content.</strong> Function signatures, type names, and descriptions are
+          derived from publicly available references and the open-source
+          <a href="https://github.com/ben-nightworks/12dpl-lang-server" target="_blank" rel="noopener">12dpl-lang-server</a>
+          project. Content may be incomplete, outdated, or contain errors.
+        </li>
+        <li>
+          <strong>No warranty.</strong> All information is provided <em>"as is"</em>, without warranty
+          of any kind, express or implied, including but not limited to warranties of merchantability,
+          fitness for a particular purpose, accuracy, or non-infringement.
+        </li>
+        <li>
+          <strong>Limitation of liability.</strong> The maintainers and contributors of this site shall
+          not be liable for any direct, indirect, incidental, special, consequential, or exemplary
+          damages arising from the use of, or inability to use, this site or its content — including
+          but not limited to data loss, lost profits, or business interruption — even if advised of
+          the possibility of such damages.
+        </li>
+        <li>
+          <strong>Use at your own risk.</strong> You are solely responsible for verifying any
+          information from this site against the official 12d Model documentation before relying on
+          it for production work, safety-critical work, contractual deliverables, or compliance
+          purposes.
+        </li>
+        <li>
+          <strong>Licensing.</strong> The website source is released under the
+          <a href="https://github.com/ben-nightworks/12dpl-lang-server/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>.
+          Trademarks, product names, and any third-party content remain the property of their
+          respective owners.
+        </li>
+        <li>
+          <strong>Reporting issues.</strong> If you believe content on this site is inaccurate or
+          infringes on rights you hold, please open an issue on the
+          <a href="https://github.com/ben-nightworks/12dpl-lang-server/issues" target="_blank" rel="noopener">project issue tracker</a>
+          and we will review it promptly.
+        </li>
+      </ul>
+
+      <p class="disclaimer-foot">
+        For official, authoritative 12dPL documentation, please consult the manual provided by
+        <a href="https://www.12d.com" target="_blank" rel="noopener">12d Solutions</a>.
+      </p>
+      <p class="copyright">
+        &copy; <span id="footerYear">2026</span> 12dpl-lang-server contributors. Site content released under
+        <a href="https://github.com/ben-nightworks/12dpl-lang-server/blob/main/LICENSE" target="_blank" rel="noopener">MIT</a>.
+      </p>
+    </section>
+
+  </main>
+</div>
+
+<button id="backToTop" class="back-to-top" type="button" aria-label="Back to top">↑</button>
+
+<!-- Search index data -->
+<script id="searchData" type="application/json">
+[
+  {"section":"home","title":"Introduction","text":"12dPL 12d Model Programming Language macro civil survey C++ subset full manual coverage 1643 pages"},
+  {"section":"getting-started","title":"Install VS Code & Extension","text":"vscode visual studio code install download extension marketplace nightworks 12dpl language server setup"},
+  {"section":"compiling","title":"Compiling & Running","text":"compile run cc4d.exe .4dm .4do macro compiler Utilities Macros"},
+  {"section":"names","title":"Names & Reserved Words","text":"reserved keywords Integer Real Text Element Model View names case-sensitive"},
+  {"section":"comments","title":"Comments & Whitespace","text":"comments // /* */ whitespace blank lines"},
+  {"section":"preprocessing","title":"Preprocessing","text":"#include set_ups.h include files preprocessing"},
+  {"section":"variables","title":"Variables & Types","text":"variable declaration type Integer Real Text Element persistent"},
+  {"section":"math-types","title":"Mathematical Types","text":"Integer Integer64 Real Text Vector2 Vector3 Vector4 Matrix3 Matrix4 arithmetic"},
+  {"section":"geometric-types","title":"Geometric Types","text":"Point Line Arc Spiral Parabola Segment temporary geometry"},
+  {"section":"db-handles","title":"Database Handles","text":"Element Model View Tin Macro_Function handles database persistent Super Arc Drainage"},
+  {"section":"internal-types","title":"Internal Types","text":"Uid Guid Attributes Textstyle_Data Blob Undo"},
+  {"section":"interface-types","title":"Interface Types","text":"Panel Widget Button Message_Box Input_Box Model_Box Colour_Box Tick_Box GUI"},
+  {"section":"file-types","title":"File Types","text":"File Map_File XML_Document XML_Node Plot_Parameter_File"},
+  {"section":"odbc-types","title":"ODBC Types","text":"Connection Select_Query Insert_Query Update_Query Delete_Query database"},
+  {"section":"arrays","title":"Arrays","text":"fixed array dynamic Dynamic_Element Dynamic_Real Dynamic_Text Dynamic_Integer indices start 1"},
+  {"section":"constants","title":"Constants","text":"integer real text constant literal escape \\n LL"},
+  {"section":"operators","title":"Operators","text":"arithmetic + - * / % relational == != < > logical && || ! bitwise increment"},
+  {"section":"flow-control","title":"Flow Control","text":"flow control if else switch while for do break continue goto"},
+  {"section":"if-else","title":"if / else","text":"if else else if conditional ternary ? :"},
+  {"section":"switch","title":"switch","text":"switch case default break fall through braces required"},
+  {"section":"loops","title":"Loops","text":"while for do while loop break continue iteration"},
+  {"section":"goto","title":"goto & labels","text":"goto label jump transfer control"},
+  {"section":"functions","title":"Functions","text":"function user defined return type arguments"},
+  {"section":"main-function","title":"main() Function","text":"main entry point void program start"},
+  {"section":"user-functions","title":"User-Defined Functions","text":"user defined function return statement non-void"},
+  {"section":"prototypes","title":"Function Prototypes","text":"prototype declaration semicolon before definition"},
+  {"section":"pass-by-ref","title":"Pass by Value / Reference","text":"pass value reference ampersand & modify caller return via argument"},
+  {"section":"overloading","title":"Function Overloading","text":"overloading same name different arguments types automatic promotion"},
+  {"section":"recursion","title":"Recursion","text":"recursion recursive fibonacci"},
+  {"section":"scopes","title":"Blocks & Scopes","text":"scope local global function block braces nested variables"},
+  {"section":"lib-overview","title":"Library Overview","text":"library built-in functions return code 0 success non-zero error"},
+  {"section":"lib-text","title":"Text Functions","text":"To_text Text_length Text_upper Text_lower Text_trim Text_substr concatenation"},
+  {"section":"lib-math","title":"Math Functions","text":"Abs Sqrt Sin Cos Tan Atan2 Log Exp Pow Floor Ceil Round Max Min Pi"},
+  {"section":"lib-io","title":"Input / Output","text":"Print File_open File_write_line File_close File_prompt Clear_console"},
+  {"section":"lib-elements","title":"Elements & Models","text":"Get_name Get_type Get_colour Get_points Get_model Set_name Set_colour Element_draw Get_elements"},
+  {"section":"lib-panels","title":"Panels & Widgets","text":"Create_panel Show_widget Wait_on_widgets Append Validate Set_data Get_id"},
+  {"section":"lib-dynamic","title":"Dynamic Arrays","text":"Add_item Get_item Set_item Delete_item Clear_items Get_count dynamic array"},
+  {"section":"all-calls","title":"Library Reference (All Calls)","text":"complete extracted call index full function list 12dpl calls get set create manual coverage filter category browse"},
+  {"section":"types","title":"Type Reference","text":"types catalogue Integer Real Text Vector Matrix Element Model Tin Panel Widget Box file XML ODBC dynamic array"},
+  {"section":"snippets","title":"Snippets Gallery","text":"snippets templates for loop while if function panel button message_box copy paste vscode language server"},
+  {"section":"examples","title":"Code Examples","text":"example hello world model elements panel string vertices fibonacci interactive"},
+  {"section":"type-summary","title":"Type Quick Reference","text":"all types summary void Integer Real Text Vector Element Model Panel File"},
+  {"section":"about","title":"About & Legal","text":"about legal disclaimer license MIT no warranty no affiliation 12d Solutions trademark liability community unofficial"}
+]
+</script>
+
+<script src="site_data.js"></script>
+<script src="app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="prism-12dpl.js"></script>
+</body>
+</html>
