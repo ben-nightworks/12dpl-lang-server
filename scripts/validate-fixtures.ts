@@ -35,6 +35,7 @@ import {
 	validateReturnStatements,
 	validateArraySize,
 	validateAssignmentTypes,
+	validateLogicalConditions,
 } from '../server/src/core/validators';
 import type { FunctionSignatureMap, OverloadReturnType } from '../server/src/core/validators';
 import type { KnownSymbols, SymbolDeclaration, ParameterSymbolInfo } from '../server/src/core/types';
@@ -489,6 +490,7 @@ function validateFile(filePath: string, prototypes: PrototypeService): Diagnosti
 		pushDiagnostics(validateReturnStatements(result.tree));
 		pushDiagnostics(validateArraySize(result.tree));
 		pushDiagnostics(validateAssignmentTypes(result.tree));
+		pushDiagnostics(validateLogicalConditions(result.tree));
 	}
 
 	return diagnostics;

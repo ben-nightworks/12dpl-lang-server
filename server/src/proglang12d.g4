@@ -242,6 +242,10 @@ builtInTypeSpecifier
     | 'Text_Set'
     | 'Spiral'
     | 'Parabola'
+    | 'Chain_Parameters'
+    | 'Macro_Handle'
+    | 'View_Draw'
+    | 'User_Input_Replay'
     ;
 
 builtInWidgetTypeSpecifier
@@ -312,6 +316,8 @@ builtInWidgetTypeSpecifier
     | 'Tree_Page'
     | 'View_Box'
     | 'XYZ_Box'
+    | 'Hydro_Box'
+    | 'Weight_Box'
     ;
 
 builtInSetTypeSpecifier

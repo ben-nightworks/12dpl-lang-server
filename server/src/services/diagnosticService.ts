@@ -18,7 +18,8 @@ import { validateVariableRedeclarations,
 	validateReturnStatements,
 	validateArraySize,
 	validateControlFlow,
-	validateAssignmentTypes} from '../core/validators';
+	validateAssignmentTypes,
+	validateLogicalConditions} from '../core/validators';
 import type { FunctionSignatureMap, OverloadReturnType } from '../core/validators';
 import type { KnownSymbols, ParameterSymbolInfo } from '../core/types';
 
@@ -108,6 +109,10 @@ export class DiagnosticService {
 			// 3i. Assignment type validation (issue #100)
 			const assignmentTypeDiagnostics = validateAssignmentTypes(parseResult.tree);
 			diagnostics.push(...assignmentTypeDiagnostics);
+
+			// 3j. Logical condition validation (issue #101)
+			const logicalConditionDiagnostics = validateLogicalConditions(parseResult.tree);
+			diagnostics.push(...logicalConditionDiagnostics);
 		}
 
 		return diagnostics;
