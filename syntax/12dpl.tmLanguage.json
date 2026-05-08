@@ -117,6 +117,9 @@
 			"include": "#anon_pattern_range_9"
 		},
 		{
+			"include": "#constant_symbols"
+		},
+		{
 			"include": "#anon_pattern_14"
 		},
 		{
@@ -191,6 +194,14 @@
 		"anon_pattern_7": {
 			"match": "\\b(TRUE|FALSE)\\b",
 			"name": "constant.language.12dpl"
+		},
+		"constant_symbols": {
+			"patterns": [
+				{
+					"name": "constant.other.12dpl",
+					"match": "\\b[A-Z][A-Z0-9_]{2,}\\b"
+				}
+			]
 		},
 		"anon_pattern_range_1": {
 			"name": "meta.preprocessor.macro.12dpl",
@@ -1116,6 +1127,9 @@
 					"include": "#function-call-innards"
 				},
 				{
+					"include": "#constant_symbols"
+				},
+				{
 					"include": "$self"
 				}
 			]
@@ -1158,6 +1172,9 @@
 							"include": "#function-call-innards"
 						}
 					]
+				},
+				{
+					"include": "#constant_symbols"
 				},
 				{
 					"begin": "\\(",
