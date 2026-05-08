@@ -26,7 +26,7 @@ import {
 	safeTokenColumn,
 	extractIdentifierFromDeclarator,
 } from './validation.Common';
-import { isSubtypeOf, isPromotableTo } from './typeHierarchy';
+import { isSubtypeOf, isPromotableTo, getLossyPromotionReason } from './typeHierarchy';
 
 /**
  * Resolves the type of a simple expression — literals and identifiers.
@@ -53,6 +53,33 @@ function isAssignmentCompatible(fromType: string, toType: string): boolean {
 	if (isPromotableTo(fromType, toType)) return true;
 	if (isSubtypeOf(fromType, toType)) return true;
 	return false;
+}
+
+/**
+ * Builds the diagnostic for a `fromType` → `toType` assignment, or returns
+ * undefined if the assignment is fully compatible without information loss.
+ */
+function diagnoseTypeFlow(
+	fromType: string,
+	toType: string,
+	range: Diagnostic['range']
+): Diagnostic | undefined {
+	if (!isAssignmentCompatible(fromType, toType)) {
+		return {
+			severity: DiagnosticSeverity.Error,
+			range,
+			message: `Cannot promote '${fromType}' to '${toType}'`
+		};
+	}
+	const reason = getLossyPromotionReason(fromType, toType);
+	if (reason) {
+		return {
+			severity: DiagnosticSeverity.Warning,
+			range,
+			message: `Possible loss of precision: '${fromType}' to '${toType}' (${reason})`
+		};
+	}
+	return undefined;
 }
 
 /**
@@ -121,15 +148,12 @@ export function validateAssignmentTypes(tree: any): Diagnostic[] {
 				const initializer = initDecl?.initializer?.();
 				if (initializer) {
 					const exprType = resolveExprType(initializer, scopedVars);
-					if (exprType && !isAssignmentCompatible(exprType, declType)) {
-						diagnostics.push({
-							severity: DiagnosticSeverity.Error,
-							range: {
-								start: { line: info.line - 1, character: info.column },
-								end: { line: info.line - 1, character: info.column + info.name.length }
-							},
-							message: `Cannot promote '${exprType}' to '${declType}'`
+					if (exprType) {
+						const diag = diagnoseTypeFlow(exprType, declType, {
+							start: { line: info.line - 1, character: info.column },
+							end: { line: info.line - 1, character: info.column + info.name.length }
 						});
+						if (diag) diagnostics.push(diag);
 					}
 				}
 			}
@@ -203,8 +227,7 @@ export function validateAssignmentTypes(tree: any): Diagnostic[] {
 						const targetType = targetName ? scopedVars.get(targetName) : undefined;
 						const rhsType = rhs ? resolveExprType(rhs, scopedVars) : undefined;
 
-						if (targetName && targetType && rhsType &&
-							!isAssignmentCompatible(rhsType, targetType)) {
+						if (targetName && targetType && rhsType) {
 							const idNode = lhs?.Identifier?.()
 								?? lhs?.postfixExpression?.()?.primaryExpression?.()?.Identifier?.()
 								?? null;
@@ -221,14 +244,11 @@ export function validateAssignmentTypes(tree: any): Diagnostic[] {
 								column = typeof start?.column === 'number' ? start.column : null;
 							}
 							if (line !== null && column !== null) {
-								diagnostics.push({
-									severity: DiagnosticSeverity.Error,
-									range: {
-										start: { line: line - 1, character: column },
-										end: { line: line - 1, character: column + targetName.length }
-									},
-									message: `Cannot promote '${rhsType}' to '${targetType}'`
+								const diag = diagnoseTypeFlow(rhsType, targetType, {
+									start: { line: line - 1, character: column },
+									end: { line: line - 1, character: column + targetName.length }
 								});
+								if (diag) diagnostics.push(diag);
 							}
 						}
 					}

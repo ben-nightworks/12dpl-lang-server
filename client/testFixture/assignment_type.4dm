@@ -68,7 +68,21 @@ void test_promotion_chain()
 
 	big = i;                       // OK: Integer promotes to Integer64
 	r   = big;                     // OK: Integer64 promotes to Real
-	i   = big;                     // OK: Integer64 promotes to Integer
+}
+
+// ──────── Precision-loss warnings ───────────────────────────────────────────
+
+void test_lossy_promotions()
+{
+	Integer   i;
+	Integer64 big = 0;
+	Real      r = 1.5;
+
+	i   = big;                     // WARNING: 'Integer64' to 'Integer' (large values may be truncated)
+	i   = r;                       // WARNING: 'Real' to 'Integer' (decimals will be truncated)
+	big = r;                       // WARNING: 'Real' to 'Integer64' (decimals will be truncated)
+
+	Integer init_from_real = 1.5;  // WARNING: 'Real' to 'Integer' (decimals will be truncated)
 }
 
 // ──────── Scope isolation between functions ─────────────────────────────────

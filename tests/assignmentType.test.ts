@@ -15,6 +15,7 @@ import { validateAssignmentTypes } from '../server/src/core/validators';
 type Diagnostic = { severity: number; range: any; message: string; [key: string]: any };
 
 const ERROR = 1;
+const WARNING = 2;
 
 function validate(text: string): Diagnostic[] {
 	const result = parse(text);
@@ -169,6 +170,83 @@ void My_function()
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Precision-loss warnings
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('precision-loss warnings', () => {
+	test('Integer = Integer64 — warning (range narrowing)', () => {
+		const diags = validate(`
+void fn() {
+    Integer64 big = 0;
+    Integer   i;
+    i = big;
+}`);
+		expect(diags).toHaveLength(1);
+		expect(diags[0].severity).toBe(WARNING);
+		expect(diags[0].message).toBe(
+			`Possible loss of precision: 'Integer64' to 'Integer' (large values may be truncated)`
+		);
+	});
+
+	test('Integer = Real — warning (decimal truncation)', () => {
+		const diags = validate(`
+void fn() {
+    Real    r = 1.5;
+    Integer i;
+    i = r;
+}`);
+		expect(diags).toHaveLength(1);
+		expect(diags[0].severity).toBe(WARNING);
+		expect(diags[0].message).toBe(
+			`Possible loss of precision: 'Real' to 'Integer' (decimals will be truncated)`
+		);
+	});
+
+	test('Integer64 = Real — warning (decimal truncation)', () => {
+		const diags = validate(`
+void fn() {
+    Real      r = 1.5;
+    Integer64 big;
+    big = r;
+}`);
+		expect(diags).toHaveLength(1);
+		expect(diags[0].severity).toBe(WARNING);
+		expect(diags[0].message).toBe(
+			`Possible loss of precision: 'Real' to 'Integer64' (decimals will be truncated)`
+		);
+	});
+
+	test('Integer i = 1.5 (initialiser) — warning', () => {
+		const diags = validate(`
+void fn() {
+    Integer i = 1.5;
+}`);
+		expect(diags).toHaveLength(1);
+		expect(diags[0].severity).toBe(WARNING);
+		expect(diags[0].message).toBe(
+			`Possible loss of precision: 'Real' to 'Integer' (decimals will be truncated)`
+		);
+	});
+
+	test('Real r = 0 (lossless) — no diagnostic', () => {
+		const diags = validate(`
+void fn() {
+    Real r = 0;
+}`);
+		expect(diags).toHaveLength(0);
+	});
+
+	test('Integer64 big = i (lossless widening) — no diagnostic', () => {
+		const diags = validate(`
+void fn() {
+    Integer i = 0;
+    Integer64 big = i;
+}`);
+		expect(diags).toHaveLength(0);
+	});
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Scope isolation
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -195,20 +273,29 @@ void test_scope_b()
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('client/testFixture/assignment_type.4dm fixture', () => {
-	test('produces only the expected ERROR diagnostics', () => {
+	test('produces the expected mix of ERROR and WARNING diagnostics', () => {
 		const fixturePath = path.resolve(__dirname, '..', 'client', 'testFixture', 'assignment_type.4dm');
 		const text = fs.readFileSync(fixturePath, 'utf-8');
 		const diags = validate(text);
 
-		// Every diagnostic must be a properly-formatted promotion error.
-		for (const d of diags) {
-			expect(d.severity).toBe(ERROR);
+		const errors = diags.filter(d => d.severity === ERROR);
+		const warnings = diags.filter(d => d.severity === WARNING);
+
+		for (const d of errors) {
 			expect(d.message).toMatch(/^Cannot promote '[^']+' to '[^']+'$/);
 			expect(d.message).not.toContain('%s');
 		}
+		for (const d of warnings) {
+			expect(d.message).toMatch(/^Possible loss of precision: '[^']+' to '[^']+' \([^)]+\)$/);
+			expect(d.message).not.toContain('%s');
+		}
 
-		// We expect 8 errors from the fixture: 3 from test_init_incompatible
-		// and 5 from test_assign_incompatible.
-		expect(diags).toHaveLength(8);
+		// Every diagnostic must fall into one of the two recognised buckets.
+		expect(errors.length + warnings.length).toBe(diags.length);
+
+		// 8 errors: 3 from test_init_incompatible, 5 from test_assign_incompatible.
+		expect(errors).toHaveLength(8);
+		// 4 warnings from test_lossy_promotions.
+		expect(warnings).toHaveLength(4);
 	});
 });
