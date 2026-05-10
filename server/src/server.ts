@@ -35,6 +35,7 @@ import { registerHoverProvider } from './providers/hoverProvider';
 import { registerFormattingProvider } from './providers/formattingProvider';
 import { registerValidationProvider } from './providers/validationProvider';
 import { registerDocumentSymbolProvider } from './providers/documentSymbolProvider';
+import { registerSignatureHelpProvider } from './providers/signatureHelpProvider';
 
 // Create a connection for the server, using Node's IPC as a transport.
 const connection = createConnection(ProposedFeatures.all);
@@ -111,6 +112,10 @@ connection.onInitialize((params: InitializeParams) => {
 				resolveProvider: true,
 				triggerCharacters: ['"', "'", '<', '/']
 			},
+			signatureHelpProvider: {
+				triggerCharacters: ['(', ','],
+				retriggerCharacters: [',']
+			},
 			hoverProvider: true,
 			definitionProvider: true,
 			documentFormattingProvider: true,
@@ -177,6 +182,7 @@ documents.onDidChangeContent(change => {
 registerCompletionProvider({ connection, documents, documentService, includeService, prototypeService, symbolResolver });
 registerDefinitionProvider({ connection, documents, symbolResolver });
 registerHoverProvider({ connection, documents, symbolResolver, prototypeService });
+registerSignatureHelpProvider({ connection, documents, documentService, includeService, prototypeService });
 registerFormattingProvider({ connection, documents });
 registerValidationProvider({ connection, documents, diagnosticService, prototypeService });
 registerDocumentSymbolProvider({ connection, documents, documentService });

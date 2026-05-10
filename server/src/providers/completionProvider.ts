@@ -20,6 +20,7 @@ import { fileUriToFsPath } from '../services/includeUtils.js';
 import { buildFunctionCallSnippet, fuzzyScore, getWordAtPosition } from '../core/utils.js';
 import { visibleSymbolsAt } from '../core/symbolCollector.js';
 import type { SymbolDeclaration } from '../core/types';
+import { getCallContext } from './signatureHelpProvider.js';
 
 type IncludePathContext = {
 	startCharacter: number;
@@ -153,6 +154,56 @@ function buildDefineSnippet(name: string, params: string[] | undefined): { inser
 	return { insertText: `${name}(${placeholders})$0`, insertTextFormat: InsertTextFormat.Snippet };
 }
 
+/**
+ * Collects the set of expected parameter types at `argIndex` for all overloads
+ * of `name`, searching document functions, include functions, and prototypes.
+ * Returns lowercased type strings for case-insensitive comparison.
+ *
+ * @internal Exported for unit testing.
+ */
+export async function getExpectedParamTypes(
+	name: string,
+	argIndex: number,
+	uri: string,
+	documentService: DocumentService,
+	includeService: IncludeService,
+	prototypeService: PrototypeService
+): Promise<Set<string>> {
+	const types = new Set<string>();
+
+	// 1. Document functions (all overloads)
+	const views = documentService.getDerivedViews(uri);
+	for (const decl of views?.allFunctions.get(name) ?? []) {
+		const t = decl.params?.[argIndex]?.type;
+		if (t) types.add(t.toLowerCase());
+	}
+
+	// 2. Include functions (all overloads)
+	const includeSymbols = await includeService.getIncludeSymbols(uri);
+	for (const decl of includeSymbols.functions.get(name) ?? []) {
+		const t = decl.params?.[argIndex]?.type;
+		if (t) types.add(t.toLowerCase());
+	}
+
+	// 3. Built-in prototype overloads
+	await prototypeService.ready;
+	for (const func of prototypeService.getPrototypes(name)) {
+		const t = func.parameters[argIndex]?.type;
+		if (t) types.add(t.toLowerCase());
+	}
+
+	return types;
+}
+
+/** Extracts the declared type from a completion item's data payload, lowercased. */
+function getItemType(item: CompletionItem): string | null {
+	const data: any = (item as any).data;
+	if (data && typeof data === 'object' && typeof data.type === 'string' && data.type.length) {
+		return data.type.toLowerCase();
+	}
+	return null;
+}
+
 function defineToCompletionItem(def: SymbolDeclaration): CompletionItem {
 	const { insertText, insertTextFormat } = buildDefineSnippet(def.name, def.defineParams);
 	const sig = def.defineParams?.length
@@ -206,6 +257,9 @@ function resolvedSymbolToCompletionItem(sym: ResolvedSymbol): CompletionItem {
 	if (isFn && sym.params) {
 		item.insertTextFormat = InsertTextFormat.Snippet;
 		item.insertText = buildFunctionCallSnippet(sym.name, sym.params);
+		if (sym.params.length > 0) {
+			item.command = { command: 'editor.action.triggerParameterHints', title: 'Trigger Signature Help' };
+		}
 	}
 
 	return item;
@@ -309,6 +363,7 @@ const detailText = primaryFn.signature ?? '';
 				filterText: primaryFn.name,
 				insertTextFormat: InsertTextFormat.Snippet,
 				insertText: buildFunctionCallSnippet(primaryFn.name, primaryFn.params),
+				...(primaryFn.params && primaryFn.params.length > 0 ? { command: { command: 'editor.action.triggerParameterHints', title: 'Trigger Signature Help' } } : {}),
 				data: { source: 'document', kind: 'function', signature: primaryFn.signature }
 			} as any);
 		}
@@ -377,6 +432,7 @@ const detailText = primaryFn.signature ?? '';
 				filterText: primaryFn.name,
 				insertTextFormat: InsertTextFormat.Snippet,
 				insertText: buildFunctionCallSnippet(primaryFn.name, primaryFn.params),
+				...(primaryFn.params && primaryFn.params.length > 0 ? { command: { command: 'editor.action.triggerParameterHints', title: 'Trigger Signature Help' } } : {}),
 				data: { source: 'include', kind: 'function', signature: primaryFn.signature }
 			} as any);
 		}
@@ -502,26 +558,40 @@ const detailText = primaryFn.signature ?? '';
 			out.push({ ...originalItem });
 		}
 
+		// ── Type-sensitive boosting ───────────────────────────────────────────
+		// If the cursor is inside a function call, collect the expected parameter
+		// type(s) at the current arg index and use them to float matching items.
+		const callCtxOffset = doc ? doc.offsetAt(textDocumentPosition.position) : 0;
+		const callCtx = doc ? getCallContext(doc.getText(), callCtxOffset) : null;
+		const expectedTypes = callCtx
+			? await getExpectedParamTypes(callCtx.name, callCtx.argIndex, uri, documentService, includeService, prototypeService)
+			: new Set<string>();
+
+		// ─────────────────────────────────────────────────────────────────────
+
+		const groupPriority = (item: CompletionItem): number => {
+			const data: any = (item as any).data;
+			if (data && typeof data === 'object' && typeof data.source === 'string') {
+				// Highest priority: in-document and included-file functions/variables.
+				if (data.source === 'document') return 600;
+				if (data.source === 'include') return 590;
+				// Lower than symbols: preprocessor defines/directives.
+				if (data.source === 'define') return 350;
+				if (data.source === 'keyword') return 200;
+			}
+			// Heuristics for items without structured data.
+			if (item.kind === CompletionItemKind.Class) return 180; // types
+			if (item.kind === CompletionItemKind.Function) return 160; // prototypes (data is string)
+			return 100;
+		};
+
+		// Bonus applied to items whose type matches the expected parameter type.
+		const TYPE_MATCH_BONUS = 10000;
+
 		// Fuzzy filter: allow non-prefix matches by subsequence scoring.
 		// Also set filterText=query for returned items so VS Code's client-side prefix filtering doesn't hide them.
 		const q = query.trim();
 		if (q.length >= 2) {
-			const groupPriority = (item: CompletionItem): number => {
-				const data: any = (item as any).data;
-				if (data && typeof data === 'object' && typeof data.source === 'string') {
-					// Highest priority: in-document and included-file functions/variables.
-					if (data.source === 'document') return 600;
-					if (data.source === 'include') return 590;
-					// Lower than symbols: preprocessor defines/directives.
-					if (data.source === 'define') return 350;
-					if (data.source === 'keyword') return 200;
-				}
-				// Heuristics for items without structured data.
-				if (item.kind === CompletionItemKind.Class) return 180; // types
-				if (item.kind === CompletionItemKind.Function) return 160; // prototypes (data is string)
-				return 100;
-			};
-
 			const qLower = q.toLowerCase();
 			const scored: Array<{ item: CompletionItem; score: number; group: number; label: string }> = [];
 			for (const item of out) {
@@ -535,6 +605,12 @@ const detailText = primaryFn.signature ?? '';
 				if (labelLower === qLower) s += 5000;
 				else if (labelLower.startsWith(qLower)) s += 2000;
 				else if (labelLower.includes(qLower)) s += 200;
+
+				// Type-sensitive boost: float items whose type matches the expected parameter type.
+				if (expectedTypes.size > 0) {
+					const itemType = getItemType(item);
+					if (itemType && expectedTypes.has(itemType)) s += TYPE_MATCH_BONUS;
+				}
 
 				scored.push({ item, score: s, group: groupPriority(item), label });
 			}
@@ -555,6 +631,19 @@ const detailText = primaryFn.signature ?? '';
 			}
 
 			return scored.map(x => x.item);
+		}
+
+		// No query or single character — apply type-sensitive sort via sortText so
+		// type-matched variables float to the top of their group.
+		if (expectedTypes.size > 0) {
+			for (const item of out) {
+				const itemType = getItemType(item);
+				const typeMatches = itemType !== null && expectedTypes.has(itemType);
+				const gp = groupPriority(item);
+				const typeRank = typeMatches ? '0' : '1';
+				const groupRank = (999 - Math.max(0, Math.min(999, gp))).toString().padStart(3, '0');
+				item.sortText = `${typeRank}-${groupRank}-${getLabelText(item)}`;
+			}
 		}
 
 		return out;
