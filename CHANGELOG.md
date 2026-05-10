@@ -38,7 +38,7 @@ Changelog notes in [v1.1.0]
 	- Migrated build scripts to use `bun` for faster performance.
 
 ### Changed
-- Updated `Test.4dm` to include a comprehensive macro example demonstrating all supported features.
+- Updated `realworld_smoke_test.4dm` (formerly `Test.4dm`) to include a comprehensive macro example demonstrating all supported features.
 
 ## Release Overview
 
@@ -337,6 +337,49 @@ Please provide feedback through the official 12d Forums or on github if you noti
 
 ---
 
+## [v1.3.1] - (04/04/2026)
+
+Release of [v1.3.0] to the VS Code Marketplace.
+
+### Added
+- **Array Size Validation** (#73): Unsized array declarations in function bodies and at script level are now flagged as errors.
+- **Undeclared Function Call Detection** (#75, #76): Calls to functions that are not declared locally, in included headers, or in the built-in prototype list are now flagged as errors.
+- **Document Outline** (#78): The VS Code outline panel and breadcrumb bar now show functions and global variables from the current file.
+- **Bundled Publishing** (#85): The extension is now built with ESBuild for a smaller and faster install.
+
+### Fixed
+- **Prototype Definitions** (#79): Corrected enriched function signatures to match the 12d Model compiler and documentation.
+- **Include Path Search** (#80): The base compilation target directory is now automatically added to the include path search when resolving header files.
+- **Conditional Code False Positives** (#84): Undeclared-identifier and redeclaration diagnostics are now suppressed for identifiers that appear inside `#if`/`#ifdef` conditional blocks.
+- **Dependency Upgrades** (#77): All npm dependencies updated to latest versions.
+
+---
+
+## [v1.5.0] - (10/05/2026)
+
+### Added
+- **Signature Help** (#122): Parameter info tooltip appears as you type a function call, showing the active parameter highlighted and all overload signatures. Completion no longer inserts a full function snippet -- it inserts just the name and lets signature help take over.
+- **Rename All Symbols** (#121): Rename a symbol (variable, function, parameter) across the current file using F2 or right-click > Rename Symbol. Rename is scope-aware and only renames references within the correct scope.
+- **Control Flow Validation** (#112): Detects unreachable statements after `return`/`break`/`continue`, missing `break` before the next `case` in a `switch`, and `switch` blocks without a `default` label.
+- **Assignment Type Validation** (#113, #100): Reports an error when a value of an incompatible type is assigned to a variable (e.g. assigning a `Text` to an `Integer`). Reports a warning for lossy promotions (e.g. `Real` to `Integer`).
+- **Logical Condition Validation** (#114, #101, #102): Warns when a `while` loop condition is a non-boolean expression (e.g. an assignment), and reports other common logical condition mistakes.
+- **6 New Built-in Types** (#115, #103): Added `Macro_Handle`, `Panel_Column`, `Panel_Row`, `Tree_View`, `Tree_View_Column`, and `List_Box_Ex` to the grammar, type keywords, and type documentation.
+- **Formatter Enhancements** (#120): New formatting options including `bracketStyle` (preserve / same-line K&R / new-line Allman), `indentStyle` (spaces or tabs), `preserveBlankLines`, and `maxLineLength` automatic line-break wrapping.
+- **Docs Website** (#116): Auto-generated documentation website deployed via Vercel, built from the built-in function prototype and type documentation JSON.
+
+### Fixed
+- **Macro with Nested Parentheses** (#123): Function-like macros whose arguments contain nested function calls (e.g. `MACRO(someFunc())`) no longer produce a false-positive missing-semicolon syntax error. The preprocessor stripper now walks balanced parentheses instead of using a flat regex.
+- **Tin Type Promotion** (#118): `Tin` is now correctly treated as promotable to `Element` in type compatibility checks, preventing false-positive type mismatch errors.
+- **Standalone Macro False Positives** (#108): Bare macro invocations used as statements (with no trailing semicolon) are now stripped before parsing, avoiding spurious syntax errors.
+- **Goto Definition Prefers Definition** (#110): Go-to-definition now resolves to the function body definition rather than a forward declaration when both are present.
+- **#include Autocomplete Extra Hash** (#111): Selecting an `#include` completion no longer inserts a duplicate `#` when the `#` is already typed.
+- **Multiline Parameter Highlighting** (#109): Function parameters that span multiple lines in the TextMate grammar are now highlighted correctly.
+- **Prompt() Void Return False Positive** (#94): `Prompt()` and similar functions that return a value used only for side effects no longer trigger a spurious void-return diagnostic.
+
+### Changed
+- Completion provider no longer inserts full function snippets with parameter placeholders; signature help now provides that context inline as you type.
+
+---
 # Template
 
 ## [vX.X.X] - (Date)

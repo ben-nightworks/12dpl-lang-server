@@ -58,7 +58,7 @@ const typePromotions: ReadonlyMap<string, ReadonlySet<string>> = new Map([
 	['Integer64',  new Set(['Real', 'Integer'])],
 	['Model',      new Set(['Dynamic_Element'])],
 	['Element',    new Set(['Dynamic_Element'])],
-	['Tin',        new Set(['Dynamic_Element'])],
+	['Tin',        new Set(['Element', 'Dynamic_Element'])],
 	['Point',      new Set(['Segment'])],
 	['Line',       new Set(['Segment'])],
 	['Arc',        new Set(['Segment'])],
@@ -86,4 +86,27 @@ export function isSubtypeOf(childType: string, parentType: string): boolean {
 export function isPromotableTo(fromType: string, toType: string): boolean {
 	const targets = typePromotions.get(fromType);
 	return targets !== undefined && targets.has(toType);
+}
+
+/**
+ * Promotions that are legal but lose information. The value is a short reason
+ * suitable for inclusion in a diagnostic message.
+ */
+const lossyPromotionReasons: ReadonlyMap<string, ReadonlyMap<string, string>> = new Map([
+	['Real',      new Map([
+		['Integer',   'decimals will be truncated'],
+		['Integer64', 'decimals will be truncated'],
+	])],
+	['Integer64', new Map([
+		['Integer',   'large values may be truncated'],
+	])],
+]);
+
+/**
+ * Returns a human-readable reason string when promoting `fromType` to `toType`
+ * loses information (e.g. Real → Integer drops the fractional part). Returns
+ * undefined for lossless promotions.
+ */
+export function getLossyPromotionReason(fromType: string, toType: string): string | undefined {
+	return lossyPromotionReasons.get(fromType)?.get(toType);
 }

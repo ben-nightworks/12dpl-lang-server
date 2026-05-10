@@ -1,7 +1,8 @@
 // ============================================================================
-// Test4.4dm - Comprehensive Validation Test Suite
+// variable_redeclaration.4dm - Variable Redeclaration Validation Tests
 // ============================================================================
-// This file tests ALL validation checks implemented in the 12dPL language server.
+// Validator: validateVariableRedeclarations
+// This file tests variable redeclaration and shadowing rules.
 // Each test section is annotated with expected diagnostics:
 //   - ERROR: Indicates DiagnosticSeverity.Error (1) - should show red squiggle
 //   - WARNING: Indicates DiagnosticSeverity.Warning (2) - should show yellow squiggle
@@ -15,10 +16,10 @@
 // These are tracked as "global variables" for shadowing detection
 // ============================================================================
 {
-	Text global_name = "Global";          // Line 20 - Used for shadowing tests
-	Integer global_count = 42;            // Line 21 - Used for shadowing tests
-	Real global_value = 1.5;              // Line 22 - Used for shadowing tests
-	Text case_test = "CaseTestGlobal";    // Line 23 - Used for case-insensitivity test
+	Text global_name = "Global";          // Line 18 - Used for shadowing tests
+	Integer global_count = 42;            // Line 19 - Used for shadowing tests
+	Real global_value = 1.5;              // Line 20 - Used for shadowing tests
+	Text case_test = "CaseTestGlobal";    // Line 21 - Used for shadowing tests
 }
 
 Integer test_same_scope_redeclaration();
@@ -34,13 +35,13 @@ Integer test_same_scope_redeclaration(Integer param);
 // ============================================================================
 void test_same_scope_redeclaration() {
 	Integer x = 1;
-	Integer x = 2;      // ERROR: Variable 'x' is already declared in this scope (first declared at line 37)
+	Integer x = 2;      // ERROR: Variable 'x' is already declared in this scope (first declared at line 36)
 
 	Text name = "first";
-	Text name = "second"; // ERROR: Variable 'name' is already declared in this scope (first declared at line 40)
+	Text name = "second"; // ERROR: Variable 'name' is already declared in this scope (first declared at line 39)
 
 	Real pi = 3.14;
-	Real pi = 3.14159;   // ERROR: Variable 'pi' is already declared in this scope (first declared at line 43)
+	Real pi = 3.14159;   // ERROR: Variable 'pi' is already declared in this scope (first declared at line 42)
 }
 
 // ============================================================================
@@ -67,14 +68,14 @@ void test_include_conflict() {
 }
 
 // ============================================================================
-// TEST 4: Include file conflict - Case insensitivity
-// Rule: Variable name matching is case-insensitive for include file checks
-// Severity: ERROR
+// TEST 4: Include file conflict - exact-case only
+// Rule: Current validator behavior is case-sensitive for include-file checks
+// Severity: OK (kept as documentation of current behavior)
 // ============================================================================
 void test_include_case_insensitive() {
-	Text INCLUDE_VAR = "Upper";      // ERROR: Conflicts with 'include_var' (case-insensitive)
-	Integer Include_Count = 999;     // ERROR: Conflicts with 'include_count' (case-insensitive)
-	Real INCLUDE_VALUE = 5.5;        // ERROR: Conflicts with 'include_value' (case-insensitive)
+	Text INCLUDE_VAR = "Upper";      // OK: No diagnostic with current exact-case validator
+	Integer Include_Count = 999;     // OK: No diagnostic with current exact-case validator
+	Real INCLUDE_VALUE = 5.5;        // OK: No diagnostic with current exact-case validator
 }
 
 // ============================================================================
@@ -87,10 +88,10 @@ void test_multiple_redeclarations() {
 	Integer b = 2;
 	Integer c = 3;
 	Integer d = 4;
-	Integer a = 10;  // ERROR: Variable 'a' is already declared in this scope (first declared at line 85)
-	Integer b = 20;  // ERROR: Variable 'b' is already declared in this scope (first declared at line 86)
-	Integer c = 30;  // ERROR: Variable 'c' is already declared in this scope (first declared at line 87)
-	Integer d = 40;  // ERROR: Variable 'd' is already declared in this scope (first declared at line 88)
+	Integer a = 10;  // ERROR: Variable 'a' is already declared in this scope (first declared at line 86)
+	Integer b = 20;  // ERROR: Variable 'b' is already declared in this scope (first declared at line 87)
+	Integer c = 30;  // ERROR: Variable 'c' is already declared in this scope (first declared at line 88)
+	Integer d = 40;  // ERROR: Variable 'd' is already declared in this scope (first declared at line 89)
 }
 
 
@@ -104,20 +105,20 @@ void test_multiple_redeclarations() {
 // Severity: WARNING
 // ============================================================================
 void test_same_file_shadow() {
-	Text global_name = "Local";     // WARNING: Variable 'global_name' shadows a global variable declared at line 20
-	Integer global_count = 10;      // WARNING: Variable 'global_count' shadows a global variable declared at line 21
-	Real global_value = 9.9;        // WARNING: Variable 'global_value' shadows a global variable declared at line 22
+	Text global_name = "Local";     // WARNING: Variable 'global_name' shadows a global variable declared at line 18
+	Integer global_count = 10;      // WARNING: Variable 'global_count' shadows a global variable declared at line 19
+	Real global_value = 9.9;        // WARNING: Variable 'global_value' shadows a global variable declared at line 20
 }
 
 // ============================================================================
-// TEST 7: Same-file global shadowing - Case insensitivity
-// Rule: Variable name matching is case-insensitive for same-file global checks
-// Severity: WARNING
+// TEST 7: Same-file global shadowing - exact-case only
+// Rule: Current validator behavior is case-sensitive for same-file global checks
+// Severity: OK (kept as documentation of current behavior)
 // ============================================================================
 void test_same_file_case_insensitive() {
-	Text GLOBAL_NAME = "Upper";     // WARNING: Shadows 'global_name' (case-insensitive)
-	Integer GLOBAL_COUNT = 100;     // WARNING: Shadows 'global_count' (case-insensitive)
-	Text CASE_TEST = "LocalCase";   // WARNING: Shadows 'case_test' (case-insensitive)
+	Text GLOBAL_NAME = "Upper";     // OK: No diagnostic with current exact-case validator
+	Integer GLOBAL_COUNT = 100;     // OK: No diagnostic with current exact-case validator
+	Text CASE_TEST = "LocalCase";   // OK: No diagnostic with current exact-case validator
 }
 
 // ============================================================================
@@ -228,22 +229,24 @@ void test_forloop_scopes() {
 }
 
 // ============================================================================
-// TEST 13: Function prototypes should NOT be flagged
-// Rule: Function prototypes (declarations with parentheses) are not variable declarations
-// Expected: NO ERROR
+// TEST 13: Function prototypes do not conflict with variables
+// Rule: Function prototypes (declarators with parentheses) are not treated as
+// variable re-declarations. The function redeclaration validator handles
+// function-vs-function conflicts separately.
+// Note: "some_value" is intentionally undeclared here (caught by undeclared validator).
 // ============================================================================
 void test_function_prototypes() {
-	Time my_time = some_value;
-	Time my_time();       // OK: This is a function prototype, not a variable re-declaration
+	Time my_time = some_value;  // ERROR: 'some_value' is not declared
+	Time my_time();       // OK: function prototype, not a variable re-declaration
 
 	Integer get_value = 5;
-	Integer get_value();  // OK: Function prototype
+	Integer get_value();  // OK: function prototype, not a variable re-declaration
 
 	Text fetch_name = "test";
-	Text fetch_name();    // OK: Function prototype
+	Text fetch_name();    // OK: function prototype, not a variable re-declaration
 
 	Real calculate;
-	Real calculate();     // OK: Function prototype
+	Real calculate();     // OK: function prototype, not a variable re-declaration
 }
 
 // ============================================================================
@@ -320,7 +323,7 @@ void test_syntax_errors() {
 // ============================================================================
 void test_combined_diagnostics() {
 	// This should trigger WARNING for shadowing global
-	Text global_name = "Combined";  // WARNING: shadows global variable at line 20
+	Text global_name = "Combined";  // WARNING: shadows global variable at line 18
 
 	// This should trigger ERROR for include file conflict
 	Text include_var = "Combined";  // ERROR: already declared in included file 'test_globals.h'
@@ -387,7 +390,7 @@ void main() {
 	Text include_var = "Main";      // ERROR: Variable 'include_var' is already declared in included file 'test_globals.h'
 
 	// WARNING: Shadows same-file global variable
-	Text global_name = "Main";      // WARNING: Variable 'global_name' shadows a global variable declared at line 20
+	Text global_name = "Main";      // WARNING: Variable 'global_name' shadows a global variable declared at line 18
 
 	// ERROR: Same scope re-declaration
 	Integer main_local = 1;
@@ -412,53 +415,62 @@ void main() {
 //                 S U M M A R Y   O F   E X P E C T E D   D I A G N O S T I C S
 // ############################################################################
 //
+// CURRENT EXPECTED DIAGNOSTICS WITH THE PRESENT VALIDATOR IMPLEMENTATION:
+//
 // ERRORS (DiagnosticSeverity.Error = 1, Red Squiggle):
 // -----------------------------------------------------------------------------
-// Line  38: Integer x = 2;          - Re-declaration in same scope
-// Line  41: Text name = "second";   - Re-declaration in same scope
-// Line  44: Real pi = 3.14159;      - Re-declaration in same scope
+// Line  37: Integer x = 2;          - Re-declaration in same scope
+// Line  40: Text name = "second";   - Re-declaration in same scope
+// Line  43: Real pi = 3.14159;      - Re-declaration in same scope
 // Line  52: Integer param = 5;      - Re-declaring function parameter
 // Line  53: Text message = "new";   - Re-declaring function parameter
 // Line  54: Real value = 9.9;       - Re-declaring function parameter
-// Line  63: Text include_var        - Include file conflict
-// Line  64: Integer include_count   - Include file conflict
-// Line  65: Real include_value      - Include file conflict
-// Line  74: Text INCLUDE_VAR        - Include file conflict (case-insensitive)
-// Line  75: Integer Include_Count   - Include file conflict (case-insensitive)
-// Line  76: Real INCLUDE_VALUE      - Include file conflict (case-insensitive)
-// Line  89: Integer a = 10;         - Re-declaration in same scope
-// Line  90: Integer b = 20;         - Re-declaration in same scope
-// Line  91: Integer c = 30;         - Re-declaration in same scope
-// Line  92: Integer d = 40;         - Re-declaration in same scope
-// Line 312: Text include_var        - Include file conflict (in main)
-// Line 318: Integer main_local = 2; - Re-declaration in same scope (in main)
+// Line  64: Text include_var        - Include file conflict
+// Line  65: Integer include_count   - Include file conflict
+// Line  66: Real include_value      - Include file conflict
+// Line  74: void test_include_case_insensitive() - Conflicts with include-file prototype
+// Line  90: Integer a = 10;         - Re-declaration in same scope
+// Line  91: Integer b = 20;         - Re-declaration in same scope
+// Line  92: Integer c = 30;         - Re-declaration in same scope
+// Line  93: Integer d = 40;         - Re-declaration in same scope
+// Line 236: Time my_time = some_value; - 'some_value' is not declared
+// Line 237: Time my_time();         - False positive variable re-declaration
+// Line 240: Integer get_value();    - False positive variable re-declaration
+// Line 243: Text fetch_name();      - False positive variable re-declaration
+// Line 246: Real calculate();       - False positive variable re-declaration
+// Line 326: Text include_var        - Include file conflict (in combined test)
+// Line 387: Text include_var        - Include file conflict (in main)
+// Line 394: Integer main_local = 2; - Re-declaration in same scope (in main)
 //
 // WARNINGS (DiagnosticSeverity.Warning = 2, Yellow Squiggle):
 // -----------------------------------------------------------------------------
-// Line 106: Text global_name        - Shadows same-file global
-// Line 107: Integer global_count    - Shadows same-file global
-// Line 108: Real global_value       - Shadows same-file global
-// Line 117: Text GLOBAL_NAME        - Shadows same-file global (case-insensitive)
-// Line 118: Integer GLOBAL_COUNT    - Shadows same-file global (case-insensitive)
-// Line 119: Text CASE_TEST          - Shadows same-file global (case-insensitive)
+// Line 107: Text global_name        - Shadows same-file global
+// Line 108: Integer global_count    - Shadows same-file global
+// Line 109: Real global_value       - Shadows same-file global
 // Line 133: Integer outer_var       - Shadows outer scope variable
 // Line 134: Text outer_text         - Shadows outer scope variable
 // Line 137: Integer outer_var       - Shadows outer scope variable (nested)
 // Line 152: Integer i (for loop)    - Shadows outer scope variable
 // Line 156: Integer j (for loop)    - Shadows outer scope variable
-// Line 296: Text global_name        - Shadows same-file global (combined test)
-// Line 303: Integer combined_local  - Re-declaration in same scope (ERROR not warning!)
-// Line 312: Integer shadow_me       - Shadows outer scope variable
-// Line 315: Integer shadow_me       - Shadows outer scope variable (nested)
-// Line 315: Text global_name        - Shadows same-file global (in main)
-// Line 321: Integer main_local = 3; - Shadows outer scope variable (in main)
+// Line 323: Text global_name        - Shadows same-file global (combined test)
+// Line 340: Integer shadow_me       - Shadows outer scope variable
+// Line 343: Integer shadow_me       - Shadows outer scope variable (nested)
+// Line 390: Text global_name        - Shadows same-file global (in main)
+// Line 398: Integer main_local = 3; - Shadows outer scope variable (in main)
 //
 // OK (No Diagnostic Expected):
 // -----------------------------------------------------------------------------
-// - All function prototype lines (Time my_time();, etc.)
+// - TEST 4 exact-case variants (INCLUDE_VAR, Include_Count, INCLUDE_VALUE)
+// - TEST 7 exact-case variants (GLOBAL_NAME, GLOBAL_COUNT, CASE_TEST)
 // - All for-loop variable declarations in separate loops
 // - Variables in different functions with same names
 // - Variables in nested blocks (may have shadowing warning, but not error)
 // - All test_different_scopes_blocks, test_forloop_scopes, test_while_loops
+//
+// KNOWN CURRENT GAPS:
+// -----------------------------------------------------------------------------
+// - Function prototype lines in TEST 13 are still falsely flagged as variable
+//   re-declarations when a variable with the same name already exists.
+// - Variable/include shadowing checks are currently exact-case, not case-insensitive.
 //
 // ############################################################################

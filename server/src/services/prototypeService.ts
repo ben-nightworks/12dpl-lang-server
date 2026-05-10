@@ -75,17 +75,16 @@ export class PrototypeService {
 				insertText: this.generateSnippet(primaryFunc),
 				insertTextFormat: InsertTextFormat.Snippet,
 				filterText: primaryFunc.name,
+				...(primaryFunc.parameters.length > 0 ? { command: { command: 'editor.action.triggerParameterHints', title: 'Trigger Signature Help' } } : {}),
 				data: { source: 'prototype', name: primaryFunc.name, id: primaryFunc.id }
 			} as any);
 		}
 	}
 
 	private generateSnippet(func: FunctionData): string {
-		if (func.parameters.length === 0) {
-			return `${func.name}()`;
-		}
-		const params = func.parameters.map((p, index) => `\${${index + 1}:${p.type} ${p.name}}`).join(', ');
-		return `${func.name}(${params})`;
+		// Place cursor inside the parens; signature help guides the user through parameters.
+		if (func.parameters.length === 0) return `${func.name}()`;
+		return `${func.name}($0)`;
 	}
 
 	private generateSignature(func: FunctionData): string {

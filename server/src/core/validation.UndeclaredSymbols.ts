@@ -22,7 +22,7 @@ import {
 	type SwitchCaseMismatch,
 } from './validation.Common';
 
-export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymbols): Diagnostic[] {
+export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymbols, conditionalLines?: Set<number>): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];
 	const switchCaseMismatches: SwitchCaseMismatch[] = [];
 
@@ -53,11 +53,13 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 
 	/** Check an identifier usage inline; emit diagnostic if undeclared. */
 	const checkUsage = (text: string, line: number, column: number, isFunctionCall: boolean) => {
+		// Skip identifiers on conditional lines (#if/#ifdef kept branches)
+		if (conditionalLines?.has(line)) return;
+
 		if (lookupSymbol(text)) return;
 		if (isFunctionCall && knownSymbols.functions.has(text)) return;
 		if (knownSymbols.variables.has(text)) return;
 		if (knownSymbols.defines.has(text)) return;
-		if (isFunctionCall) return;
 
 		diagnostics.push({
 			severity: DiagnosticSeverity.Error,
@@ -65,7 +67,9 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 				start: { line: line - 1, character: column },
 				end: { line: line - 1, character: column + text.length }
 			},
-			message: `'${text}' is not declared`
+			message: isFunctionCall
+				? `Function '${text}' is not declared`
+				: `'${text}' is not declared`
 		});
 	};
 
@@ -234,6 +238,7 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 			return visitor.visitChildren(ctx);
 		},
 		visitPostfixExpression(ctx: PostfixExpressionContext | any) {
+			let isMacroCall = false;
 			try {
 				const primary = ctx?.primaryExpression?.();
 				const idNode = primary?.Identifier?.();
@@ -245,7 +250,15 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 				if (text && line !== null && column !== null) {
 					checkUsage(text, line, column, !!isFunctionCall);
 				}
+				// Skip argument validation for function-like macro calls
+				if (isFunctionCall && text && knownSymbols.defines.has(text)) {
+					isMacroCall = true;
+				}
 			} catch { /* ignore */ }
+			if (isMacroCall) {
+				// For macro calls, skip argument validation entirely
+				return undefined;
+			}
 			const children: any[] = ctx?.children ?? [];
 			for (const child of children) {
 				if (child && typeof child.accept === 'function') {
@@ -253,11 +266,6 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 					if (!isPrimary) child.accept(visitor);
 				}
 			}
-			try {
-				for (const argList of ctx?.argumentExpressionList_list?.() ?? []) {
-					argList?.accept?.(visitor);
-				}
-			} catch { /* ignore */ }
 			return undefined;
 		},
 		visitPrimaryExpression(ctx: PrimaryExpressionContext | any) {

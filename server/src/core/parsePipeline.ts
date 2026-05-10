@@ -298,6 +298,76 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 	return out;
 }
 
+/**
+ * Replaces standalone macro usage lines with empty lines to prevent ANTLR parse errors.
+ *
+ * When a `#define MACRO_NAME ...` is used as a statement on its own line (e.g. `MACRO_EXAMPLE`
+ * or `LOG("hello")`), the bare identifier is not valid 12dPL grammar without a trailing
+ * semicolon. Since macro expansion happens in the compiler, we replace those lines with
+ * empty lines to preserve line numbers while avoiding false-positive syntax errors.
+ *
+ * @param strippedText - Text after `stripConditionalDirectives` (define lines already empty).
+ * @param rawText - The original document text, used to extract define names.
+ */
+export function stripStandaloneMacroUsages(strippedText: string, rawText: string): string {
+	// Collect all define names from the original (unstripped) text
+	const defineNames = new Set<string>();
+	const defineRe = /^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)/gm;
+	let m: RegExpExecArray | null;
+	while ((m = defineRe.exec(rawText)) !== null) {
+		defineNames.add(m[1]);
+	}
+	if (defineNames.size === 0) return strippedText;
+
+	// Replace lines that are ONLY a macro name (with optional args) and no trailing semicolon.
+	// Walks balanced parentheses so nested calls like MACRO(foo()) are handled correctly.
+	const lines = strippedText.split('\n');
+	for (let i = 0; i < lines.length; i++) {
+		const trimmed = lines[i].trim();
+		if (!trimmed) continue;
+
+		const identMatch = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)/);
+		if (!identMatch || !defineNames.has(identMatch[1])) continue;
+
+		const rest = trimmed.slice(identMatch[1].length).trimStart();
+
+		// No arguments — bare macro identifier with nothing after it
+		if (rest === '') {
+			lines[i] = '';
+			continue;
+		}
+
+		// Must start with '(' to be a function-like macro invocation
+		if (!rest.startsWith('(')) continue;
+
+		// Walk balanced parentheses, respecting strings, to find the closing paren
+		let depth = 0;
+		let j = 0;
+		let inStr = false;
+		let strChar = '';
+		for (; j < rest.length; j++) {
+			const c = rest[j];
+			if (inStr) {
+				if (c === '\\') { j++; continue; }
+				if (c === strChar) inStr = false;
+				continue;
+			}
+			if (c === '"' || c === "'") { inStr = true; strChar = c; continue; }
+			if (c === '(') { depth++; continue; }
+			if (c === ')') {
+				depth--;
+				if (depth === 0) { j++; break; }
+			}
+		}
+
+		// Only strip if parens balanced and nothing (no semicolon) follows
+		if (depth === 0 && rest.slice(j).trim() === '') {
+			lines[i] = '';
+		}
+	}
+	return lines.join('\n');
+}
+
 class SyntaxErrorListener implements ErrorListener<any> {
 	public errors: SyntaxError[] = [];
 
@@ -326,7 +396,8 @@ class SyntaxErrorListener implements ErrorListener<any> {
  */
 export function parse(documentText: string): ParseResult {
 	const { text: strippedText, conditionalLines } = stripConditionalDirectives(documentText);
-	const transformedText = wrapTopLevelScriptsPreservingLines(strippedText);
+	const macroStrippedText = stripStandaloneMacroUsages(strippedText, documentText);
+	const transformedText = wrapTopLevelScriptsPreservingLines(macroStrippedText);
 
 	const chars = new CharStream(transformedText);
 	const lexer = new proglang12dLexer(chars);

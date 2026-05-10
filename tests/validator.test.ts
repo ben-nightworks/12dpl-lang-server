@@ -1,9 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import * as fs from "fs";
-import * as path from "path";
 import { parse } from "../server/src/core/parsePipeline";
 import { collectSymbolTable, deriveViews } from "../server/src/core/symbolCollector";
-import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls, validateVoidFunctionReturnValues, FunctionSignatureMap, validateFunctionArguments, validateReturnStatements } from "../server/src/core/validators";
+import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls, validateVoidFunctionReturnValues, FunctionSignatureMap, validateFunctionArguments, validateReturnStatements, validateArraySize } from "../server/src/core/validators";
+import type { OverloadReturnType } from "../server/src/core/validators";
 import type { SymbolDeclaration, KnownSymbols, DerivedSymbolViews, ParameterSymbolInfo } from "../server/src/core/types";
 
 // The core validators return vscode-languageserver Diagnostic objects.
@@ -32,7 +31,7 @@ function ValidateWithIncludes(text: string, includeDeclarations: SymbolDeclarati
 	const synErrs = syntaxDiagnostics(result);
 	if (synErrs.length === 0) {
 		const varRedecl = validateVariableRedeclarations(result.tree, includeDeclarations, result.conditionalLines);
-		const funcRedecl = validateFunctionRedeclarations(result.tree, includeDeclarations);
+		const funcRedecl = validateFunctionRedeclarations(result.tree, includeDeclarations, result.conditionalLines);
 		return [...synErrs, ...varRedecl, ...funcRedecl];
 	}
 	return synErrs;
@@ -43,7 +42,7 @@ function ValidateWithSymbols(text: string, knownSymbols: KnownSymbols): Diagnost
 	const diagnostics: Diagnostic[] = [];
 	diagnostics.push(...validateDeprecatedCalls(result));
 	diagnostics.push(...syntaxDiagnostics(result));
-	diagnostics.push(...validateUndeclaredIdentifiers(result.tree, knownSymbols));
+	diagnostics.push(...validateUndeclaredIdentifiers(result.tree, knownSymbols, result.conditionalLines));
 	return diagnostics;
 }
 
@@ -66,29 +65,157 @@ function includeDecl(name: string, sourceFile: string, kind: 'variable' | 'funct
 	};
 }
 
-function repoRoot(): string {
-	// tests/* lives one level below repo root
-	return path.resolve(import.meta.dir, "..");
-}
-
-function readFixture(relPath: string): string {
-	return fs.readFileSync(path.join(repoRoot(), relPath), "utf-8");
-}
-
 describe("Validator.Validate", () => {
-	test("parses the large fixture without crashing", () => {
-		const text = readFixture("client/testFixture/Test.4dm");
+	test("parses complex real-world macro without crashing", () => {
+		// Exercises: forward declarations, functions with arrays/refs, top-level blocks,
+		// switch/case, if/else chains, complex expressions, goto, multi-variable decls
+		const text = `
+void get_hip_info(Element align,Integer hip,Integer &type,
+Real xval[],Real yval[],Real lengths[]);
+
+Widget Cast(Widget &widget)
+{
+return widget;
+};
+
+void My_function(Text_Text_Map map)
+{
+    Vector4_Guid_Multimap guid_map;
+};
+
+Integer create_rgb(Integer r,Integer g,Integer b)
+{
+  return((1 << 31) | (r << 16) | (g << 8) | b);
+}
+
+{
+    Text hip_type;
+    Integer ret;
+    ret = Get_hip_type(align,hip,hip_type);
+    switch(hip_type)
+    {
+    case "Test 1":
+    case "Test 2":
+        {
+            break;
+        }
+    case "Test 3":
+    default:
+        {
+
+        }
+    }
+
+    if(hip_type == "IP") {
+        Real xip,yip;  ret = Get_hip_geom(align,hip,0,xip,yip);
+        xval[6] = xip; yval[6] = yip;
+        type = 0;
+        xval[1] = xip; yval[1] = yip;
+    } else if(hip_type == "Curve") {
+        Real xip,yip;  ret = Get_hip_geom(align,hip,0,xip,yip);
+        Real xtc,ytc;  ret = Get_hip_geom(align,hip,1,xtc,ytc);
+        xval[1] = xtc; yval[1] = ytc;
+        xval[6] = xip; yval[6] = yip;
+        type = 2;
+    }
+    return;
+}
+
+Element position_text(Text text,Real size,Integer colour,Real x1,Real y1,Real x2,Real y2)
+{
+    Real xpos,ypos,angle;
+    xpos = 0.5 * (x1 + x2);
+    ypos = 0.5 * (y1 + y2);
+    angle = Atan2(y2 - y1,x2 - x1);
+    Element elt = Create_text(text,xpos,ypos,size,colour,angle,4,1);
+    return (elt);
+}
+
+{
+    Text    program_name = "12dF Check Exporter";
+    Text    ver          = "15.1";
+    Text    td_ver       = "v15";
+    Integer Shutdown_code = 424242;
+}
+
+void main()
+{
+    Integer ret;
+    Element cl;
+    Real    text_size;
+    Integer colour;
+    Text    colour_name,model_name;
+    Model   model;
+
+    Integer no_hip;
+    Get_hip_points(cl,no_hip);
+    for(Integer i=1;i<= no_hip;i++) {
+        Integer  type;
+        Real xval[6],yval[6],lengths[4];
+        get_hip_info(cl,i,type,xval,yval,lengths);
+        Integer curve = (lengths[1] == 0) ? 0 : 1;
+        Integer left_spiral  = (lengths[3] == 0) ? 0 : 1;
+        Integer right_spiral = (lengths[4] == 0) ? 0 : 1;
+        if(left_spiral) {
+            Text text = "spiral length = " + To_text(lengths[3],1) + "m";
+            Element elt = position_text(text,text_size,colour,xval[1],yval[1],xval[4],yval[4]);
+            Set_model(elt,model);
+        }
+    }
+}
+`;
 		const diagnostics = Validate(text);
 		expect(Array.isArray(diagnostics)).toBe(true);
 		// This is a real-world macro; it should ideally be clean.
 		// If this starts failing, it indicates a grammar/regression in the parser.
-		expect(diagnostics.filter(d => d.severity === 1 /* Error */).length).toBe(0);
+		// Filter out 'is not declared' since Validate() has no knownSymbols (no prototypes).
+		expect(diagnostics.filter(d => d.severity === 1 /* Error */ && !d.message.includes("is not declared")).length).toBe(0);
 	});
 
 	test("handles preprocessor directives and top-level blocks", () => {
-		const text = readFixture("client/testFixture/Test2.4dm");
+		// Exercises: forward declarations with overloads, top-level blocks,
+		// intentional re-declarations/redefinitions
+		const text = `
+Integer create_rgb(Integer r,Integer g,Integer b);
+
+Integer create_rgb(Integer r,Integer g,Integer b, Integer a);
+
+Integer create_rgb(Integer r,Integer g,Integer b, Integer a)
+{
+    return 0;
+}
+
+Integer create_rgb(Integer r,Integer g,Integer b);
+
+{
+    Text prog_name = "TEST";
+
+    Text    program_name    = "12dF Check Exporter";
+    Text    program_name    = "12dF Check Exporter";
+    Text    ver             = "15.1";
+    Text    td_ver          = "v15";
+    Integer Shutdown_code = 424242;
+}
+
+Integer create_rgb(Integer r,Integer g,Integer b)
+{
+    return 0;
+}
+
+Integer create_rgb(Integer r,Integer g,Integer b);
+
+Integer create_rgb(Integer r,Integer g,Integer b)
+{
+    return 0;
+}
+
+Integer create_rgb(Integer r,Integer g,Integer b, Integer a)
+{
+    return 0;
+}
+`;
 		const diagnostics = Validate(text);
-		// Test2.4dm has intentional re-declarations/redefinitions
+		// Has intentional re-declarations/redefinitions
 		const syntaxErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && !d.message.includes("already declared") && !d.message.includes("is not declared") && !d.message.includes("already defined")
 		);
@@ -212,6 +339,36 @@ void main() {
 		expect(redeclErrors.length).toBe(0);
 	});
 
+	test("does not flag variable followed by same-name function prototype", () => {
+		const code = `
+void main() {
+    Time my_time = some_value;
+    Time my_time();
+    Integer get_value = 5;
+    Integer get_value();
+}
+`;
+		const diagnostics = Validate(code);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already declared")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("does not flag function prototype followed by same-name variable", () => {
+		const code = `
+void main() {
+    Real calculate();
+    Real calculate = 3.14;
+}
+`;
+		const diagnostics = Validate(code);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already declared")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
 	test("reports error when variable conflicts with include file variable", () => {
 		const code = `
 void main() {
@@ -266,7 +423,13 @@ void main() {
 	});
 
 	test("allows overloaded forward declarations in same file", () => {
-		const text = readFixture("client/testFixture/Test7.4dm");
+		const text = `
+Integer count = 0;
+void process();
+void process(Integer x);
+void process(Integer x, Integer y);
+Integer other_var = 5;
+`;
 		const diagnostics = Validate(text);
 		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
@@ -574,6 +737,48 @@ void process(Integer x, Integer y) {
 		// Different param count = valid overload
 		expect(redeclErrors.length).toBe(0);
 	});
+
+	test("does not flag function redeclaration in #if/#else conditional branches", () => {
+		const code = `
+#if USE_NEW == 1
+void FW_Print_Create_log_line(Text &msg)
+{
+	Integer x = 1;
+}
+#else
+void FW_Print_Create_log_line(Text &msg)
+{
+	Integer y = 2;
+}
+#endif
+`;
+		const diagnostics = ValidateWithIncludes(code, []);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("does not flag function redeclaration in #ifdef conditional branches", () => {
+		const code = `
+#ifdef FEATURE_FLAG
+void my_func()
+{
+	Integer x = 1;
+}
+#endif
+void my_func()
+{
+	Integer y = 2;
+}
+`;
+		const diagnostics = ValidateWithIncludes(code, []);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		// One definition is on a conditional line, so no error
+		expect(redeclErrors.length).toBe(0);
+	});
 });
 
 describe("RHS operand validation (issue #26)", () => {
@@ -645,14 +850,32 @@ void main() {
 		expect(undeclaredErrors.length).toBe(0);
 	});
 
-	test("does not flag function calls as undeclared", () => {
+	test("flags undeclared function calls as errors", () => {
 		const code = `
 void main() {
     Integer x = someFunction(1, 2);
 }
 `;
 		const diagnostics = Validate(code);
-		// Function calls should not be flagged as undeclared variables
+		const errors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("someFunction")
+		);
+		expect(errors.length).toBe(1);
+		expect(errors[0].message).toContain("Function 'someFunction' is not declared");
+	});
+
+	test("does not flag known function calls as undeclared", () => {
+		const code = `
+void main() {
+    Integer x = someFunction(1, 2);
+}
+`;
+		const knownSymbols = {
+			functions: new Set(['someFunction']),
+			variables: new Set<string>(),
+			defines: new Set<string>()
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
 		const errors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("someFunction")
 		);
@@ -804,7 +1027,9 @@ void main() {
 			d.severity === 1 /* Error */ && d.message.includes("is not declared")
 		);
 		// MyFunction and MYFUNCTION are different from myfunction — should be flagged
-		expect(undeclaredErrors.length).toBe(0); // function calls don't flag as undeclared (they pass through)
+		expect(undeclaredErrors.length).toBe(2);
+		expect(undeclaredErrors.some(d => d.message.includes("MyFunction"))).toBe(true);
+		expect(undeclaredErrors.some(d => d.message.includes("MYFUNCTION"))).toBe(true);
 	});
 
 	// =========================================================================
@@ -939,6 +1164,89 @@ void main() {
 		);
 		expect(undeclaredErrors.length).toBe(1);
 		expect(undeclaredErrors[0].message).toContain("unknown_var");
+	});
+
+	// =========================================================================
+	// Undeclared Function Call Tests
+	// =========================================================================
+
+	test("flags undeclared function call with specific message", () => {
+		const code = `
+void main() {
+    nonexistent_function();
+}
+`;
+		const knownSymbols = {
+			functions: new Set<string>(),
+			variables: new Set<string>(),
+			defines: new Set<string>()
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
+		const errors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("is not declared")
+		);
+		expect(errors.length).toBe(1);
+		expect(errors[0].message).toBe("Function 'nonexistent_function' is not declared");
+	});
+
+	test("flags undeclared function call but not known ones", () => {
+		const code = `
+void main() {
+    known_func();
+    unknown_func();
+}
+`;
+		const knownSymbols = {
+			functions: new Set(['known_func']),
+			variables: new Set<string>(),
+			defines: new Set<string>()
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
+		const errors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("is not declared")
+		);
+		expect(errors.length).toBe(1);
+		expect(errors[0].message).toContain("unknown_func");
+	});
+
+	test("does not flag locally defined function as undeclared", () => {
+		const code = `
+Integer my_func() {
+    return 42;
+}
+
+void main() {
+    Integer x = my_func();
+}
+`;
+		const knownSymbols = {
+			functions: new Set<string>(),
+			variables: new Set<string>(),
+			defines: new Set<string>()
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
+		const errors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("my_func")
+		);
+		expect(errors.length).toBe(0);
+	});
+
+	test("does not flag define used as function call", () => {
+		const code = `
+void main() {
+    Integer x = MY_MACRO(42);
+}
+`;
+		const knownSymbols = {
+			functions: new Set<string>(),
+			variables: new Set<string>(),
+			defines: new Set(['MY_MACRO'])
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
+		const errors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("MY_MACRO")
+		);
+		expect(errors.length).toBe(0);
 	});
 
 	// =========================================================================
@@ -1131,7 +1439,7 @@ void main() {
 #endif
 }
 `;
-		const diagnostics = Validate(code);
+		const diagnostics = ValidateWithIncludes(code, []);
 		const redeclErrors = diagnostics.filter(d =>
 			d.message.includes("already declared")
 		);
@@ -1220,7 +1528,7 @@ void process_elements() {
 #endif
 }
 `;
-		const diagnostics = Validate(code);
+		const diagnostics = ValidateWithIncludes(code, []);
 		const redeclErrors = diagnostics.filter(d =>
 			d.message.includes("already declared")
 		);
@@ -1455,7 +1763,7 @@ void Do_thing(Integer x, Integer y)
 });
 // ─── Void function return value validation (#46) ───────────────────────────
 
-function ValidateVoidReturnValues(text: string, externalReturnTypes: Map<string, string> = new Map()): Diagnostic[] {
+function ValidateVoidReturnValues(text: string, externalReturnTypes: Map<string, OverloadReturnType[]> = new Map()): Diagnostic[] {
 	const result = parse(text);
 	const synErrs = syntaxDiagnostics(result);
 	if (synErrs.length > 0) return synErrs;
@@ -1610,9 +1918,9 @@ Integer main() {
 	});
 
 	test("resolves external function return types", () => {
-		const externalReturnTypes = new Map<string, string>();
-		externalReturnTypes.set("ext_void_func", "void");
-		externalReturnTypes.set("ext_int_func", "Integer");
+		const externalReturnTypes = new Map<string, OverloadReturnType[]>();
+		externalReturnTypes.set("ext_void_func", [{ paramCount: 0, returnType: "void" }]);
+		externalReturnTypes.set("ext_int_func", [{ paramCount: 0, returnType: "Integer" }]);
 
 		const code = `
 void main() {
@@ -1655,6 +1963,116 @@ void main() {
 `;
 		const diagnostics = ValidateVoidReturnValues(code);
 		expect(diagnostics.length).toBe(0);
+	});
+
+	test("does not flag mixed-overload function when non-void overload exists", () => {
+		// Simulates Prompt() which has both void(1-param) and Integer(2-param) overloads.
+		// The validator should match by argument count to pick the right return type.
+		const externalReturnTypes = new Map<string, OverloadReturnType[]>();
+		externalReturnTypes.set("Prompt", [
+			{ paramCount: 1, returnType: "void" },
+			{ paramCount: 2, returnType: "Integer" },
+			{ paramCount: 2, returnType: "Integer" },
+			{ paramCount: 2, returnType: "Integer" },
+		]);
+
+		const code = `
+void main() {
+	Integer x = Prompt("Enter value: ", "default");
+	if (Prompt("Continue? ", 1) != 0) {
+	}
+}
+`;
+		const diagnostics = ValidateVoidReturnValues(code, externalReturnTypes);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("flags void overload by argument count even if non-void overload exists (Ben's case)", () => {
+		// Ben's test case:
+		// Integer func() -- no arguments, returns Integer
+		// void func(Real value) -- one argument, returns void
+		// if(func(x)) should be flagged because the 1-argument overload returns void.
+		const externalReturnTypes = new Map<string, OverloadReturnType[]>();
+		externalReturnTypes.set("func", [
+			{ paramCount: 0, returnType: "Integer" },
+			{ paramCount: 1, returnType: "void" },
+		]);
+
+		const code = `
+void main() {
+	Real x = 1.0;
+	if (func(x)) {
+	}
+}
+`;
+		const diagnostics = ValidateVoidReturnValues(code, externalReturnTypes);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("func");
+		expect(diagnostics[0].message).toContain("void");
+	});
+
+	test("triple overload: only 2-arg is void — flags 2-arg call, not 1-arg or 3-arg", () => {
+		// triple(Integer) -> Integer, triple(Integer, Integer) -> void, triple(Integer, Integer, Integer) -> Real
+		const externalReturnTypes = new Map<string, OverloadReturnType[]>();
+		externalReturnTypes.set("triple", [
+			{ paramCount: 1, returnType: "Integer" },
+			{ paramCount: 2, returnType: "void" },
+			{ paramCount: 3, returnType: "Real" },
+		]);
+
+		const code = `
+void main() {
+	Integer a = triple(1);
+	Integer b = triple(1, 2);
+	Real c = triple(1, 2, 3);
+}
+`;
+		const diagnostics = ValidateVoidReturnValues(code, externalReturnTypes);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("triple");
+	});
+
+	test("local function definitions resolve by argument count (all-void multi-arity)", () => {
+		// Locally defined overloads: all return void, different arities — all consumed calls should warn.
+		const code = `
+void av()
+{
+}
+
+void av(Integer x)
+{
+}
+
+void test()
+{
+	Integer a = av();
+	Integer b = av(1);
+}
+`;
+		const diagnostics = ValidateVoidReturnValues(code);
+		expect(diagnostics.length).toBe(2);
+	});
+
+	test("local function definitions resolve by argument count (mixed: 0-arg non-void, 1-arg void)", () => {
+		const code = `
+Integer mf()
+{
+	return 42;
+}
+
+void mf(Integer x)
+{
+}
+
+void test()
+{
+	Integer a = mf();
+	Integer b = mf(1);
+}
+`;
+		const diagnostics = ValidateVoidReturnValues(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("mf");
 	});
 });
 
@@ -1951,6 +2369,21 @@ void main()
 {
 	Element e;
 	Process(e);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(0);
+	});
+	test("allows Tin where Element parameter expected (promotion)", () => {
+		const code = `
+void Process(Element e)
+{
+}
+
+void main()
+{
+	Tin t;
+	Process(t);
 }
 `;
 		const diagnostics = ValidateFunctionArgs(code);
@@ -2463,5 +2896,415 @@ Panel Make_panel()
 		expect(diagnostics[0].severity).toBe(1); // Error
 		expect(diagnostics[0].message).toContain("Widget");
 		expect(diagnostics[0].message).toContain("Panel");
+	});
+});
+
+// ─── Array size validation (issue #73) ──────────────────────────────────────
+
+function ValidateArraySize(text: string): Diagnostic[] {
+	const result = parse(text);
+	if (result.syntaxErrors.length > 0) return [];
+	return validateArraySize(result.tree);
+}
+
+describe("Array size validation (issue #73)", () => {
+	test("flags unsized array declaration in function body", () => {
+		const code = `
+void main()
+{
+	Text my_choices[];
+}
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].severity).toBe(1); // Error
+		expect(diagnostics[0].message).toContain("requires a size");
+		expect(diagnostics[0].message).toContain("my_choices");
+	});
+
+	test("flags unsized array declaration at top level (script)", () => {
+		const code = `Integer arr[];
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("requires a size");
+		expect(diagnostics[0].message).toContain("arr");
+	});
+
+	test("does not flag sized array declaration", () => {
+		const code = `
+void main()
+{
+	Text my_choices[10];
+}
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("does not flag array parameters in function signatures", () => {
+		const code = `
+void foo(Text items[])
+{
+}
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("does not flag pass-by-reference array parameters", () => {
+		const code = `
+void bar(Integer &arr[])
+{
+}
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(0);
+	});
+
+	test("flags unsized array with initializer", () => {
+		const code = `
+void main()
+{
+	Real values[];
+	Integer counts[];
+}
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(2);
+	});
+
+	test("flags unsized Text array", () => {
+		const code = `
+void main()
+{
+	Text items[];
+}
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("requires a size");
+		expect(diagnostics[0].message).toContain("items");
+	});
+
+	test("flags unsized Integer array", () => {
+		const code = `
+void main()
+{
+	Integer nums[];
+}
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("requires a size");
+		expect(diagnostics[0].message).toContain("nums");
+	});
+
+	test("flags unsized Real array", () => {
+		const code = `
+void main()
+{
+	Real coords[];
+}
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("requires a size");
+		expect(diagnostics[0].message).toContain("coords");
+	});
+
+	test("flags unsized Element array", () => {
+		const code = `
+void main()
+{
+	Element elems[];
+}
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("requires a size");
+		expect(diagnostics[0].message).toContain("elems");
+	});
+
+	test("flags unsized Model array", () => {
+		const code = `
+void main()
+{
+	Model models[];
+}
+`;
+		const diagnostics = ValidateArraySize(code);
+		expect(diagnostics.length).toBe(1);
+		expect(diagnostics[0].message).toContain("requires a size");
+		expect(diagnostics[0].message).toContain("models");
+	});
+});
+
+// ─── Conditional lines — false positive suppression ─────────────────────
+
+describe("Conditional line suppression", () => {
+	test("does not flag undeclared identifiers inside #if conditional blocks", () => {
+		const code = `
+#define DEBUG 0
+#if DEBUG == 1
+	Print_line("test");
+#endif
+void main()
+{
+	Integer x = 1;
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set(["DEBUG"]),
+		});
+		const undeclaredErrors = diagnostics.filter(d =>
+			d.message.includes("is not declared")
+		);
+		expect(undeclaredErrors.length).toBe(0);
+	});
+
+	test("does not flag undeclared function calls inside #ifdef blocks", () => {
+		const code = `
+#ifdef FEATURE_FLAG
+	some_unknown_function();
+#endif
+void main()
+{
+	Integer x = 1;
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set(),
+		});
+		const undeclaredErrors = diagnostics.filter(d =>
+			d.message.includes("is not declared")
+		);
+		expect(undeclaredErrors.length).toBe(0);
+	});
+
+	test("still flags undeclared identifiers outside conditional blocks", () => {
+		const code = `
+#if DEBUG == 1
+	Print_line("test");
+#endif
+void main()
+{
+	Integer x = unknown_var;
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set(["DEBUG"]),
+		});
+		const undeclaredErrors = diagnostics.filter(d =>
+			d.message.includes("is not declared")
+		);
+		expect(undeclaredErrors.length).toBe(1);
+		expect(undeclaredErrors[0].message).toContain("unknown_var");
+	});
+});
+
+// ─── Function-like macro argument suppression ────────────────────────────
+
+describe("Function-like macro argument suppression", () => {
+	test("does not flag arguments of function-like macro calls", () => {
+		const code = `
+#define MY_MACRO(x) (1 << (x))
+void main()
+{
+	Integer a = MY_MACRO(SOME_CONSTANT);
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set(["MY_MACRO"]),
+		});
+		const undeclaredErrors = diagnostics.filter(d =>
+			d.message.includes("is not declared")
+		);
+		expect(undeclaredErrors.length).toBe(0);
+	});
+
+	test("still flags undeclared arguments of regular function calls", () => {
+		const code = `
+void main()
+{
+	Integer a = some_func(UNKNOWN_ARG);
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(["some_func"]),
+			variables: new Set(),
+			defines: new Set(),
+		});
+		const undeclaredErrors = diagnostics.filter(d =>
+			d.message.includes("is not declared")
+		);
+		expect(undeclaredErrors.length).toBe(1);
+		expect(undeclaredErrors[0].message).toContain("UNKNOWN_ARG");
+	});
+
+	test("does not flag arguments of function-like define from include file", () => {
+		const code = `
+#define String_Super_Bit(n) (1 << n)
+#define Att_ZCoord_Value 1
+void main()
+{
+	Integer flag = String_Super_Bit(ZCoord_Value);
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set(["String_Super_Bit", "Att_ZCoord_Value"]),
+		});
+		const undeclaredErrors = diagnostics.filter(d =>
+			d.message.includes("is not declared")
+		);
+		expect(undeclaredErrors.length).toBe(0);
+	});
+});
+
+// ─── Standalone macro usage as statement (#106) ──────────────────────────────
+
+describe("Standalone macro usage as statement (#106)", () => {
+	test("no-arg macro used as standalone statement does not produce a syntax error", () => {
+		const code = `
+void func()
+{
+#define MACRO_EXAMPLE Integer test = 1;
+
+	MACRO_EXAMPLE
+
+	someOtherfunction();
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("no-arg macro used as standalone statement is not flagged as undeclared", () => {
+		const code = `
+void func()
+{
+#define MY_MACRO Integer x = 0;
+
+	MY_MACRO
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set(),
+		});
+		const undeclaredErrors = diagnostics.filter(d => d.message.includes("MY_MACRO"));
+		expect(undeclaredErrors.length).toBe(0);
+	});
+
+	test("function-like macro used as standalone statement does not produce a syntax error", () => {
+		const code = `
+#define LOG(msg) Print(msg);
+
+void func()
+{
+	LOG("hello")
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("code following the standalone macro is still parsed and validated", () => {
+		const code = `
+void func()
+{
+#define MACRO_EXAMPLE Integer test = 1;
+
+	MACRO_EXAMPLE
+
+	someOtherfunction();
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(),
+			variables: new Set(),
+			defines: new Set(),
+		});
+		const fnErrors = diagnostics.filter(d => d.message.includes("someOtherfunction"));
+		expect(fnErrors.length).toBe(1);
+		expect(fnErrors[0].message).toContain("not declared");
+	});
+
+	test("multiple standalone macros in a row do not produce syntax errors", () => {
+		const code = `
+#define SETUP_A Integer a = 1;
+#define SETUP_B Integer b = 2;
+
+void func()
+{
+	SETUP_A
+	SETUP_B
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("function-like macro with nested function call argument does not produce a syntax error", () => {
+		// MACRO_EXAMPLE(someOtherfunction()) — the argument contains nested parens.
+		// The old regex [^)]* stopped at the first ')' so the line was not stripped,
+		// causing a missing-semicolon syntax error on the following statement.
+		const code = `
+Integer someOtherfunction()
+{
+	return 1;
+}
+
+void func()
+{
+	#define MACRO_EXAMPLE(x) Integer test = x;
+
+	MACRO_EXAMPLE(someOtherfunction())
+
+	someOtherfunction();
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("function-like macro with nested call does not produce false undeclared errors", () => {
+		const code = `
+Integer someOtherfunction()
+{
+	return 1;
+}
+
+void func()
+{
+	#define MACRO_EXAMPLE(x) Integer test = x;
+
+	MACRO_EXAMPLE(someOtherfunction())
+
+	someOtherfunction();
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(['someOtherfunction']),
+			variables: new Set(),
+			defines: new Set(['MACRO_EXAMPLE']),
+		});
+		const errors = diagnostics.filter(d => d.severity === 1 /* Error */);
+		expect(errors.length).toBe(0);
 	});
 });

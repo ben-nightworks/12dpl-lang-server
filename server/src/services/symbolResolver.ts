@@ -69,7 +69,15 @@ export class SymbolResolver {
 		if (symbolTable) {
 			const found = findDeclaringScope(symbolTable.root, position, name);
 			if (found && !isGeneratedWrapperFunctionName(found.declaration.name)) {
-				return this.declarationToResolved(found.declaration, 'document', uri);
+				let declaration = found.declaration;
+				// If the scope match is a forward declaration, prefer the full definition
+				if (declaration.isForwardDeclaration) {
+					const views = this.documentService.getDerivedViews(uri);
+					const allDecls = views?.allFunctions.get(name);
+					const definition = allDecls?.find(d => !d.isForwardDeclaration);
+					if (definition) declaration = definition;
+				}
+				return this.declarationToResolved(declaration, 'document', uri);
 			}
 		}
 
@@ -87,7 +95,8 @@ export class SymbolResolver {
 		const incFunctions = includeSymbols.functions.get(name);
 		if (incFunctions && incFunctions.length > 0) {
 			const incFsPath = await this.findIncludeFsPathForSymbol(uri, name);
-			return this.declarationToResolved(incFunctions[0], 'include', undefined, incFsPath);
+			const preferred = incFunctions.find(d => !d.isForwardDeclaration) ?? incFunctions[0];
+			return this.declarationToResolved(preferred, 'include', undefined, incFsPath);
 		}
 		const incVariable = includeSymbols.variables.get(name);
 		if (incVariable) {

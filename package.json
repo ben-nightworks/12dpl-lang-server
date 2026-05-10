@@ -1,16 +1,15 @@
 {
 	"name": "12dpl-lang-server",
-	"description": "A language server for 12dPL",
+	"description": "Language server and VS Code extension for 12dPL, the programming language of 12d Model.",
 	"author": "Ben Olsen",
 	"contributors": [
 		{
-			"name": "Kamal Jarada",
-			"email": "kamal.jarada@example.com"
+			"name": "Kamal Jarada"
 		}
 	],
 	"license": "MIT",
-	"displayName": "12dPL Language Server",
-	"version": "1.3.1",
+	"displayName": "12dPL Language",
+	"version": "1.5.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ben-nightworks/12dpl-lang-server"
@@ -23,14 +22,9 @@
 		"12d"
 	],
 	"engines": {
-		"vscode": "^1.74.0"
+		"vscode": "^1.82.0"
 	},
 	"main": "./client/out/extension",
-	"activationEvents": [
-		"onLanguage:12dpl",
-		"onCommand:12dpl.compile",
-		"onCommand:12dpl.compileWithFlags"
-	],
 	"contributes": {
 		"configurationDefaults": {
 			"[12dpl]": {
@@ -95,7 +89,24 @@
 					".4dm",
 					".h"
 				],
-				"configuration": "./language-configuration.json"
+				"configuration": "./language-configuration.json",
+				"icon": {
+					"light": "./Images/4dm.svg",
+					"dark": "./Images/4dm.svg"
+				}
+			},
+			{
+				"id": "12dpl-compiled",
+				"aliases": [
+					"12dPL Compiled"
+				],
+				"extensions": [
+					".4do"
+				],
+				"icon": {
+					"light": "./Images/4do.svg",
+					"dark": "./Images/4do.svg"
+				}
 			},
 			{
 				"id": "mtfsnippet",
@@ -156,7 +167,9 @@
 				"12dpl.compiler.includePaths": {
 					"scope": "window",
 					"type": "array",
-					"items": { "type": "string" },
+					"items": {
+						"type": "string"
+					},
 					"default": [],
 					"description": "List of folders to prepend to the PATH environment variable before running the compiler (useful for include directories). Use platform paths; on Windows use semicolon-separated PATH semantics."
 				},
@@ -179,7 +192,43 @@
 					"scope": "resource",
 					"type": "number",
 					"default": 4,
-					"description": "Indent size (spaces) used by the 12dPL formatter."
+					"description": "Number of spaces per indent level used by the 12dPL formatter (also controls how many spaces a tab counts as when indentStyle is 'spaces')."
+				},
+				"12dpl.formatter.indentStyle": {
+					"scope": "resource",
+					"type": "string",
+					"default": "editor",
+					"enum": ["editor", "spaces", "tabs"],
+					"enumDescriptions": [
+						"Use the editor.insertSpaces setting to decide (default).",
+						"Always indent with spaces, replacing any existing tab indentation.",
+						"Always indent with tabs, replacing any existing space indentation."
+					],
+					"description": "Controls whether the formatter uses spaces or tabs for indentation, overriding the editor.insertSpaces setting. 'editor' defers to VS Code's setting."
+				},
+				"12dpl.formatter.preserveBlankLines": {
+					"scope": "resource",
+					"type": "boolean",
+					"default": false,
+					"description": "When enabled, blank lines keep their original whitespace during formatting. This prevents format-on-save from moving the cursor to column 0 when it is positioned on a blank line."
+				},
+				"12dpl.formatter.bracketStyle": {
+					"scope": "resource",
+					"type": "string",
+					"default": "preserve",
+					"enum": ["preserve", "same-line", "new-line"],
+					"enumDescriptions": [
+						"Do not modify brace positions (default).",
+						"Place opening braces at the end of the preceding statement line (K&R style).",
+						"Place opening braces on their own line (Allman style)."
+					],
+					"description": "Controls where opening braces are placed during formatting. 'preserve' leaves braces unchanged; 'same-line' moves lone opening braces up to the previous line (K&R); 'new-line' moves trailing opening braces onto their own line (Allman)."
+				},
+				"12dpl.formatter.maxLineLength": {
+					"scope": "resource",
+					"type": "number",
+					"default": 100,
+					"description": "Maximum line length before the formatter inserts a line break at the nearest safe point (after a comma or logical operator). Set to 0 to disable (default)."
 				},
 				"langServer.maxNumberOfProblems": {
 					"scope": "resource",
@@ -220,9 +269,12 @@
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "bun run compile && bun server/copy-resources.js",
+		"vscode:prepublish": "bun run bundle",
+		"bundle": "bun scripts/bundle.ts",
+		"publish": "vsce publish --no-dependencies",
+		"publish:pre-release": "vsce publish --pre-release --no-dependencies",
+		"vsce-package": "vsce package --no-dependencies",
 		"generate-antlr": "cd server && bun run generate-antlr",
-		"sync-types": "bun server/sync-grammar-types.js",
 		"build": "bun run compile",
 		"compile": "bun x tsc -b && bun server/copy-resources.js",
 		"watch": "bun x tsc -b -w",
@@ -234,12 +286,15 @@
 		"test:all": "bun run compile && bun test tests",
 		"test:e2e": "sh ./scripts/e2e.sh"
 	},
+	"bundledDependencies": [],
 	"devDependencies": {
-		"@types/node": "^16.11.7",
-		"@typescript-eslint/eslint-plugin": "^5.42.0",
-		"@typescript-eslint/parser": "^5.42.0",
-		"@vscode/vsce": "^3.7.1",
-		"eslint": "^8.26.0",
-		"typescript": "^4.9.5"
+		"@types/node": "latest",
+		"@typescript-eslint/eslint-plugin": "latest",
+		"@typescript-eslint/parser": "latest",
+		"@vscode/vsce": "latest",
+		"bun-types": "^1.3.11",
+		"esbuild": "^0.28.0",
+		"eslint": "latest",
+		"typescript": "latest"
 	}
 }

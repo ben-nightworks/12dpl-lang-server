@@ -15,8 +15,12 @@ import { validateVariableRedeclarations,
 	validateDeprecatedCalls, 
 	validateVoidFunctionReturnValues,
 	validateFunctionArguments,
-  validateReturnStatements} from '../core/validators';
-import type { FunctionSignatureMap } from '../core/validators';
+	validateReturnStatements,
+	validateArraySize,
+	validateControlFlow,
+	validateAssignmentTypes,
+	validateLogicalConditions} from '../core/validators';
+import type { FunctionSignatureMap, OverloadReturnType } from '../core/validators';
 import type { KnownSymbols, ParameterSymbolInfo } from '../core/types';
 
 export class DiagnosticService {
@@ -60,24 +64,26 @@ export class DiagnosticService {
 			diagnostics.push(...redeclDiagnostics);
 
 			// 3b. Function redeclaration checking (issue #44)
-			const funcRedeclDiagnostics = validateFunctionRedeclarations(parseResult.tree, includeDeclarations);
+			const funcRedeclDiagnostics = validateFunctionRedeclarations(parseResult.tree, includeDeclarations, parseResult.conditionalLines);
 			diagnostics.push(...funcRedeclDiagnostics);
 
 			// 3c. Undeclared identifier checking
 			const knownSymbols = await this.buildKnownSymbols(uri);
 			const undeclaredDiagnostics = validateUndeclaredIdentifiers(
 				parseResult.tree,
-				knownSymbols
+				knownSymbols,
+				parseResult.conditionalLines
 			);
 			diagnostics.push(...undeclaredDiagnostics);
 
 			// 3d. Function argument checking (issue #45)
 			const functionSignatures = await this.buildFunctionSignatures(uri);
 			const functionReturnTypes = await this.buildFunctionReturnTypes(uri);
+			const simpleReturnTypes = this.flattenReturnTypes(functionReturnTypes);
 			const argDiagnostics = validateFunctionArguments(
 				parseResult.tree,
 				functionSignatures,
-				functionReturnTypes
+				simpleReturnTypes
 			);
 			diagnostics.push(...argDiagnostics);
 
@@ -91,7 +97,22 @@ export class DiagnosticService {
       // 3f. Return statement validation (issue #47)
 			const returnDiagnostics = validateReturnStatements(parseResult.tree);
 			diagnostics.push(...returnDiagnostics);
-      
+
+			// 3g. Array size validation (issue #73)
+			const arraySizeDiagnostics = validateArraySize(parseResult.tree);
+			diagnostics.push(...arraySizeDiagnostics);
+
+			// 3h. Control flow validation (issues #96, #97, #98, #99)
+			const controlFlowDiagnostics = validateControlFlow(parseResult.tree);
+			diagnostics.push(...controlFlowDiagnostics);
+
+			// 3i. Assignment type validation (issue #100)
+			const assignmentTypeDiagnostics = validateAssignmentTypes(parseResult.tree);
+			diagnostics.push(...assignmentTypeDiagnostics);
+
+			// 3j. Logical condition validation (issue #101)
+			const logicalConditionDiagnostics = validateLogicalConditions(parseResult.tree);
+			diagnostics.push(...logicalConditionDiagnostics);
 		}
 
 		return diagnostics;
@@ -148,16 +169,34 @@ export class DiagnosticService {
 		return knownSymbols;
 	}
 
-	/** Builds a map of function name → return type for void-return-value checking. */
-	private async buildFunctionReturnTypes(uri: string): Promise<Map<string, string>> {
-		const returnTypes = new Map<string, string>();
+	/** Flattens overload return types to a simple name→returnType map for validators that don't need overload awareness. */
+	private flattenReturnTypes(overloadMap: Map<string, OverloadReturnType[]>): Map<string, string> {
+		const result = new Map<string, string>();
+		for (const [name, overloads] of overloadMap) {
+			if (overloads.length > 0) {
+				// Prefer a non-void overload if one exists
+				const nonVoid = overloads.find(o => o.returnType !== 'void');
+				result.set(name, nonVoid ? nonVoid.returnType : overloads[0].returnType);
+			}
+		}
+		return result;
+	}
 
-		// Built-in prototypes — only mark as void if ALL overloads return void
+	/** Builds a map of function name → overload return types for void-return-value checking. */
+	private async buildFunctionReturnTypes(uri: string): Promise<Map<string, OverloadReturnType[]>> {
+		const returnTypes = new Map<string, OverloadReturnType[]>();
+
+		const addOverload = (name: string, paramCount: number, returnType: string) => {
+			const existing = returnTypes.get(name) ?? [];
+			existing.push({ paramCount, returnType });
+			returnTypes.set(name, existing);
+		};
+
+		// Built-in prototypes
 		for (const name of this.prototypeService.getAllNames()) {
 			const overloads = this.prototypeService.getPrototypes(name);
-			if (overloads.length > 0) {
-				const allVoid = overloads.every(o => o.returnType === 'void');
-				returnTypes.set(name, allVoid ? 'void' : overloads[0].returnType);
+			for (const overload of overloads) {
+				addOverload(name, overload.parameters.length, overload.returnType);
 			}
 		}
 
@@ -165,8 +204,10 @@ export class DiagnosticService {
 		const docViews = this.documentService.getDerivedViews(uri);
 		if (docViews) {
 			for (const [name, decls] of docViews.allFunctions) {
-				if (decls.length > 0 && decls[0].returnType) {
-					returnTypes.set(name, decls[0].returnType);
+				for (const decl of decls) {
+					if (decl.returnType) {
+						addOverload(name, decl.params?.length ?? 0, decl.returnType);
+					}
 				}
 			}
 		}
@@ -177,8 +218,10 @@ export class DiagnosticService {
 			const views = this.documentService.getDerivedViewsForFsPath(includeFsPath);
 			if (views) {
 				for (const [name, decls] of views.exportedFunctions) {
-					if (decls.length > 0 && decls[0].returnType) {
-						returnTypes.set(name, decls[0].returnType);
+					for (const decl of decls) {
+						if (decl.returnType) {
+							addOverload(name, decl.params?.length ?? 0, decl.returnType);
+						}
 					}
 				}
 			}

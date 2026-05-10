@@ -10,13 +10,13 @@
 		"url": "https://github.com/ben-nightworks/12dpl-lang-server"
 	},
 	"engines": {
-		"vscode": "^1.63.0"
+		"vscode": "^1.82.0"
 	},
 	"dependencies": {
-		"vscode-languageclient": "^7.0.0"
+		"vscode-languageclient": "latest"
 	},
 	"devDependencies": {
-		"@types/node": "16.11.36",
-		"@types/vscode": "^1.63.0"
+		"@types/node": "latest",
+		"@types/vscode": "latest"
 	}
 }
