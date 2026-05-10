@@ -3259,4 +3259,52 @@ void func()
 		const result = parse(code);
 		expect(result.syntaxErrors.length).toBe(0);
 	});
+
+	test("function-like macro with nested function call argument does not produce a syntax error", () => {
+		// MACRO_EXAMPLE(someOtherfunction()) — the argument contains nested parens.
+		// The old regex [^)]* stopped at the first ')' so the line was not stripped,
+		// causing a missing-semicolon syntax error on the following statement.
+		const code = `
+Integer someOtherfunction()
+{
+	return 1;
+}
+
+void func()
+{
+	#define MACRO_EXAMPLE(x) Integer test = x;
+
+	MACRO_EXAMPLE(someOtherfunction())
+
+	someOtherfunction();
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("function-like macro with nested call does not produce false undeclared errors", () => {
+		const code = `
+Integer someOtherfunction()
+{
+	return 1;
+}
+
+void func()
+{
+	#define MACRO_EXAMPLE(x) Integer test = x;
+
+	MACRO_EXAMPLE(someOtherfunction())
+
+	someOtherfunction();
+}
+`;
+		const diagnostics = ValidateWithSymbols(code, {
+			functions: new Set(['someOtherfunction']),
+			variables: new Set(),
+			defines: new Set(['MACRO_EXAMPLE']),
+		});
+		const errors = diagnostics.filter(d => d.severity === 1 /* Error */);
+		expect(errors.length).toBe(0);
+	});
 });

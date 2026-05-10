@@ -319,14 +319,49 @@ export function stripStandaloneMacroUsages(strippedText: string, rawText: string
 	}
 	if (defineNames.size === 0) return strippedText;
 
-	// Replace lines that are ONLY a macro name (with optional args) and no trailing semicolon
+	// Replace lines that are ONLY a macro name (with optional args) and no trailing semicolon.
+	// Walks balanced parentheses so nested calls like MACRO(foo()) are handled correctly.
 	const lines = strippedText.split('\n');
 	for (let i = 0; i < lines.length; i++) {
 		const trimmed = lines[i].trim();
 		if (!trimmed) continue;
-		// Matches: IDENTIFIER or IDENTIFIER(anything) with no trailing semicolon
-		const usageMatch = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)(\([^)]*\))?\s*$/);
-		if (usageMatch && defineNames.has(usageMatch[1])) {
+
+		const identMatch = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)/);
+		if (!identMatch || !defineNames.has(identMatch[1])) continue;
+
+		const rest = trimmed.slice(identMatch[1].length).trimStart();
+
+		// No arguments — bare macro identifier with nothing after it
+		if (rest === '') {
+			lines[i] = '';
+			continue;
+		}
+
+		// Must start with '(' to be a function-like macro invocation
+		if (!rest.startsWith('(')) continue;
+
+		// Walk balanced parentheses, respecting strings, to find the closing paren
+		let depth = 0;
+		let j = 0;
+		let inStr = false;
+		let strChar = '';
+		for (; j < rest.length; j++) {
+			const c = rest[j];
+			if (inStr) {
+				if (c === '\\') { j++; continue; }
+				if (c === strChar) inStr = false;
+				continue;
+			}
+			if (c === '"' || c === "'") { inStr = true; strChar = c; continue; }
+			if (c === '(') { depth++; continue; }
+			if (c === ')') {
+				depth--;
+				if (depth === 0) { j++; break; }
+			}
+		}
+
+		// Only strip if parens balanced and nothing (no semicolon) follows
+		if (depth === 0 && rest.slice(j).trim() === '') {
 			lines[i] = '';
 		}
 	}
