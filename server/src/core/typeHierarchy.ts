@@ -58,7 +58,7 @@ const typePromotions: ReadonlyMap<string, ReadonlySet<string>> = new Map([
 	['Integer64',  new Set(['Real', 'Integer'])],
 	['Model',      new Set(['Dynamic_Element'])],
 	['Element',    new Set(['Dynamic_Element'])],
-	['Tin',        new Set(['Dynamic_Element'])],
+	['Tin',        new Set(['Element', 'Dynamic_Element'])],
 	['Point',      new Set(['Segment'])],
 	['Line',       new Set(['Segment'])],
 	['Arc',        new Set(['Segment'])],
