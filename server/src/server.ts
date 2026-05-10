@@ -35,6 +35,7 @@ import { registerHoverProvider } from './providers/hoverProvider';
 import { registerFormattingProvider } from './providers/formattingProvider';
 import { registerValidationProvider } from './providers/validationProvider';
 import { registerDocumentSymbolProvider } from './providers/documentSymbolProvider';
+import { registerRenameProvider } from './providers/renameProvider';
 
 // Create a connection for the server, using Node's IPC as a transport.
 const connection = createConnection(ProposedFeatures.all);
@@ -114,7 +115,8 @@ connection.onInitialize((params: InitializeParams) => {
 			hoverProvider: true,
 			definitionProvider: true,
 			documentFormattingProvider: true,
-			documentSymbolProvider: true
+			documentSymbolProvider: true,
+			renameProvider: { prepareProvider: true }
 		}
 	};
 	if (hasWorkspaceFolderCapability) {
@@ -178,6 +180,7 @@ registerCompletionProvider({ connection, documents, documentService, includeServ
 registerDefinitionProvider({ connection, documents, symbolResolver });
 registerHoverProvider({ connection, documents, symbolResolver, prototypeService });
 registerFormattingProvider({ connection, documents });
+registerRenameProvider({ connection, documents, documentService, symbolResolver });
 registerValidationProvider({ connection, documents, diagnosticService, prototypeService });
 registerDocumentSymbolProvider({ connection, documents, documentService });
 
