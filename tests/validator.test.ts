@@ -2374,6 +2374,21 @@ void main()
 		const diagnostics = ValidateFunctionArgs(code);
 		expect(diagnostics.length).toBe(0);
 	});
+	test("allows Tin where Element parameter expected (promotion)", () => {
+		const code = `
+void Process(Element e)
+{
+}
+
+void main()
+{
+	Tin t;
+	Process(t);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		expect(diagnostics.length).toBe(0);
+	});
 
 	test("allows Vector2 where Vector3 parameter expected (promotion)", () => {
 		const code = `

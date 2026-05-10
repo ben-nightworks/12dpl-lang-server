@@ -239,3 +239,12 @@ void main()
 //   TEST 11: No argument-count/type diagnostic from this validator
 //
 // ============================================================================
+void Process(Element e)
+{
+}
+
+void main_tin()
+{
+	Tin t;
+	Process(t);
+}
