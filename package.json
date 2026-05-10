@@ -192,7 +192,43 @@
 					"scope": "resource",
 					"type": "number",
 					"default": 4,
-					"description": "Indent size (spaces) used by the 12dPL formatter."
+					"description": "Number of spaces per indent level used by the 12dPL formatter (also controls how many spaces a tab counts as when indentStyle is 'spaces')."
+				},
+				"12dpl.formatter.indentStyle": {
+					"scope": "resource",
+					"type": "string",
+					"default": "editor",
+					"enum": ["editor", "spaces", "tabs"],
+					"enumDescriptions": [
+						"Use the editor.insertSpaces setting to decide (default).",
+						"Always indent with spaces, replacing any existing tab indentation.",
+						"Always indent with tabs, replacing any existing space indentation."
+					],
+					"description": "Controls whether the formatter uses spaces or tabs for indentation, overriding the editor.insertSpaces setting. 'editor' defers to VS Code's setting."
+				},
+				"12dpl.formatter.preserveBlankLines": {
+					"scope": "resource",
+					"type": "boolean",
+					"default": false,
+					"description": "When enabled, blank lines keep their original whitespace during formatting. This prevents format-on-save from moving the cursor to column 0 when it is positioned on a blank line."
+				},
+				"12dpl.formatter.bracketStyle": {
+					"scope": "resource",
+					"type": "string",
+					"default": "preserve",
+					"enum": ["preserve", "same-line", "new-line"],
+					"enumDescriptions": [
+						"Do not modify brace positions (default).",
+						"Place opening braces at the end of the preceding statement line (K&R style).",
+						"Place opening braces on their own line (Allman style)."
+					],
+					"description": "Controls where opening braces are placed during formatting. 'preserve' leaves braces unchanged; 'same-line' moves lone opening braces up to the previous line (K&R); 'new-line' moves trailing opening braces onto their own line (Allman)."
+				},
+				"12dpl.formatter.maxLineLength": {
+					"scope": "resource",
+					"type": "number",
+					"default": 100,
+					"description": "Maximum line length before the formatter inserts a line break at the nearest safe point (after a comma or logical operator). Set to 0 to disable (default)."
 				},
 				"langServer.maxNumberOfProblems": {
 					"scope": "resource",

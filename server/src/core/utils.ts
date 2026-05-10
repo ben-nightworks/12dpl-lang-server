@@ -39,22 +39,10 @@ export function escapeSnippetText(text: string): string {
  * Falls back to `foo()` when no parameter metadata is available.
  */
 export function buildFunctionCallSnippet(functionName: string, params: ParameterSymbolInfo[] | undefined): string {
-	const placeholders: string[] = [];
-	const p = params ?? [];
-
-	for (let i = 0; i < p.length; i++) {
-		const param = p[i];
-		const ref = param.byRef ? '&' : '';
-		const arr = param.isArray ? '[]' : '';
-		const label = (param.type && param.name)
-			? `${param.type} ${ref}${param.name}${arr}`
-			: (param.type ? `${param.type}${arr}` : (param.name ? `${ref}${param.name}${arr}` : ''));
-		if (!label.length) continue;
-		placeholders.push(`\${${i + 1}:${escapeSnippetText(label)}}`);
-	}
-
-	if (!placeholders.length) return `${functionName}()$0`;
-	return `${functionName}(${placeholders.join(', ')})$0`;
+	const hasParams = (params ?? []).length > 0;
+	// Place cursor inside the parens; signature help guides the user through parameters.
+	if (hasParams) return `${functionName}($0)`;
+	return `${functionName}()$0`;
 }
 
 /**
