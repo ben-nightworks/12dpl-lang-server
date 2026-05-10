@@ -22,4 +22,5 @@ export { validateFunctionArguments } from './validation.FunctionArguments';
 export type { FunctionSignatureMap } from './validation.FunctionArguments';
 export { validateArraySize } from './validation.ArraySize';
 export { validateControlFlow } from './validation.ControlFlow';
+export { validateAssignmentTypes } from './validation.AssignmentType';
 export { validateLogicalConditions } from './validation.LogicalCondition';

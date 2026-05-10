@@ -34,6 +34,7 @@ import {
 	validateFunctionArguments,
 	validateReturnStatements,
 	validateArraySize,
+	validateAssignmentTypes,
 	validateLogicalConditions,
 } from '../server/src/core/validators';
 import type { FunctionSignatureMap, OverloadReturnType } from '../server/src/core/validators';
@@ -488,6 +489,7 @@ function validateFile(filePath: string, prototypes: PrototypeService): Diagnosti
 		pushDiagnostics(validateVoidFunctionReturnValues(result.tree, funcRetTypes));
 		pushDiagnostics(validateReturnStatements(result.tree));
 		pushDiagnostics(validateArraySize(result.tree));
+		pushDiagnostics(validateAssignmentTypes(result.tree));
 		pushDiagnostics(validateLogicalConditions(result.tree));
 	}
 
