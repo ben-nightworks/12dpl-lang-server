@@ -29,6 +29,7 @@ macros_mattmonk/**
 tests/**
 docs/**
 scripts/**
+website/**
 client/testFixture/**
 server/src/**
 
