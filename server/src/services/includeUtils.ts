@@ -68,7 +68,12 @@ import * as path from 'path';
 	export function fsPathToFileUri(fsPath: string): string {
 		const abs = path.resolve(fsPath);
 		const withForwardSlashes = abs.replace(/\\/g, '/');
-		return `file:///${encodeURI(withForwardSlashes)}`;
+		// On Unix/macOS the absolute path already starts with '/', so we need
+		// file:// + path  →  file:///Users/...
+		// On Windows the path starts with a drive letter, so we need an extra slash:
+		// file:/// + C:/...  →  file:///C:/...
+		const prefix = withForwardSlashes.startsWith('/') ? 'file://' : 'file:///';
+		return `${prefix}${encodeURI(withForwardSlashes)}`;
 	}
 
 	/** Extracts all `#include` paths from a document. */

@@ -75,7 +75,12 @@ export class IncludeService {
 			const views = this.documentService.getDerivedViewsForFsPath(fsPath);
 			if (!views) continue;
 			for (const [name, decls] of views.exportedFunctions) {
-				if (!functions.has(name)) functions.set(name, decls);
+				const existing = functions.get(name);
+				if (existing) {
+					for (const d of decls) existing.push(d);
+				} else {
+					functions.set(name, [...decls]);
+				}
 			}
 			for (const [name, decl] of views.exportedVariables) {
 				if (!variables.has(name)) variables.set(name, decl);

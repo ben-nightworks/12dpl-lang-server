@@ -6,8 +6,9 @@
 //
 // ============================================================================
 
-// ──────── Forward declarations ───────────────────────────────────────────────
+#include "/includes/Test_Include.h"
 
+// ──────── Forward declarations ───────────────────────────────────────────────
 void forward_only(Integer x);
 
 void both_decl_and_def(Integer a, Integer b);
@@ -44,6 +45,8 @@ void main()
 	both_decl_and_def(1, 2);
 	Integer v = returns_value(1.0);
 	definition_only("hello");
+
+	Add(1, 2);
 }
 
 // ============================================================================
