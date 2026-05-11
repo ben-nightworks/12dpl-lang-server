@@ -5,9 +5,11 @@
  * - Functions with only a forward declaration still resolve to that declaration
  * - The `isForwardDeclaration` flag is correctly set by the symbol collector
  */
+import * as path from 'path';
 import { describe, expect, test } from 'bun:test';
 import { parse } from '../server/src/core/parsePipeline';
 import { collectSymbolTable, deriveViews, findDeclaringScope } from '../server/src/core/symbolCollector';
+import { fsPathToFileUri } from '../server/src/services/includeUtils';
 
 function parseAndCollect(text: string) {
 	const result = parse(text);
@@ -208,3 +210,108 @@ void caller()
 	});
 });
 
+// ─── getIncludeSymbols merging: fwd decl and definition in separate files ────
+//     Regression for: go-to-definition on an include function with a forward
+//     declaration in one header and a definition in another (#forward-decl-include).
+
+describe('cross-file forward declaration + definition merging', () => {
+	test('aggregating exportedFunctions from two files merges both entries', () => {
+		// Simulate Test_Sub_Forw_Delc.h (forward decl only)
+		const fwdSrc = `Integer Add(Integer a, Integer b);`;
+		const fwdResult = parse(fwdSrc);
+		const fwdTable = collectSymbolTable(fwdResult, fwdSrc);
+		const fwdViews = deriveViews(fwdTable.root);
+
+		// Simulate Test_Sub_Include.h (definition)
+		const defSrc = `Integer Add(Integer a, Integer b)\n{\n\treturn a + b;\n}`;
+		const defResult = parse(defSrc);
+		const defTable = collectSymbolTable(defResult, defSrc);
+		const defViews = deriveViews(defTable.root);
+
+		// Replicate the fixed getIncludeSymbols merge logic
+		const functions = new Map<string, import('../server/src/core/types').SymbolDeclaration[]>();
+		for (const [name, decls] of fwdViews.exportedFunctions) {
+			const existing = functions.get(name);
+			if (existing) {
+				for (const d of decls) existing.push(d);
+			} else {
+				functions.set(name, [...decls]);
+			}
+		}
+		for (const [name, decls] of defViews.exportedFunctions) {
+			const existing = functions.get(name);
+			if (existing) {
+				for (const d of decls) existing.push(d);
+			} else {
+				functions.set(name, [...decls]);
+			}
+		}
+
+		const merged = functions.get('Add')!;
+		expect(merged).toBeDefined();
+		expect(merged.length).toBe(2);
+
+		// The preferred selection (as used in SymbolResolver) must return the definition
+		const preferred = merged.find(d => !d.isForwardDeclaration) ?? merged[0];
+		expect(preferred.isForwardDeclaration).toBeFalsy();
+	});
+
+	test('old first-wins logic would have hidden the definition when fwd decl file comes first', () => {
+		const fwdSrc = `Integer Add(Integer a, Integer b);`;
+		const fwdResult = parse(fwdSrc);
+		const fwdTable = collectSymbolTable(fwdResult, fwdSrc);
+		const fwdViews = deriveViews(fwdTable.root);
+
+		const defSrc = `Integer Add(Integer a, Integer b)\n{\n\treturn a + b;\n}`;
+		const defResult = parse(defSrc);
+		const defTable = collectSymbolTable(defResult, defSrc);
+		const defViews = deriveViews(defTable.root);
+
+		// Old (buggy) first-wins logic
+		const functions = new Map<string, import('../server/src/core/types').SymbolDeclaration[]>();
+		for (const [name, decls] of fwdViews.exportedFunctions) {
+			if (!functions.has(name)) functions.set(name, decls);
+		}
+		for (const [name, decls] of defViews.exportedFunctions) {
+			if (!functions.has(name)) functions.set(name, decls); // skipped — already set
+		}
+
+		const result = functions.get('Add')!;
+		// With old logic, only the forward declaration was visible
+		expect(result.length).toBe(1);
+		expect(result[0].isForwardDeclaration).toBe(true);
+		// This caused preferred to fall back to the forward declaration
+		const preferred = result.find(d => !d.isForwardDeclaration) ?? result[0];
+		expect(preferred.isForwardDeclaration).toBe(true); // bug: navigates to wrong place
+	});
+});
+
+// ─── fsPathToFileUri — correct URI generation on all platforms ───────────────
+
+describe('fsPathToFileUri', () => {
+	test('absolute path produces a valid file URI with no double-slash bug', () => {
+		const absPath = path.resolve('some', 'project', 'file.h');
+		const uri = fsPathToFileUri(absPath);
+		expect(uri.startsWith('file:///')).toBe(true);
+		// Must not have 4 consecutive slashes (old macOS bug: file:/// prepended
+		// to a path that already started with /)
+		expect(uri).not.toContain('////');
+	});
+
+	test('path with spaces is percent-encoded', () => {
+		const absPath = path.resolve('my project', 'file.h');
+		const uri = fsPathToFileUri(absPath);
+		expect(uri.startsWith('file:///')).toBe(true);
+		expect(uri).not.toContain('////');
+		expect(uri).toContain('%20');
+	});
+
+	test('URI has empty authority — path starts immediately after file://', () => {
+		const absPath = path.resolve('some', 'path', 'header.h');
+		const uri = fsPathToFileUri(absPath);
+		// file:// + single / means empty authority + absolute path
+		const pathPart = uri.slice('file://'.length);
+		expect(pathPart.startsWith('/')).toBe(true);
+		expect(pathPart.startsWith('//')).toBe(false);
+	});
+});
