@@ -225,12 +225,18 @@ export class SymbolResolver {
 
 	private async findIncludeFsPathForSymbol(uri: string, name: string): Promise<string | undefined> {
 		const files = await this.includeService.getIncludeFiles(uri);
+		let forwardDeclPath: string | undefined;
 		for (const fp of files) {
 			const views = this.documentService.getDerivedViewsForFsPath(fp);
 			if (!views) continue;
-			if (views.exportedFunctions.has(name)) return fp;
+			if (views.exportedFunctions.has(name)) {
+				const decls = views.exportedFunctions.get(name)!;
+				// Prefer the file that contains the actual definition, not just a forward declaration
+				if (decls.some(d => !d.isForwardDeclaration)) return fp;
+				forwardDeclPath ??= fp;
+			}
 			if (views.exportedVariables.has(name)) return fp;
 		}
-		return undefined;
+		return forwardDeclPath;
 	}
 }
