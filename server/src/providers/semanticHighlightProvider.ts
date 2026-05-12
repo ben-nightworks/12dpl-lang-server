@@ -15,12 +15,12 @@ import type { SymbolDeclaration, SymbolRange } from '../core/types';
 const MACRO_TOKEN_TYPE_INDEX = 0;
 const NO_TOKEN_MODIFIERS = 0;
 
-export const semanticTokensLegend: SemanticTokensLegend = {
+export const semanticHighlightLegend: SemanticTokensLegend = {
 	tokenTypes: ['macro'],
 	tokenModifiers: [],
 };
 
-export interface MacroSemanticToken {
+export interface MacroSemanticHighlightToken {
 	line: number;
 	character: number;
 	length: number;
@@ -33,8 +33,8 @@ interface IdentifierOccurrence {
 	length: number;
 }
 
-/** Registers full-document semantic tokens for known preprocessor macros. */
-export function registerSemanticTokensProvider(opts: {
+/** Registers full-document semantic highlighting for known preprocessor macros. */
+export function registerSemanticHighlightProvider(opts: {
 	connection: Connection;
 	documents: TextDocuments<TextDocument>;
 	documentService: DocumentService;
@@ -50,17 +50,17 @@ export function registerSemanticTokensProvider(opts: {
 		const localDefines = symbolTable?.defines ?? [];
 		const includeDefines = await includeService.getIncludeDefines(params.textDocument.uri);
 
-		const tokens = collectMacroSemanticTokens(doc.getText(), localDefines, includeDefines);
-		return encodeMacroSemanticTokens(tokens);
+		const tokens = collectMacroSemanticHighlightTokens(doc.getText(), localDefines, includeDefines);
+		return encodeMacroSemanticHighlightTokens(tokens);
 	});
 }
 
-/** Collects macro definition and reference tokens from one document. */
-export function collectMacroSemanticTokens(
+/** Collects macro definition and reference highlight tokens from one document. */
+export function collectMacroSemanticHighlightTokens(
 	text: string,
 	localDefines: readonly SymbolDeclaration[],
 	includeDefines: readonly SymbolDeclaration[] = []
-): MacroSemanticToken[] {
+): MacroSemanticHighlightToken[] {
 	const knownMacroNames = new Set<string>();
 	for (const def of localDefines) {
 		if (def.kind === 'define') knownMacroNames.add(def.name);
@@ -69,7 +69,7 @@ export function collectMacroSemanticTokens(
 		if (def.kind === 'define') knownMacroNames.add(def.name);
 	}
 
-	const tokens: MacroSemanticToken[] = [];
+	const tokens: MacroSemanticHighlightToken[] = [];
 	const occupiedRanges = new Set<string>();
 
 	for (const def of localDefines) {
@@ -91,8 +91,8 @@ export function collectMacroSemanticTokens(
 	return sortTokens(tokens);
 }
 
-/** Encodes absolute-position macro tokens into LSP semantic-token delta format. */
-export function encodeMacroSemanticTokens(tokens: readonly MacroSemanticToken[]): SemanticTokens {
+/** Encodes absolute-position macro highlight tokens into the LSP delta payload format. */
+export function encodeMacroSemanticHighlightTokens(tokens: readonly MacroSemanticHighlightToken[]): SemanticTokens {
 	const builder = new SemanticTokensBuilder();
 	for (const token of sortTokens(tokens)) {
 		builder.push(
@@ -210,7 +210,7 @@ export function scanIdentifiersOutsideCommentsAndStrings(text: string): Identifi
 	return result;
 }
 
-function tokenFromRange(range: SymbolRange): MacroSemanticToken | null {
+function tokenFromRange(range: SymbolRange): MacroSemanticHighlightToken | null {
 	const length = range.end.character - range.start.character;
 	if (length <= 0) return null;
 	return {
@@ -221,9 +221,9 @@ function tokenFromRange(range: SymbolRange): MacroSemanticToken | null {
 }
 
 function addToken(
-	tokens: MacroSemanticToken[],
+	tokens: MacroSemanticHighlightToken[],
 	occupiedRanges: Set<string>,
-	token: MacroSemanticToken | null
+	token: MacroSemanticHighlightToken | null
 ): void {
 	if (!token || token.length <= 0) return;
 	const key = rangeKey(token);
@@ -233,18 +233,18 @@ function addToken(
 	tokens.push(token);
 }
 
-function rangesOverlap(a: MacroSemanticToken, b: MacroSemanticToken): boolean {
+function rangesOverlap(a: MacroSemanticHighlightToken, b: MacroSemanticHighlightToken): boolean {
 	if (a.line !== b.line) return false;
 	const aEnd = a.character + a.length;
 	const bEnd = b.character + b.length;
 	return a.character < bEnd && b.character < aEnd;
 }
 
-function rangeKey(token: MacroSemanticToken): string {
+function rangeKey(token: MacroSemanticHighlightToken): string {
 	return `${token.line}:${token.character}:${token.length}`;
 }
 
-function sortTokens(tokens: readonly MacroSemanticToken[]): MacroSemanticToken[] {
+function sortTokens(tokens: readonly MacroSemanticHighlightToken[]): MacroSemanticHighlightToken[] {
 	return [...tokens].sort((a, b) => a.line - b.line || a.character - b.character || a.length - b.length);
 }
 

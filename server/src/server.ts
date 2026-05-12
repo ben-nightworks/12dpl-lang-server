@@ -37,7 +37,7 @@ import { registerValidationProvider } from './providers/validationProvider';
 import { registerDocumentSymbolProvider } from './providers/documentSymbolProvider';
 import { registerRenameProvider } from './providers/renameProvider';
 import { registerSignatureHelpProvider } from './providers/signatureHelpProvider';
-import { registerSemanticTokensProvider, semanticTokensLegend } from './providers/semanticTokensProvider';
+import { registerSemanticHighlightProvider, semanticHighlightLegend } from './providers/semanticHighlightProvider';
 
 // Create a connection for the server, using Node's IPC as a transport.
 const connection = createConnection(ProposedFeatures.all);
@@ -124,7 +124,7 @@ connection.onInitialize((params: InitializeParams) => {
 			documentSymbolProvider: true,
 			renameProvider: { prepareProvider: true },
 			semanticTokensProvider: {
-				legend: semanticTokensLegend,
+				legend: semanticHighlightLegend,
 				full: true,
 				range: false,
 			}
@@ -195,7 +195,7 @@ registerFormattingProvider({ connection, documents });
 registerRenameProvider({ connection, documents, documentService, symbolResolver });
 registerValidationProvider({ connection, documents, diagnosticService, prototypeService });
 registerDocumentSymbolProvider({ connection, documents, documentService });
-registerSemanticTokensProvider({ connection, documents, documentService, includeService });
+registerSemanticHighlightProvider({ connection, documents, documentService, includeService });
 
 // Make the text document manager listen on the connection
 documents.listen(connection);

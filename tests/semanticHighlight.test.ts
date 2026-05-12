@@ -3,10 +3,10 @@ import { parse } from '../server/src/core/parsePipeline';
 import { collectSymbolTable } from '../server/src/core/symbolCollector';
 import type { SymbolDeclaration } from '../server/src/core/types';
 import {
-	collectMacroSemanticTokens,
-	encodeMacroSemanticTokens,
+	collectMacroSemanticHighlightTokens,
+	encodeMacroSemanticHighlightTokens,
 	scanIdentifiersOutsideCommentsAndStrings,
-} from '../server/src/providers/semanticTokensProvider';
+} from '../server/src/providers/semanticHighlightProvider';
 
 function getLocalDefines(text: string): SymbolDeclaration[] {
 	const parseResult = parse(text);
@@ -25,12 +25,12 @@ function includeDefine(name: string): SymbolDeclaration {
 	};
 }
 
-function tokenTexts(text: string, tokens: ReturnType<typeof collectMacroSemanticTokens>): string[] {
+function tokenTexts(text: string, tokens: ReturnType<typeof collectMacroSemanticHighlightTokens>): string[] {
 	const lines = text.split(/\r?\n/);
 	return tokens.map(token => lines[token.line].slice(token.character, token.character + token.length));
 }
 
-describe('semantic macro tokens', () => {
+describe('semantic macro highlights', () => {
 	test('highlights local macro definitions and references', () => {
 		const src = `#define LOCAL_LIMIT 12
 void main(){
@@ -38,7 +38,7 @@ void main(){
 }
 `;
 
-		const tokens = collectMacroSemanticTokens(src, getLocalDefines(src));
+		const tokens = collectMacroSemanticHighlightTokens(src, getLocalDefines(src));
 		expect(tokenTexts(src, tokens).filter(text => text === 'LOCAL_LIMIT')).toHaveLength(2);
 	});
 
@@ -49,7 +49,7 @@ void main(){
 }
 `;
 
-		const tokens = collectMacroSemanticTokens(src, getLocalDefines(src));
+		const tokens = collectMacroSemanticHighlightTokens(src, getLocalDefines(src));
 		expect(tokenTexts(src, tokens).filter(text => text === 'ScaleValue')).toHaveLength(2);
 	});
 
@@ -59,7 +59,7 @@ void main(){
 }
 `;
 
-		const tokens = collectMacroSemanticTokens(src, getLocalDefines(src));
+		const tokens = collectMacroSemanticHighlightTokens(src, getLocalDefines(src));
 		expect(tokenTexts(src, tokens)).not.toContain('NOT_A_MACRO');
 		expect(tokens).toHaveLength(0);
 	});
@@ -70,7 +70,7 @@ void main(){
 }
 `;
 
-		const tokens = collectMacroSemanticTokens(src, getLocalDefines(src), [includeDefine('INCLUDED_MACRO')]);
+		const tokens = collectMacroSemanticHighlightTokens(src, getLocalDefines(src), [includeDefine('INCLUDED_MACRO')]);
 		expect(tokenTexts(src, tokens)).toEqual(['INCLUDED_MACRO']);
 	});
 
@@ -84,7 +84,7 @@ void main(){
 }
 `;
 
-		const tokens = collectMacroSemanticTokens(src, getLocalDefines(src));
+		const tokens = collectMacroSemanticHighlightTokens(src, getLocalDefines(src));
 		expect(tokenTexts(src, tokens).filter(text => text === 'LOCAL_LIMIT')).toHaveLength(2);
 	});
 
@@ -97,8 +97,8 @@ KEEP_TOO`;
 		expect(identifiers).toEqual(['KEEP', 'KEEP_TOO']);
 	});
 
-	test('encodes macro tokens as LSP semantic token deltas', () => {
-		const encoded = encodeMacroSemanticTokens([
+	test('encodes macro highlights as LSP token deltas', () => {
+		const encoded = encodeMacroSemanticHighlightTokens([
 			{ line: 0, character: 8, length: 5 },
 			{ line: 2, character: 1, length: 5 },
 		]);
