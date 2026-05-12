@@ -378,6 +378,11 @@ Release of [v1.3.0] to the VS Code Marketplace.
 
 ### Changed
 - Completion provider no longer inserts full function snippets with parameter placeholders; signature help now provides that context inline as you type.
+---
+## [v1.5.2] - (Date)
+
+### New Features
+- **Preprocessor Definition Highlighting** (#119): Preprocessor definitions are now highlighted using semantic highlighting. Special thanks to @KleberNZ for his contribution.
 
 ---
 # Template
