@@ -112,7 +112,7 @@ connection.onInitialize((params: InitializeParams) => {
 			textDocumentSync: TextDocumentSyncKind.Full,
 			completionProvider: {
 				resolveProvider: true,
-				triggerCharacters: ['"', "'", '<', '/']
+				triggerCharacters: ['"', "'", '<']
 			},
 			signatureHelpProvider: {
 				triggerCharacters: ['(', ','],
