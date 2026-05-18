@@ -152,8 +152,10 @@ export function validateVoidFunctionReturnValues(
 	 * Returns undefined if the function is unknown.
 	 */
 	const resolveReturnType = (name: string, argCount: number): string | undefined => {
-		const overloads = localReturnTypes.get(name) ?? functionReturnTypes.get(name);
-		if (!overloads || overloads.length === 0) return undefined;
+		const localOverloads = localReturnTypes.get(name) ?? [];
+		const protoOverloads = functionReturnTypes.get(name) ?? [];
+		const overloads = [...localOverloads, ...protoOverloads];
+		if (overloads.length === 0) return undefined;
 
 		// Find overloads matching the argument count
 		const matching = overloads.filter(o => o.paramCount === argCount);
