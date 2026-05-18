@@ -988,6 +988,70 @@ void main() {
 	});
 });
 
+describe("Undeclared symbols in nested parentheses (issue #134)", () => {
+	test("flags undeclared variables when call is wrapped in double parens", () => {
+		const code = `
+void Test()
+{
+    if ((Find_text(horiz_datum, "2020") && Find_text(projection_name, "2020")))
+    {
+    }
+}
+`;
+		const knownSymbols = {
+			functions: new Set(['Find_text']),
+			variables: new Set<string>(),
+			defines: new Set<string>()
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
+		const errors = diagnostics.filter(d => d.severity === 1 && d.message.includes("is not declared"));
+		expect(errors.some(d => d.message.includes("horiz_datum"))).toBe(true);
+		expect(errors.some(d => d.message.includes("projection_name"))).toBe(true);
+	});
+
+	test("flags undeclared variables in complex nested-paren conditions", () => {
+		const code = `
+void Test()
+{
+    if ((Find_text(horiz_datum, "2020") && Find_text(projection_name, "2020")) || (Find_text(horiz_datum, "94") && Find_text(projection_name, "94")))
+    {
+    }
+}
+`;
+		const knownSymbols = {
+			functions: new Set(['Find_text']),
+			variables: new Set<string>(),
+			defines: new Set<string>()
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
+		const errors = diagnostics.filter(d => d.severity === 1 && d.message.includes("is not declared"));
+		expect(errors.some(d => d.message.includes("horiz_datum"))).toBe(true);
+		expect(errors.some(d => d.message.includes("projection_name"))).toBe(true);
+	});
+
+	test("does not flag declared variables inside nested parens", () => {
+		const code = `
+void Test()
+{
+    Text horiz_datum;
+    Text projection_name;
+    if ((Find_text(horiz_datum, "2020") && Find_text(projection_name, "2020")))
+    {
+    }
+}
+`;
+		const knownSymbols = {
+			functions: new Set(['Find_text']),
+			variables: new Set<string>(),
+			defines: new Set<string>()
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
+		const errors = diagnostics.filter(d => d.severity === 1 && d.message.includes("is not declared"));
+		expect(errors.some(d => d.message.includes("horiz_datum"))).toBe(false);
+		expect(errors.some(d => d.message.includes("projection_name"))).toBe(false);
+	});
+});
+
 describe("KnownSymbols validation (PR #30 refactor)", () => {
 	// =========================================================================
 	// Known Functions Tests
@@ -2075,6 +2139,27 @@ void test()
 		const diagnostics = ValidateVoidReturnValues(code);
 		expect(diagnostics.length).toBe(1);
 		expect(diagnostics[0].message).toContain("mf");
+	});
+
+	test("does not flag call when local void overload shadows a non-void built-in with same arg count (issue #132)", () => {
+		// User defines void Create_text(5 params), built-in has Element Create_text(5 params).
+		// The call inside the function uses the built-in signature — should not be flagged.
+		const externalReturnTypes = new Map<string, OverloadReturnType[]>();
+		externalReturnTypes.set("Create_text", [
+			{ paramCount: 5, returnType: "Element" },
+		]);
+
+		const code = `
+void Create_text(Text text, Real x, Real y, Textstyle_Data txtstyl, Model model)
+{
+	Real txt_size;
+	Integer txt_colour;
+
+	Element text_elt = Create_text(text, x, y, txt_size, txt_colour);
+}
+`;
+		const diagnostics = ValidateVoidReturnValues(code, externalReturnTypes);
+		expect(diagnostics.length).toBe(0);
 	});
 });
 
@@ -3994,6 +4079,52 @@ void main() {
     Print(msg)
 void main() {
     Integer x = 1;
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+});
+
+describe("Top-level block comment before brace (issue #135)", () => {
+	test("no syntax errors for /* comment */ { ... } block", () => {
+		const code = `
+/* Global variables */ {
+    Integer Shutdown_code = 424242;
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("no syntax errors for /*comment*/{ immediately adjacent }", () => {
+		const code = `
+/*global variables*/{
+    Integer x = 1;
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("no syntax errors for multiple top-level comment blocks", () => {
+		const code = `
+/* Block 1 */ {
+    Integer a = 1;
+}
+
+/* Block 2 */ {
+    Integer b = 2;
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("regular top-level brace block without comment still works", () => {
+		const code = `
+{
+    Integer x = 99;
 }
 `;
 		const result = parse(code);

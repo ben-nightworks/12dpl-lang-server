@@ -122,6 +122,37 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 	let awaitingFunctionBody = false;
 
 	const isLineStart = (i: number) => i === 0 || text[i - 1] === '\n' || text[i - 1] === '\r';
+
+	/**
+	 * True if only whitespace and closed block comments precede position i on its line.
+	 * This allows wrapping `{` that appears after a comment on the same line, e.g.:
+	 *   `/* Global variables *‌/ {`
+	 */
+	const isEffectiveLineStart = (i: number): boolean => {
+		if (isLineStart(i)) return true;
+		let j = i - 1;
+		while (j >= 0) {
+			const c = text[j];
+			if (c === '\n' || c === '\r') return true;
+			if (c === ' ' || c === '\t') { j--; continue; }
+			// Check for the end of a block comment: `*/`
+			if (c === '/' && j > 0 && text[j - 1] === '*') {
+				j -= 2; // move before the `*/`
+				// Walk backward to find the matching `/*`
+				while (j >= 1) {
+					if (text[j - 1] === '/' && text[j] === '*') {
+						j -= 2; // move before the `/*`
+						break;
+					}
+					j--;
+				}
+				continue;
+			}
+			return false;
+		}
+		return true; // reached start of file
+	};
+
 	const isIdentChar = (ch: string) => /[A-Za-z0-9_]/.test(ch);
 	const skipWhitespace = (i: number) => {
 		while (i < text.length && (text[i] === ' ' || text[i] === '\t')) i++;
@@ -209,7 +240,7 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 				braceDepth === 0 &&
 				parenDepth === 0 &&
 				bracketDepth === 0 &&
-				isLineStart(i) &&
+				isEffectiveLineStart(i) &&
 				!tryMatchFunctionSignatureAt(i) &&
 				lineHasRealCode(i) &&
 				!inScriptWrapper

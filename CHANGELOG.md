@@ -379,12 +379,23 @@ Release of [v1.3.0] to the VS Code Marketplace.
 ### Changed
 - Completion provider no longer inserts full function snippets with parameter placeholders; signature help now provides that context inline as you type.
 ---
-## [v1.5.2] - (Date)
+
+## [v1.5.2] - (12/05/2026)
 
 ### New Features
 - **Preprocessor Definition Highlighting** (#119): Preprocessor definitions are now highlighted using semantic highlighting. Special thanks to @KleberNZ for his contribution.
 
 ---
+
+## [v1.5.3] - (18/05/2026)
+
+### Bug Fixes
+- **Nested Function variable definition checks** (#138): Functions nested in brackets are now all checked.
+- **Prototypes vs User Defined Functions** (#137): When a user defines an overload of a 12d prototype function the return types are now correctly checked.
+- **Block Comment Fix** (#136): When a block comment was used before a piece of valid code it was cleaned by the parser, this has now been corrected.
+
+---
+
 # Template
 
 ## [vX.X.X] - (Date)

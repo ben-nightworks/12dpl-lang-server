@@ -263,7 +263,18 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 			for (const child of children) {
 				if (child && typeof child.accept === 'function') {
 					const isPrimary = child.ruleIndex !== undefined && child.constructor?.name === 'PrimaryExpressionContext';
-					if (!isPrimary) child.accept(visitor);
+					if (!isPrimary) {
+						child.accept(visitor);
+					} else {
+						// If the primary is a parenthesized expression '(expr)', visit the inner
+						// expression so undeclared symbols inside nested parens are still checked.
+						// Plain-identifier primaries (e.g. the function name) have no expression()
+						// child, so they are still skipped to avoid double-visiting.
+						const innerExpr = child?.expression?.();
+						if (innerExpr && typeof innerExpr.accept === 'function') {
+							innerExpr.accept(visitor);
+						}
+					}
 				}
 			}
 			return undefined;
