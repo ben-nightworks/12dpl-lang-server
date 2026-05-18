@@ -988,6 +988,70 @@ void main() {
 	});
 });
 
+describe("Undeclared symbols in nested parentheses (issue #134)", () => {
+	test("flags undeclared variables when call is wrapped in double parens", () => {
+		const code = `
+void Test()
+{
+    if ((Find_text(horiz_datum, "2020") && Find_text(projection_name, "2020")))
+    {
+    }
+}
+`;
+		const knownSymbols = {
+			functions: new Set(['Find_text']),
+			variables: new Set<string>(),
+			defines: new Set<string>()
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
+		const errors = diagnostics.filter(d => d.severity === 1 && d.message.includes("is not declared"));
+		expect(errors.some(d => d.message.includes("horiz_datum"))).toBe(true);
+		expect(errors.some(d => d.message.includes("projection_name"))).toBe(true);
+	});
+
+	test("flags undeclared variables in complex nested-paren conditions", () => {
+		const code = `
+void Test()
+{
+    if ((Find_text(horiz_datum, "2020") && Find_text(projection_name, "2020")) || (Find_text(horiz_datum, "94") && Find_text(projection_name, "94")))
+    {
+    }
+}
+`;
+		const knownSymbols = {
+			functions: new Set(['Find_text']),
+			variables: new Set<string>(),
+			defines: new Set<string>()
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
+		const errors = diagnostics.filter(d => d.severity === 1 && d.message.includes("is not declared"));
+		expect(errors.some(d => d.message.includes("horiz_datum"))).toBe(true);
+		expect(errors.some(d => d.message.includes("projection_name"))).toBe(true);
+	});
+
+	test("does not flag declared variables inside nested parens", () => {
+		const code = `
+void Test()
+{
+    Text horiz_datum;
+    Text projection_name;
+    if ((Find_text(horiz_datum, "2020") && Find_text(projection_name, "2020")))
+    {
+    }
+}
+`;
+		const knownSymbols = {
+			functions: new Set(['Find_text']),
+			variables: new Set<string>(),
+			defines: new Set<string>()
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
+		const errors = diagnostics.filter(d => d.severity === 1 && d.message.includes("is not declared"));
+		expect(errors.some(d => d.message.includes("horiz_datum"))).toBe(false);
+		expect(errors.some(d => d.message.includes("projection_name"))).toBe(false);
+	});
+});
+
 describe("KnownSymbols validation (PR #30 refactor)", () => {
 	// =========================================================================
 	// Known Functions Tests
