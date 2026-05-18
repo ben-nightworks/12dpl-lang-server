@@ -474,3 +474,14 @@ void main() {
 // - Variable/include shadowing checks are currently exact-case, not case-insensitive.
 //
 // ############################################################################
+
+/*global variables*/{
+    #define MAX_STRINGS 1500
+    #define MAX_OCC     30000
+
+    Real DROP_TOL = 0.005;
+    Real EPS_DEF  = 0.05;
+
+    Integer PIT_has_error[MAX_OCC+1];
+    Integer PIT_msg_count[MAX_OCC+1];
+}

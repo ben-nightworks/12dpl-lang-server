@@ -4000,3 +4000,49 @@ void main() {
 		expect(result.syntaxErrors.length).toBe(0);
 	});
 });
+
+describe("Top-level block comment before brace (issue #135)", () => {
+	test("no syntax errors for /* comment */ { ... } block", () => {
+		const code = `
+/* Global variables */ {
+    Integer Shutdown_code = 424242;
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("no syntax errors for /*comment*/{ immediately adjacent }", () => {
+		const code = `
+/*global variables*/{
+    Integer x = 1;
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("no syntax errors for multiple top-level comment blocks", () => {
+		const code = `
+/* Block 1 */ {
+    Integer a = 1;
+}
+
+/* Block 2 */ {
+    Integer b = 2;
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("regular top-level brace block without comment still works", () => {
+		const code = `
+{
+    Integer x = 99;
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+});
