@@ -2076,6 +2076,27 @@ void test()
 		expect(diagnostics.length).toBe(1);
 		expect(diagnostics[0].message).toContain("mf");
 	});
+
+	test("does not flag call when local void overload shadows a non-void built-in with same arg count (issue #132)", () => {
+		// User defines void Create_text(5 params), built-in has Element Create_text(5 params).
+		// The call inside the function uses the built-in signature — should not be flagged.
+		const externalReturnTypes = new Map<string, OverloadReturnType[]>();
+		externalReturnTypes.set("Create_text", [
+			{ paramCount: 5, returnType: "Element" },
+		]);
+
+		const code = `
+void Create_text(Text text, Real x, Real y, Textstyle_Data txtstyl, Model model)
+{
+	Real txt_size;
+	Integer txt_colour;
+
+	Element text_elt = Create_text(text, x, y, txt_size, txt_colour);
+}
+`;
+		const diagnostics = ValidateVoidReturnValues(code, externalReturnTypes);
+		expect(diagnostics.length).toBe(0);
+	});
 });
 
 // ─── Function argument validation (#45) ─────────────────────────────────────
