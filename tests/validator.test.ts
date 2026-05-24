@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { describe, expect, test } from "bun:test";
-import { parse } from "../server/src/core/parsePipeline";
+import { parse, expandObjectLikeMacros } from "../server/src/core/parsePipeline";
 import { collectSymbolTable, deriveViews, parseDefines } from "../server/src/core/symbolCollector";
 import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls, validateVoidFunctionReturnValues, FunctionSignatureMap, validateFunctionArguments, validateReturnStatements, validateArraySize } from "../server/src/core/validators";
 import type { OverloadReturnType } from "../server/src/core/validators";
@@ -738,6 +738,56 @@ void process(Integer x, Integer y) {
 		);
 		// Different param count = valid overload
 		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("allows full definition of function only forward-declared in header (issue #141)", () => {
+		// Standard C-style header + code pattern:
+		//   test.h: Integer Test(Text test);          ← forward declaration only
+		//   test.4dm: #include "test.h" + full definition
+		const includeVars: SymbolDeclaration[] = [
+			{
+				...includeDecl('Test', 'test.h', 'function', [
+					{ name: 'test', type: 'Text', byRef: false, isArray: false }
+				]),
+				isForwardDeclaration: true
+			}
+		];
+
+		const code = `
+Integer Test(Text test) {
+	return 0;
+}
+`;
+		const diagnostics = ValidateWithIncludes(code, includeVars);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("still errors when include has a full definition and code file redefines it (issue #141)", () => {
+		// If the include file has a full function definition (not just a prototype),
+		// redefining it in the code file should still be an error.
+		const includeVars: SymbolDeclaration[] = [
+			{
+				...includeDecl('Test', 'test.h', 'function', [
+					{ name: 'test', type: 'Text', byRef: false, isArray: false }
+				]),
+				isForwardDeclaration: false
+			}
+		];
+
+		const code = `
+Integer Test(Text test) {
+	return 0;
+}
+`;
+		const diagnostics = ValidateWithIncludes(code, includeVars);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		expect(redeclErrors.length).toBe(1);
+		expect(redeclErrors[0].message).toContain("test.h");
 	});
 
 	test("does not flag function redeclaration in #if/#else conditional branches", () => {
@@ -4131,3 +4181,83 @@ describe("Top-level block comment before brace (issue #135)", () => {
 		expect(result.syntaxErrors.length).toBe(0);
 	});
 });
+
+// ─── #define type substitution (issue #133) ──────────────────────────────────
+//
+// Object-like #defines whose value is a built-in type name must be expanded
+// before parsing so that e.g. `Boolean active = TRUE;` is parsed as
+// `Integer active = TRUE;` and does not produce a syntax error.
+
+describe("#define type substitution — expandObjectLikeMacros (issue #133)", () => {
+	test("type alias define allows variable declaration without syntax error", () => {
+		const code = `
+#define Boolean Integer
+#define TRUE 1
+#define FALSE 0
+Boolean active = TRUE;
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("type alias define allows function return type without syntax error", () => {
+		const code = `
+#define Boolean Integer
+Boolean is_active()
+{
+    return 1;
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("type alias define allows function parameter type without syntax error", () => {
+		const code = `
+#define Boolean Integer
+void set_flag(Boolean value)
+{
+    Integer x = value;
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("expandObjectLikeMacros replaces type alias with whole-word matching", () => {
+		const raw = `#define Boolean Integer\nBoolean active = 1;\nInteger BigBoolean = 2;\n`;
+		const stripped = raw.replace(/^\s*#\s*define\b.*$/gm, '');
+		const expanded = expandObjectLikeMacros(stripped, raw);
+		expect(expanded).toContain('Integer active = 1;');
+		// Should NOT replace inside longer identifiers
+		expect(expanded).toContain('Integer BigBoolean = 2;');
+	});
+
+	test("expandObjectLikeMacros skips function-like macros", () => {
+		const raw = `#define MACRO(x) x + 1\nInteger y = MACRO(5);\n`;
+		const stripped = raw.replace(/^\s*#\s*define\b.*$/gm, '');
+		const expanded = expandObjectLikeMacros(stripped, raw);
+		// MACRO should not be expanded since it's function-like
+		expect(expanded).toContain('MACRO(5)');
+	});
+
+	test("expandObjectLikeMacros expands constant (non-type) defines too", () => {
+		const raw = `#define MAX_SIZE 100\nInteger x = MAX_SIZE;\n`;
+		const stripped = raw.replace(/^\s*#\s*define\b.*$/gm, '');
+		const expanded = expandObjectLikeMacros(stripped, raw);
+		// MAX_SIZE should be expanded to 100 in the parse text
+		expect(expanded).toContain('Integer x = 100;');
+	});
+
+	test("multiple type alias defines in same file all expanded", () => {
+		const code = `
+#define Boolean Integer
+#define Number Real
+Boolean flag = 1;
+Number value = 3.14;
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+});
+

@@ -14,6 +14,7 @@
 //   - Forward declaration followed by full definition (same signature)
 //   - Forward declaration after full definition (silently ignored)
 //   - Functions on conditional (#if/#ifdef) lines (suppressed)
+//   - Full definition of a function only forward-declared in an include file (issue #141)
 //
 // Parameter signature = parameter types + array-ness (return type is irrelevant)
 //
@@ -96,18 +97,19 @@ void duplicate() // ERROR: already defined
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// TEST 6: Include file conflict → ERROR
-// test_globals.h declares:
+// TEST 6: Include forward declaration + full definition → OK (issue #141)
+// test_globals.h declares forward prototypes only:
 //   void test_include_case_insensitive(Integer x);
 //   void test_include_case_insensitive();
-// Re-defining the same signatures here triggers include conflict errors.
+// Providing a full definition for a forward-declared prototype is the standard
+// C-style header + code pattern and is NOT an error.
 // ──────────────────────────────────────────────────────────────────────────────
 
-void test_include_case_insensitive(Integer x) // ERROR: already defined in test_globals.h
+void test_include_case_insensitive(Integer x) // OK: implementing a forward prototype from test_globals.h
 {
 }
 
-void test_include_case_insensitive() // ERROR: already defined in test_globals.h
+void test_include_case_insensitive() // OK: implementing a forward prototype from test_globals.h
 {
 }
 

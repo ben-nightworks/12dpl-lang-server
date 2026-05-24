@@ -534,7 +534,13 @@
 							"name": "punctuation.definition.comment.end.12dpl"
 						}
 					},
-					"name": "comment.block.12dpl"
+					"name": "comment.block.12dpl",
+					"patterns": [
+						{
+							"match": "[{}()[\\]]",
+							"name": "comment.block.12dpl"
+						}
+					]
 				},
 				{
 					"begin": "\\s*+(\\/\\*)",
@@ -549,7 +555,13 @@
 							"name": "punctuation.definition.comment.end.12dpl"
 						}
 					},
-					"name": "comment.block.12dpl"
+					"name": "comment.block.12dpl",
+					"patterns": [
+						{
+							"match": "[{}()[\\]]",
+							"name": "comment.block.12dpl"
+						}
+					]
 				}
 			]
 		},
@@ -995,7 +1007,13 @@
 										"1": {
 											"name": "punctuation.definition.comment.end.12dpl"
 										}
-									}
+									},
+									"patterns": [
+										{
+											"match": "[{}()[\\]]",
+											"name": "comment.block.12dpl"
+										}
+									]
 								},
 								{
 									"match": "^\\/\\/ =(\\s*.*?)\\s*=$\\n?",
