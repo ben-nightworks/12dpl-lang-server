@@ -330,6 +330,64 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 }
 
 /**
+ * Expands object-like (no-parameter) `#define` macros by substituting their names
+ * with their values throughout the stripped text.
+ *
+ * This allows patterns such as:
+ * ```
+ * #define Boolean Integer
+ * Boolean active = TRUE;
+ * ```
+ * to parse correctly as `Integer active = TRUE;`.
+ *
+ * Only object-like macros are expanded -- those without a parameter list immediately
+ * after the name. Function-like macros (e.g. `#define MACRO(x) ...`) and macros with
+ * backslash-continuation values are skipped.
+ *
+ * This function is applied to the text fed to ANTLR for parsing. The original
+ * (unexpanded) token stream is preserved separately for token-based features such
+ * as rename and deprecated-call detection. See `parse()` for the dual-text strategy.
+ *
+ * Line numbers are preserved because substitutions never add or remove newlines.
+ *
+ * @param strippedText - Text after standalone macro usages have been stripped.
+ * @param rawText - The original document text, used to extract define definitions.
+ */
+export function expandObjectLikeMacros(strippedText: string, rawText: string): string {
+	// Collect object-like defines: #define NAME value
+	// A define is function-like (and must be skipped) when '(' appears immediately after NAME.
+	const defines: Array<{ name: string; value: string }> = [];
+	const lines = rawText.split(/\r?\n/);
+
+	for (const line of lines) {
+		// Match: #define NAME<no '(' here> <whitespace> value
+		const m = line.match(/^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)(?!\()[ \t]+(.+\S)/);
+		if (!m) continue;
+		const name = m[1];
+		const value = m[2].trim();
+		// Skip multi-line macro values (backslash continuation)
+		if (value.endsWith('\\')) continue;
+		defines.push({ name, value });
+	}
+
+	if (defines.length === 0) return strippedText;
+
+	// Apply whole-word substitutions in order of definition.
+	// Use a function replacement to avoid special `$` patterns in replacement strings.
+	let result = strippedText;
+	for (const { name, value } of defines) {
+		const re = new RegExp(`\\b${escapeRegExp(name)}\\b`, 'g');
+		result = result.replace(re, () => value);
+	}
+
+	return result;
+}
+
+function escapeRegExp(s: string): string {
+	return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
  * Replaces standalone macro usage lines with empty lines to prevent ANTLR parse errors.
  *
  * When a `#define MACRO_NAME ...` is used as a statement on its own line (e.g. `MACRO_EXAMPLE`
@@ -427,8 +485,24 @@ class SyntaxErrorListener implements ErrorListener<any> {
  */
 export function parse(documentText: string): ParseResult {
 	const { text: strippedText, conditionalLines } = stripConditionalDirectives(documentText);
+
+	// Strip standalone macro calls first -- shared step for both paths below.
 	const macroStrippedText = stripStandaloneMacroUsages(strippedText, documentText);
-	const transformedText = wrapTopLevelScriptsPreservingLines(macroStrippedText);
+
+	// -- Original path: lex the unexpanded text to produce the token stream --
+	// Preserves original token names (MAX_SIZE, TIMEOUT, ...) so that rename and
+	// deprecated-call detection can find them by name in the source.
+	const originalTransformed = wrapTopLevelScriptsPreservingLines(macroStrippedText);
+	const originalLexer = new proglang12dLexer(new CharStream(originalTransformed));
+	const originalTokens = new CommonTokenStream(originalLexer);
+	originalTokens.fill();
+
+	// -- Expanded path: expand all object-like macros before parsing --
+	// The ANTLR parser receives e.g. `Integer` instead of `Boolean`, so
+	// type-alias defines and other object-like substitutions do not produce
+	// spurious syntax errors.
+	const expandedText = expandObjectLikeMacros(macroStrippedText, documentText);
+	const transformedText = wrapTopLevelScriptsPreservingLines(expandedText);
 
 	const chars = new CharStream(transformedText);
 	const lexer = new proglang12dLexer(chars);
@@ -445,7 +519,7 @@ export function parse(documentText: string): ParseResult {
 
 	return {
 		tree,
-		tokens,
+		tokens: originalTokens,
 		transformedText,
 		conditionalLines,
 		syntaxErrors: errorListener.errors,
