@@ -407,6 +407,13 @@ Release of [v1.3.0] to the VS Code Marketplace.
 
 ---
 
+## [v1.5.5] - (25/05/2026)
+
+### Bug Fixes
+- **Fix for block comment** syntax highlight
+
+---
+
 # Template
 
 ## [vX.X.X] - (Date)
