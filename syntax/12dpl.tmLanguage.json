@@ -537,7 +537,7 @@
 					"name": "comment.block.12dpl",
 					"patterns": [
 						{
-							"match": "[{}()[\\]]",
+							"match": "[{}()\\[\\]]",
 							"name": "comment.block.12dpl"
 						}
 					]
@@ -558,7 +558,7 @@
 					"name": "comment.block.12dpl",
 					"patterns": [
 						{
-							"match": "[{}()[\\]]",
+							"match": "[{}()\\[\\]]",
 							"name": "comment.block.12dpl"
 						}
 					]
@@ -1010,7 +1010,7 @@
 									},
 									"patterns": [
 										{
-											"match": "[{}()[\\]]",
+											"match": "[{}()\\[\\]]",
 											"name": "comment.block.12dpl"
 										}
 									]
