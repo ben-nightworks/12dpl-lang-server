@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { describe, expect, test } from "bun:test";
-import { parse } from "../server/src/core/parsePipeline";
+import { parse, expandObjectLikeMacros } from "../server/src/core/parsePipeline";
 import { collectSymbolTable, deriveViews, parseDefines } from "../server/src/core/symbolCollector";
 import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls, validateVoidFunctionReturnValues, FunctionSignatureMap, validateFunctionArguments, validateReturnStatements, validateArraySize } from "../server/src/core/validators";
 import type { OverloadReturnType } from "../server/src/core/validators";
@@ -4181,3 +4181,83 @@ describe("Top-level block comment before brace (issue #135)", () => {
 		expect(result.syntaxErrors.length).toBe(0);
 	});
 });
+
+// ─── #define type substitution (issue #133) ──────────────────────────────────
+//
+// Object-like #defines whose value is a built-in type name must be expanded
+// before parsing so that e.g. `Boolean active = TRUE;` is parsed as
+// `Integer active = TRUE;` and does not produce a syntax error.
+
+describe("#define type substitution — expandObjectLikeMacros (issue #133)", () => {
+	test("type alias define allows variable declaration without syntax error", () => {
+		const code = `
+#define Boolean Integer
+#define TRUE 1
+#define FALSE 0
+Boolean active = TRUE;
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("type alias define allows function return type without syntax error", () => {
+		const code = `
+#define Boolean Integer
+Boolean is_active()
+{
+    return 1;
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("type alias define allows function parameter type without syntax error", () => {
+		const code = `
+#define Boolean Integer
+void set_flag(Boolean value)
+{
+    Integer x = value;
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("expandObjectLikeMacros replaces type alias with whole-word matching", () => {
+		const raw = `#define Boolean Integer\nBoolean active = 1;\nInteger BigBoolean = 2;\n`;
+		const stripped = raw.replace(/^\s*#\s*define\b.*$/gm, '');
+		const expanded = expandObjectLikeMacros(stripped, raw);
+		expect(expanded).toContain('Integer active = 1;');
+		// Should NOT replace inside longer identifiers
+		expect(expanded).toContain('Integer BigBoolean = 2;');
+	});
+
+	test("expandObjectLikeMacros skips function-like macros", () => {
+		const raw = `#define MACRO(x) x + 1\nInteger y = MACRO(5);\n`;
+		const stripped = raw.replace(/^\s*#\s*define\b.*$/gm, '');
+		const expanded = expandObjectLikeMacros(stripped, raw);
+		// MACRO should not be expanded since it's function-like
+		expect(expanded).toContain('MACRO(5)');
+	});
+
+	test("expandObjectLikeMacros expands constant (non-type) defines too", () => {
+		const raw = `#define MAX_SIZE 100\nInteger x = MAX_SIZE;\n`;
+		const stripped = raw.replace(/^\s*#\s*define\b.*$/gm, '');
+		const expanded = expandObjectLikeMacros(stripped, raw);
+		// MAX_SIZE should be expanded to 100 in the parse text
+		expect(expanded).toContain('Integer x = 100;');
+	});
+
+	test("multiple type alias defines in same file all expanded", () => {
+		const code = `
+#define Boolean Integer
+#define Number Real
+Boolean flag = 1;
+Number value = 3.14;
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+});
+
