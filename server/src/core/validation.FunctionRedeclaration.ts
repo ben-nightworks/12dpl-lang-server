@@ -73,17 +73,18 @@ export function validateFunctionRedeclarations(
 	// Map from name → array of { signature, line, column, name, isForwardDecl }
 	const definedFunctions = new Map<string, { signature: string; line: number; column: number; name: string; isForwardDecl: boolean }[]>();
 
-	// Track functions from include files: name → array of { sourceFile, signature }
-	const includeFunctions = new Map<string, { sourceFile: string; signature: string }[]>();
+	// Track functions from include files: name → array of { sourceFile, signature, isForwardDecl }
+	const includeFunctions = new Map<string, { sourceFile: string; signature: string; isForwardDecl: boolean }[]>();
 	for (const decl of includeDeclarations) {
 		if (decl.kind === 'function') {
 			const sig = (decl.params ?? []).map(p => {
 				const typeStr = p.type ?? '';
 				return typeStr + (p.isArray ? '[]' : '');
 			}).join(',');
+			const isForwardDecl = decl.isForwardDeclaration ?? false;
 			const existing = includeFunctions.get(decl.name);
-			if (existing) existing.push({ sourceFile: decl.definedInFsPath ?? '', signature: sig });
-			else includeFunctions.set(decl.name, [{ sourceFile: decl.definedInFsPath ?? '', signature: sig }]);
+			if (existing) existing.push({ sourceFile: decl.definedInFsPath ?? '', signature: sig, isForwardDecl });
+			else includeFunctions.set(decl.name, [{ sourceFile: decl.definedInFsPath ?? '', signature: sig, isForwardDecl }]);
 		}
 	}
 
@@ -98,12 +99,14 @@ export function validateFunctionRedeclarations(
 		const paramSig = extractParamSignature(declaratorCtx);
 		const existing = definedFunctions.get(info.name);
 
-		// 1. Always check against include files — every occurrence that matches is an error
+		// 1. Always check against include files — every occurrence that matches is an error,
+		//    EXCEPT when the include entry is only a forward declaration and the current
+		//    occurrence is a full definition (standard C-style header + code pattern, issue #141).
 		let hasIncludeConflict = false;
 		const includeOverloads = includeFunctions.get(info.name);
 		if (includeOverloads && !isOnConditionalLine) {
 			const includeMatch = includeOverloads.find(o => o.signature === paramSig);
-			if (includeMatch) {
+			if (includeMatch && !(includeMatch.isForwardDecl && !isForwardDecl)) {
 				hasIncludeConflict = true;
 				diagnostics.push({
 					severity: DiagnosticSeverity.Error,
