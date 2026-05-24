@@ -396,6 +396,17 @@ Release of [v1.3.0] to the VS Code Marketplace.
 
 ---
 
+## [v1.5.4] - (24/05/2026)
+
+### New Features
+- **Preprocessor Macro Substitution** (#144): Preprocessor macros are now expanded during validation, allowing the validator to correctly analyse code that uses macro-defined values. The original symbols are preserved alongside the expanded forms so completion and hover continue to work on macro names.
+
+### Bug Fixes
+- **Block Comment Bracket Colours** (#143): Brackets inside block comments are no longer coloured as code brackets by the syntax highlighter.
+- **Forward Declaration False Positive** (#142): Functions forward-declared in a header file no longer incorrectly trigger a redeclaration error when the same function is also defined in the same or an included file.
+
+---
+
 # Template
 
 ## [vX.X.X] - (Date)
