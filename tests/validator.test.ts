@@ -740,6 +740,56 @@ void process(Integer x, Integer y) {
 		expect(redeclErrors.length).toBe(0);
 	});
 
+	test("allows full definition of function only forward-declared in header (issue #141)", () => {
+		// Standard C-style header + code pattern:
+		//   test.h: Integer Test(Text test);          ← forward declaration only
+		//   test.4dm: #include "test.h" + full definition
+		const includeVars: SymbolDeclaration[] = [
+			{
+				...includeDecl('Test', 'test.h', 'function', [
+					{ name: 'test', type: 'Text', byRef: false, isArray: false }
+				]),
+				isForwardDeclaration: true
+			}
+		];
+
+		const code = `
+Integer Test(Text test) {
+	return 0;
+}
+`;
+		const diagnostics = ValidateWithIncludes(code, includeVars);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		expect(redeclErrors.length).toBe(0);
+	});
+
+	test("still errors when include has a full definition and code file redefines it (issue #141)", () => {
+		// If the include file has a full function definition (not just a prototype),
+		// redefining it in the code file should still be an error.
+		const includeVars: SymbolDeclaration[] = [
+			{
+				...includeDecl('Test', 'test.h', 'function', [
+					{ name: 'test', type: 'Text', byRef: false, isArray: false }
+				]),
+				isForwardDeclaration: false
+			}
+		];
+
+		const code = `
+Integer Test(Text test) {
+	return 0;
+}
+`;
+		const diagnostics = ValidateWithIncludes(code, includeVars);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("already defined")
+		);
+		expect(redeclErrors.length).toBe(1);
+		expect(redeclErrors[0].message).toContain("test.h");
+	});
+
 	test("does not flag function redeclaration in #if/#else conditional branches", () => {
 		const code = `
 #if USE_NEW == 1
