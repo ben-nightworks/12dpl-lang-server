@@ -1102,6 +1102,104 @@ void Test()
 	});
 });
 
+describe("Nested block scope isolation (issue #150)", () => {
+	test("reports error for variable used outside its declaring if-block", () => {
+		const code = `
+void My_function()
+{
+    if (1 == 1)
+    {
+        Model mymodel = Get_model("xyz");
+    }
+    Model_delete(mymodel);
+}
+`;
+		const knownSymbols = {
+			functions: new Set(['Get_model', 'Model_delete']),
+			variables: new Set<string>(),
+			defines: new Set<string>()
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
+		const errors = diagnostics.filter(d => d.severity === 1 && d.message.includes("is not declared"));
+		expect(errors.some(d => d.message.includes("mymodel"))).toBe(true);
+	});
+
+	test("does not flag a variable used inside its declaring if-block", () => {
+		const code = `
+void My_function()
+{
+    if (1 == 1)
+    {
+        Model mymodel = Get_model("xyz");
+        Model_delete(mymodel);
+    }
+}
+`;
+		const knownSymbols = {
+			functions: new Set(['Get_model', 'Model_delete']),
+			variables: new Set<string>(),
+			defines: new Set<string>()
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
+		const errors = diagnostics.filter(d => d.severity === 1 && d.message.includes("mymodel"));
+		expect(errors.length).toBe(0);
+	});
+
+	test("reports error for variable used after the if-else block that declares it", () => {
+		const code = `
+void test()
+{
+    if (1 == 1)
+    {
+        Integer x = 5;
+    }
+    else
+    {
+        Integer y = 10;
+    }
+    Integer z = x + y;
+}
+`;
+		const diagnostics = Validate(code);
+		const errors = diagnostics.filter(d => d.severity === 1 && d.message.includes("is not declared"));
+		expect(errors.some(d => d.message.includes("x"))).toBe(true);
+		expect(errors.some(d => d.message.includes("y"))).toBe(true);
+	});
+
+	test("variables declared before the if-block remain in scope after", () => {
+		const code = `
+void test()
+{
+    Integer x = 10;
+    if (x > 5)
+    {
+        Integer y = x + 1;
+    }
+    Integer z = x;
+}
+`;
+		const diagnostics = Validate(code);
+		const errors = diagnostics.filter(d => d.severity === 1 && d.message.includes("is not declared"));
+		expect(errors.length).toBe(0);
+	});
+
+	test("reports error for variable used outside its declaring while-block", () => {
+		const code = `
+void test()
+{
+    while (1 == 1)
+    {
+        Integer inner = 42;
+    }
+    Integer z = inner;
+}
+`;
+		const diagnostics = Validate(code);
+		const errors = diagnostics.filter(d => d.severity === 1 && d.message.includes("is not declared"));
+		expect(errors.some(d => d.message.includes("inner"))).toBe(true);
+	});
+});
+
 describe("KnownSymbols validation (PR #30 refactor)", () => {
 	// =========================================================================
 	// Known Functions Tests
