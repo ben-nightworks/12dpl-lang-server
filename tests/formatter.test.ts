@@ -328,3 +328,51 @@ describe("format12dplDocument — indentStyle (spaces vs tabs)", () => {
 		expect(out).toContain("    Integer y;");
 	});
 });
+
+describe("format12dplDocument — switch/case indentation (#149)", () => {
+	const base = { insertSpaces: true, tabSize: 4 };
+
+	test("case label is indented one level inside switch braces", () => {
+		const input = "switch (myvar)\n{\ncase (123) :\n{\nbreak;\n}\n}\n";
+		const out = format12dplDocument(input, base);
+		const lines = out.split("\n");
+		expect(lines[2]).toBe("    case (123) :");
+	});
+
+	test("default: label is indented one level inside switch braces", () => {
+		const input = "switch (myvar)\n{\ndefault:\n{\nbreak;\n}\n}\n";
+		const out = format12dplDocument(input, base);
+		const lines = out.split("\n");
+		expect(lines[2]).toBe("    default:");
+	});
+
+	test("default : label (space before colon) is indented consistently with default:", () => {
+		const input = "switch (myvar)\n{\ndefault :\n{\nbreak;\n}\n}\n";
+		const out = format12dplDocument(input, base);
+		const lines = out.split("\n");
+		expect(lines[2]).toBe("    default :");
+	});
+
+	test("case and default are at the same indent level inside a switch", () => {
+		const input = [
+			"switch (myvar)",
+			"{",
+			"case (123) :",
+			"{",
+			"break;",
+			"}",
+			"default :",
+			"{",
+			"break;",
+			"}",
+			"}",
+			""
+		].join("\n");
+		const out = format12dplDocument(input, base);
+		const lines = out.split("\n");
+		const caseLine = lines.find(l => l.includes("case (123)"));
+		const defaultLine = lines.find(l => l.includes("default :"));
+		expect(caseLine).toBe("    case (123) :");
+		expect(defaultLine).toBe("    default :");
+	});
+});

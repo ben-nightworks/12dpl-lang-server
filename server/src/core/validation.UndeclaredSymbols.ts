@@ -29,6 +29,7 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 	// Scope stack: index 0 is the global scope, higher indices are nested scopes.
 	const scopeStack: Map<string, DeclaredSymbol>[] = [new Map()];
 	let inWrapperFunction = false;
+	let inFunctionBody = false;
 
 	const pushScope = () => { scopeStack.push(new Map()); };
 	const popScope = () => { if (scopeStack.length > 1) scopeStack.pop(); };
@@ -156,14 +157,40 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 			if (info) scopeStack[0].set(funcName, info);
 
 			const prevWrapper = inWrapperFunction;
+			const prevInFunctionBody = inFunctionBody;
 			inWrapperFunction = funcName.startsWith('__12dpl__');
 
 			pushScope();
+			inFunctionBody = true;
 			visitor.visitChildren(ctx);
+			inFunctionBody = false;
 			popScope();
 
 			inWrapperFunction = prevWrapper;
+			inFunctionBody = prevInFunctionBody;
 			return undefined;
+		},
+		visitCompoundStatement(ctx: any) {
+			if (inFunctionBody) {
+				inFunctionBody = false;
+				visitor.visitChildren(ctx);
+				return undefined;
+			}
+			pushScope();
+			visitor.visitChildren(ctx);
+			popScope();
+			return undefined;
+		},
+		visitIterationStatement(ctx: any) {
+			try {
+				if (ctx?.For?.()) {
+					pushScope();
+					visitor.visitChildren(ctx);
+					popScope();
+					return undefined;
+				}
+			} catch { /* ignore */ }
+			return visitor.visitChildren(ctx);
 		},
 		visitDeclaration(ctx: any) {
 			const declType = getDeclarationTypeText(ctx);

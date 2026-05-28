@@ -206,6 +206,33 @@ void main()
 {
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// TEST 15: Variable declared inside if-block is not accessible outside (issue #150)
+// ──────────────────────────────────────────────────────────────────────────────
+
+void test_if_block_scope()
+{
+	if (1 == 1)
+	{
+		Integer block_var = 99;
+	}
+	Integer x = block_var;              // ERROR: 'block_var' not declared in this scope
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// TEST 16: Variable declared before if-block remains in scope after
+// ──────────────────────────────────────────────────────────────────────────────
+
+void test_outer_scope_persists()
+{
+	Integer outer = 10;
+	if (outer > 5)
+	{
+		Integer inner = outer + 1;      // OK: outer declared in function scope
+	}
+	Integer z = outer;                  // OK: outer still in scope after if-block
+}
+
 // ============================================================================
 // EXPECTED DIAGNOSTICS SUMMARY
 // ============================================================================
@@ -219,6 +246,7 @@ void main()
 //   TEST 8:  'MYVAR' is not declared (case mismatch)
 //   TEST 12: 'undeclared_1' is not declared
 //   TEST 12: 'undeclared_2' is not declared
+//   TEST 15: 'block_var' is not declared (used outside if-block scope)
 //
 // WARNINGS:
 //   TEST 9:  Case type mismatch: Integer switch, Text case ("text")
@@ -234,5 +262,6 @@ void main()
 //   TEST 11: Function-like macro arguments (suppressed)
 //   TEST 13: Global variables accessible in functions
 //   TEST 14: Local function calls
+//   TEST 16: Variable declared before if-block remains in scope after
 //
 // ============================================================================

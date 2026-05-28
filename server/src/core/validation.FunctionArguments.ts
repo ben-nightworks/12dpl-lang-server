@@ -66,6 +66,30 @@ function formatParamTypes(params: ParamList): string {
 }
 
 /**
+ * Returns true if the expression is definitely a temporary (not an lvalue).
+ * Only flags obvious cases: numeric and string literals (optionally negated).
+ * Used to detect passing a temporary to a reference parameter.
+ */
+function isTemporaryExpression(argCtx: any): boolean {
+	try {
+		const text = argCtx?.getText?.();
+		if (!text) return false;
+
+		// String literal
+		if (text.startsWith('"') && text.endsWith('"')) return true;
+
+		// Integer literal (optionally negated, including hex)
+		if (/^-?[0-9]+$/.test(text)) return true;
+		if (/^-?0x[0-9a-fA-F]+$/i.test(text)) return true;
+
+		// Real literal (optionally negated)
+		if (/^-?[0-9]*\.[0-9]+$/.test(text)) return true;
+
+		return false;
+	} catch { return false; }
+}
+
+/**
  * Checks whether a given argument type is compatible with a parameter type.
  * In 12dPL, Integer and Real are numerically compatible.
  */
@@ -355,6 +379,30 @@ export function validateFunctionArguments(
 								end: { line: line - 1, character: column + funcName.length }
 							},
 							message: `Function call '${funcName}' args mismatch — got (${argTypeStr}), expected ${expectedSigs}`
+						});
+					}
+
+					// Check: reference parameter receives a temporary value.
+					// Only warn if ALL count-matching overloads require byRef at this position,
+					// so that a non-byRef overload suppresses the warning.
+					for (let i = 0; i < argExprs.length; i++) {
+						const allByRef = countMatches.every(params => params[i]?.byRef === true);
+						if (!allByRef) continue;
+						if (!isTemporaryExpression(argExprs[i])) continue;
+
+						const argStart = argExprs[i]?.start;
+						const argLine = argStart?.line ?? null;
+						const argColumn = argStart?.column ?? null;
+						if (argLine === null || argColumn === null) continue;
+
+						const argText = argExprs[i]?.getText?.() ?? '';
+						diagnostics.push({
+							severity: DiagnosticSeverity.Warning,
+							range: {
+								start: { line: argLine - 1, character: argColumn },
+								end: { line: argLine - 1, character: argColumn + argText.length }
+							},
+							message: `Argument ${i + 1} of '${funcName}' is a reference parameter but value is a temporary`
 						});
 					}
 				}

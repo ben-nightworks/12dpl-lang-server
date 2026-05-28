@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { describe, expect, test } from "bun:test";
-import { parse, expandObjectLikeMacros } from "../server/src/core/parsePipeline";
+import { parse, expandObjectLikeMacros, stripConditionalDirectives } from "../server/src/core/parsePipeline";
 import { collectSymbolTable, deriveViews, parseDefines } from "../server/src/core/symbolCollector";
 import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls, validateVoidFunctionReturnValues, FunctionSignatureMap, validateFunctionArguments, validateReturnStatements, validateArraySize } from "../server/src/core/validators";
 import type { OverloadReturnType } from "../server/src/core/validators";
@@ -1099,6 +1099,104 @@ void Test()
 		const errors = diagnostics.filter(d => d.severity === 1 && d.message.includes("is not declared"));
 		expect(errors.some(d => d.message.includes("horiz_datum"))).toBe(false);
 		expect(errors.some(d => d.message.includes("projection_name"))).toBe(false);
+	});
+});
+
+describe("Nested block scope isolation (issue #150)", () => {
+	test("reports error for variable used outside its declaring if-block", () => {
+		const code = `
+void My_function()
+{
+    if (1 == 1)
+    {
+        Model mymodel = Get_model("xyz");
+    }
+    Model_delete(mymodel);
+}
+`;
+		const knownSymbols = {
+			functions: new Set(['Get_model', 'Model_delete']),
+			variables: new Set<string>(),
+			defines: new Set<string>()
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
+		const errors = diagnostics.filter(d => d.severity === 1 && d.message.includes("is not declared"));
+		expect(errors.some(d => d.message.includes("mymodel"))).toBe(true);
+	});
+
+	test("does not flag a variable used inside its declaring if-block", () => {
+		const code = `
+void My_function()
+{
+    if (1 == 1)
+    {
+        Model mymodel = Get_model("xyz");
+        Model_delete(mymodel);
+    }
+}
+`;
+		const knownSymbols = {
+			functions: new Set(['Get_model', 'Model_delete']),
+			variables: new Set<string>(),
+			defines: new Set<string>()
+		};
+		const diagnostics = ValidateWithSymbols(code, knownSymbols);
+		const errors = diagnostics.filter(d => d.severity === 1 && d.message.includes("mymodel"));
+		expect(errors.length).toBe(0);
+	});
+
+	test("reports error for variable used after the if-else block that declares it", () => {
+		const code = `
+void test()
+{
+    if (1 == 1)
+    {
+        Integer x = 5;
+    }
+    else
+    {
+        Integer y = 10;
+    }
+    Integer z = x + y;
+}
+`;
+		const diagnostics = Validate(code);
+		const errors = diagnostics.filter(d => d.severity === 1 && d.message.includes("is not declared"));
+		expect(errors.some(d => d.message.includes("x"))).toBe(true);
+		expect(errors.some(d => d.message.includes("y"))).toBe(true);
+	});
+
+	test("variables declared before the if-block remain in scope after", () => {
+		const code = `
+void test()
+{
+    Integer x = 10;
+    if (x > 5)
+    {
+        Integer y = x + 1;
+    }
+    Integer z = x;
+}
+`;
+		const diagnostics = Validate(code);
+		const errors = diagnostics.filter(d => d.severity === 1 && d.message.includes("is not declared"));
+		expect(errors.length).toBe(0);
+	});
+
+	test("reports error for variable used outside its declaring while-block", () => {
+		const code = `
+void test()
+{
+    while (1 == 1)
+    {
+        Integer inner = 42;
+    }
+    Integer z = inner;
+}
+`;
+		const diagnostics = Validate(code);
+		const errors = diagnostics.filter(d => d.severity === 1 && d.message.includes("is not declared"));
+		expect(errors.some(d => d.message.includes("inner"))).toBe(true);
 	});
 });
 
@@ -2818,6 +2916,158 @@ void main()
 		const diagnostics = ValidateFunctionArgs(code, externalSigs);
 		expect(diagnostics.length).toBe(0);
 	});
+
+	// ─── Reference parameter receives temporary (issue #151) ─────────────────
+
+	test("warns when integer literal passed to reference parameter", () => {
+		const code = `
+void My_function(Real &x)
+{
+}
+
+void main()
+{
+	My_function(0);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
+		expect(warnings.length).toBe(1);
+		expect(warnings[0].message).toContain("My_function");
+		expect(warnings[0].message).toContain("reference");
+		expect(warnings[0].message).toContain("temporary");
+	});
+
+	test("warns when real literal passed to reference parameter", () => {
+		const code = `
+void Set_value(Real &x)
+{
+}
+
+void main()
+{
+	Set_value(3.14);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
+		expect(warnings.length).toBe(1);
+		expect(warnings[0].message).toContain("Set_value");
+		expect(warnings[0].message).toContain("temporary");
+	});
+
+	test("warns when string literal passed to reference parameter", () => {
+		const code = `
+void Set_name(Text &name)
+{
+}
+
+void main()
+{
+	Set_name("hello");
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
+		expect(warnings.length).toBe(1);
+		expect(warnings[0].message).toContain("Argument 1");
+		expect(warnings[0].message).toContain("temporary");
+	});
+
+	test("does not warn when variable passed to reference parameter", () => {
+		const code = `
+void My_function(Integer &x)
+{
+}
+
+void main()
+{
+	Integer val = 5;
+	My_function(val);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
+		expect(warnings.length).toBe(0);
+	});
+
+	test("warns only for the byRef argument, not all arguments", () => {
+		const code = `
+void Mixed(Integer a, Real &b, Text c)
+{
+}
+
+void main()
+{
+	Integer x = 1;
+	Text t = "hi";
+	Mixed(x, 0.5, t);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
+		expect(warnings.length).toBe(1);
+		expect(warnings[0].message).toContain("Argument 2");
+	});
+
+	test("does not warn when a non-byRef overload also exists for that argument position", () => {
+		// foo(Real &x) and foo(Real x) — literal 0 should not warn because
+		// there is a non-byRef overload that accepts it.
+		const code = `
+void foo(Real &x)
+{
+}
+
+void foo(Real x)
+{
+}
+
+void main()
+{
+	foo(0);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
+		expect(warnings.length).toBe(0);
+	});
+
+	test("warns when multiple byRef parameters receive literals", () => {
+		const code = `
+void Swap(Integer &a, Integer &b)
+{
+}
+
+void main()
+{
+	Swap(1, 2);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
+		expect(warnings.length).toBe(2);
+		expect(warnings[0].message).toContain("Argument 1");
+		expect(warnings[1].message).toContain("Argument 2");
+	});
+
+	test("warns for reference parameter in external (include-file) function signatures", () => {
+		const externalSigs: FunctionSignatureMap = new Map();
+		externalSigs.set("Get_value", [
+			[{ name: "out", type: "Integer", byRef: true, isArray: false }]
+		]);
+
+		const code = `
+void main()
+{
+	Get_value(0);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code, externalSigs);
+		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
+		expect(warnings.length).toBe(1);
+		expect(warnings[0].message).toContain("Get_value");
+		expect(warnings[0].message).toContain("reference");
+	});
 });
 
 // ─── Return value validation (#47) ──────────────────────────────────────────
@@ -4258,6 +4508,75 @@ Number value = 3.14;
 `;
 		const result = parse(code);
 		expect(result.syntaxErrors.length).toBe(0);
+	});
+});
+
+// ─── #define type substitution from header files (issue #133) ────────────────
+//
+// When object-like type-alias defines are declared in a header file and not in
+// the current document, they must still be expanded before parsing. The
+// `parse()` function accepts an optional `extraDefines` parameter for this.
+
+describe("#define type substitution from included headers (issue #133)", () => {
+	test("type alias from header allows variable declaration without syntax error", () => {
+		// Simulates: test.h defines `#define Boolean Integer`, test.c includes it.
+		const code = `
+Integer Test(Text test) {
+    Boolean bool = 0;
+    return 0;
+}
+`;
+		const extraDefines = [{ name: 'Boolean', value: 'Integer' }];
+		const result = parse(code, extraDefines);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("constants from header allow use in expressions without syntax error", () => {
+		const code = `
+void main() {
+    Boolean active = FALSE;
+    Boolean done = TRUE;
+}
+`;
+		const extraDefines = [
+			{ name: 'Boolean', value: 'Integer' },
+			{ name: 'FALSE', value: '0' },
+			{ name: 'TRUE', value: '1' },
+		];
+		const result = parse(code, extraDefines);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("expandObjectLikeMacros applies extraDefines from header not in rawText", () => {
+		// rawText has no #define — defines come from a header file.
+		const rawText = `Integer Test(Text test) {\n    Boolean flag = 0;\n    return 0;\n}\n`;
+		const { text: stripped } = stripConditionalDirectives(rawText);
+		const extraDefines = [{ name: 'Boolean', value: 'Integer' }];
+		const expanded = expandObjectLikeMacros(stripped, rawText, extraDefines);
+		expect(expanded).toContain('Integer flag = 0;');
+	});
+
+	test("local file defines take precedence over header extraDefines", () => {
+		// If the same name is defined locally, the local define wins.
+		const rawText = `#define Boolean Real\nBoolean x = 1;\n`;
+		const { text: stripped } = require('../server/src/core/parsePipeline').stripConditionalDirectives(rawText);
+		const extraDefines = [{ name: 'Boolean', value: 'Integer' }];
+		const expanded = expandObjectLikeMacros(stripped, rawText, extraDefines);
+		// Local `#define Boolean Real` should win — result is `Real`, not `Integer`.
+		expect(expanded).toContain('Real x = 1;');
+		expect(expanded).not.toContain('Integer x = 1;');
+	});
+
+	test("header type alias does not suppress unrelated syntax errors", () => {
+		const code = `
+void main() {
+    Boolean active = ;
+}
+`;
+		const extraDefines = [{ name: 'Boolean', value: 'Integer' }];
+		const result = parse(code, extraDefines);
+		// There is a real syntax error (missing value after `=`)
+		expect(result.syntaxErrors.length).toBeGreaterThan(0);
 	});
 });
 

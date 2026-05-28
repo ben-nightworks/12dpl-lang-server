@@ -414,6 +414,18 @@ Release of [v1.3.0] to the VS Code Marketplace.
 
 ---
 
+## [v1.5.6] - (28/05/2026)
+
+### New Features
+- **Temporary Value Warnings for Pass-by-Reference** (#151): A warning is now emitted when a literal or temporary value is passed to a `&` (pass-by-reference) parameter, since the callee cannot meaningfully write back to a temporary.
+- **Block-Scope Variable Leak Detection** (#150): Variables declared inside a block (e.g. `if`, `for`) are no longer considered accessible outside that block. Using such a variable after its scope ends is now reported as an undeclared-symbol error.
+- **Preprocessor Defines from Headers** (#155): The validation pipeline now performs a double parse so that `#define` statements from included header files are collected and substituted before the main validation pass, resolving false positives caused by macro-defined values from headers.
+
+### Bug Fixes
+- **Switch Statement Formatting**: Switch cases with compound bodies were indented incorrectly by the formatter; this has been corrected.
+
+---
+
 # Template
 
 ## [vX.X.X] - (Date)
