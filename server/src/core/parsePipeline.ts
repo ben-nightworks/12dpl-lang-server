@@ -353,7 +353,11 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
  * @param strippedText - Text after standalone macro usages have been stripped.
  * @param rawText - The original document text, used to extract define definitions.
  */
-export function expandObjectLikeMacros(strippedText: string, rawText: string): string {
+export function expandObjectLikeMacros(
+	strippedText: string,
+	rawText: string,
+	extraDefines?: readonly { name: string; value: string }[]
+): string {
 	// Collect object-like defines: #define NAME value
 	// A define is function-like (and must be skipped) when '(' appears immediately after NAME.
 	const defines: Array<{ name: string; value: string }> = [];
@@ -368,6 +372,17 @@ export function expandObjectLikeMacros(strippedText: string, rawText: string): s
 		// Skip multi-line macro values (backslash continuation)
 		if (value.endsWith('\\')) continue;
 		defines.push({ name, value });
+	}
+
+	// Prepend extra defines (e.g. from included header files), deduplicating by name.
+	// Local defines take precedence over extra defines.
+	if (extraDefines && extraDefines.length > 0) {
+		const localNames = new Set(defines.map(d => d.name));
+		for (const d of extraDefines) {
+			if (!localNames.has(d.name)) {
+				defines.unshift(d);
+			}
+		}
 	}
 
 	if (defines.length === 0) return strippedText;
@@ -398,13 +413,20 @@ function escapeRegExp(s: string): string {
  * @param strippedText - Text after `stripConditionalDirectives` (define lines already empty).
  * @param rawText - The original document text, used to extract define names.
  */
-export function stripStandaloneMacroUsages(strippedText: string, rawText: string): string {
+export function stripStandaloneMacroUsages(
+	strippedText: string,
+	rawText: string,
+	extraDefineNames?: readonly string[]
+): string {
 	// Collect all define names from the original (unstripped) text
 	const defineNames = new Set<string>();
 	const defineRe = /^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)/gm;
 	let m: RegExpExecArray | null;
 	while ((m = defineRe.exec(rawText)) !== null) {
 		defineNames.add(m[1]);
+	}
+	if (extraDefineNames) {
+		for (const name of extraDefineNames) defineNames.add(name);
 	}
 	if (defineNames.size === 0) return strippedText;
 
@@ -483,11 +505,18 @@ class SyntaxErrorListener implements ErrorListener<any> {
  * Performs preprocessing (strip conditionals, wrap scripts) then ANTLR lexing/parsing.
  * The returned result is the single artifact all downstream consumers share.
  */
-export function parse(documentText: string): ParseResult {
+export function parse(
+	documentText: string,
+	extraDefines?: readonly { name: string; value: string }[]
+): ParseResult {
 	const { text: strippedText, conditionalLines } = stripConditionalDirectives(documentText);
 
 	// Strip standalone macro calls first -- shared step for both paths below.
-	const macroStrippedText = stripStandaloneMacroUsages(strippedText, documentText);
+	const macroStrippedText = stripStandaloneMacroUsages(
+		strippedText,
+		documentText,
+		extraDefines?.map(d => d.name)
+	);
 
 	// -- Original path: lex the unexpanded text to produce the token stream --
 	// Preserves original token names (MAX_SIZE, TIMEOUT, ...) so that rename and
@@ -501,7 +530,7 @@ export function parse(documentText: string): ParseResult {
 	// The ANTLR parser receives e.g. `Integer` instead of `Boolean`, so
 	// type-alias defines and other object-like substitutions do not produce
 	// spurious syntax errors.
-	const expandedText = expandObjectLikeMacros(macroStrippedText, documentText);
+	const expandedText = expandObjectLikeMacros(macroStrippedText, documentText, extraDefines);
 	const transformedText = wrapTopLevelScriptsPreservingLines(expandedText);
 
 	const chars = new CharStream(transformedText);
