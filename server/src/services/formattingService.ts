@@ -290,10 +290,7 @@ export function format12dplDocument(text: string, options: Format12dplOptions): 
 
 		// Compute indentation for the current line. Reduce indent for leading closing braces.
 		const leadingCloseCount = countLeadingChar(trimmed, '}');
-		let lineIndentLevel = indentLevel - leadingCloseCount;
-		if (trimmed.startsWith('case ') || trimmed.startsWith('default:')) {
-			lineIndentLevel = Math.max(0, lineIndentLevel - 1);
-		}
+		const lineIndentLevel = indentLevel - leadingCloseCount;
 
 		if (wasInBlockComment) {
 			// Preserve original content — block comment interior lines are not reindented.

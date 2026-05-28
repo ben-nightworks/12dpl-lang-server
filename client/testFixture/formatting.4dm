@@ -18,5 +18,17 @@ Integer param7, Integer param8, Integer param9, Integer param10)
 void main()
 {
 	Integer result = my_func(5, 10);
-		
+	switch(result)
+	{
+		case 15:
+		{
+			// This is a case for when the result is 15. It should be properly indented and formatted.
+			break;
+		}
+		default:
+		{
+			// This is the default case. It should also be properly indented and formatted.
+			break;
+		}
+	}
 }
