@@ -2818,6 +2818,158 @@ void main()
 		const diagnostics = ValidateFunctionArgs(code, externalSigs);
 		expect(diagnostics.length).toBe(0);
 	});
+
+	// ─── Reference parameter receives temporary (issue #151) ─────────────────
+
+	test("warns when integer literal passed to reference parameter", () => {
+		const code = `
+void My_function(Real &x)
+{
+}
+
+void main()
+{
+	My_function(0);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
+		expect(warnings.length).toBe(1);
+		expect(warnings[0].message).toContain("My_function");
+		expect(warnings[0].message).toContain("reference");
+		expect(warnings[0].message).toContain("temporary");
+	});
+
+	test("warns when real literal passed to reference parameter", () => {
+		const code = `
+void Set_value(Real &x)
+{
+}
+
+void main()
+{
+	Set_value(3.14);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
+		expect(warnings.length).toBe(1);
+		expect(warnings[0].message).toContain("Set_value");
+		expect(warnings[0].message).toContain("temporary");
+	});
+
+	test("warns when string literal passed to reference parameter", () => {
+		const code = `
+void Set_name(Text &name)
+{
+}
+
+void main()
+{
+	Set_name("hello");
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
+		expect(warnings.length).toBe(1);
+		expect(warnings[0].message).toContain("Argument 1");
+		expect(warnings[0].message).toContain("temporary");
+	});
+
+	test("does not warn when variable passed to reference parameter", () => {
+		const code = `
+void My_function(Integer &x)
+{
+}
+
+void main()
+{
+	Integer val = 5;
+	My_function(val);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
+		expect(warnings.length).toBe(0);
+	});
+
+	test("warns only for the byRef argument, not all arguments", () => {
+		const code = `
+void Mixed(Integer a, Real &b, Text c)
+{
+}
+
+void main()
+{
+	Integer x = 1;
+	Text t = "hi";
+	Mixed(x, 0.5, t);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
+		expect(warnings.length).toBe(1);
+		expect(warnings[0].message).toContain("Argument 2");
+	});
+
+	test("does not warn when a non-byRef overload also exists for that argument position", () => {
+		// foo(Real &x) and foo(Real x) — literal 0 should not warn because
+		// there is a non-byRef overload that accepts it.
+		const code = `
+void foo(Real &x)
+{
+}
+
+void foo(Real x)
+{
+}
+
+void main()
+{
+	foo(0);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
+		expect(warnings.length).toBe(0);
+	});
+
+	test("warns when multiple byRef parameters receive literals", () => {
+		const code = `
+void Swap(Integer &a, Integer &b)
+{
+}
+
+void main()
+{
+	Swap(1, 2);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code);
+		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
+		expect(warnings.length).toBe(2);
+		expect(warnings[0].message).toContain("Argument 1");
+		expect(warnings[1].message).toContain("Argument 2");
+	});
+
+	test("warns for reference parameter in external (include-file) function signatures", () => {
+		const externalSigs: FunctionSignatureMap = new Map();
+		externalSigs.set("Get_value", [
+			[{ name: "out", type: "Integer", byRef: true, isArray: false }]
+		]);
+
+		const code = `
+void main()
+{
+	Get_value(0);
+}
+`;
+		const diagnostics = ValidateFunctionArgs(code, externalSigs);
+		const warnings = diagnostics.filter(d => d.severity === 2 /* Warning */);
+		expect(warnings.length).toBe(1);
+		expect(warnings[0].message).toContain("Get_value");
+		expect(warnings[0].message).toContain("reference");
+	});
 });
 
 // ─── Return value validation (#47) ──────────────────────────────────────────

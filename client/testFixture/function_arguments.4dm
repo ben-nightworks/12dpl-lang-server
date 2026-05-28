@@ -208,6 +208,33 @@ void test_unknown_function()
 	unknown_function(1, 2, 3); // No argument error here; full pipeline still reports undeclared function
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// TEST 12: Reference parameter receives a temporary value → WARNING (issue #151)
+// Passing a literal to a byRef parameter should produce a warning.
+// ──────────────────────────────────────────────────────────────────────────────
+
+void takes_ref_real(Real &x)
+{
+}
+
+void takes_two_refs(Integer &a, Integer &b)
+{
+}
+
+void takes_ref_text(Text &msg)
+{
+}
+
+void test_ref_temporary()
+{
+	Integer val = 5;
+	takes_ref(0);              // WARNING: argument 1 is a reference but value is a temporary
+	takes_ref(val);            // OK: variable is an lvalue
+	takes_two_refs(1, 2);      // WARNING x2: both arguments are temporaries
+	takes_ref_real(3.14);      // WARNING: real literal passed to Real& param
+	takes_ref_text("hello");   // WARNING: text literal passed to Text& param
+}
+
 void main()
 {
 }
@@ -228,6 +255,11 @@ void main()
 //   TEST 7:  overloaded(1,2,3) — no matching overload
 //   TEST 11: unknown_function(1,2,3) — undeclared function (from undeclared-symbol validator)
 //
+// WARNINGS:
+//   TEST 12: takes_ref(0) — argument 1 is a reference but value is a temporary
+//   TEST 12: takes_two_refs(1, 2) — argument 1 and argument 2 are references but values are temporaries
+//   TEST 12: takes_ref_real(3.14) — argument 1 is a reference but value is a temporary
+//
 // OK (no diagnostic):
 //   TEST 1:  Correct argument counts
 //   TEST 3:  Correct argument types (variables and literals)
@@ -237,6 +269,7 @@ void main()
 //   TEST 9:  Return type resolution nested in arguments
 //   TEST 10: Literal promotion in overload context
 //   TEST 11: No argument-count/type diagnostic from this validator
+//   TEST 12: takes_ref(val) — variable is lvalue, no warning
 //
 // ============================================================================
 void Process(Element e)
