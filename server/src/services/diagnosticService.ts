@@ -9,6 +9,7 @@ import { Diagnostic, DiagnosticSeverity } from 'vscode-languageserver/node';
 import type { DocumentService } from './documentService';
 import type { IncludeService } from './includeService';
 import type { PrototypeService } from './prototypeService';
+import { parse } from '../core/parsePipeline';
 import { validateVariableRedeclarations, 
 	validateFunctionRedeclarations, 
 	validateUndeclaredIdentifiers, 
@@ -32,7 +33,25 @@ export class DiagnosticService {
 
 	/** Returns all diagnostics for a document. Single entry point. */
 	async validate(uri: string): Promise<Diagnostic[]> {
-		const parseResult = this.documentService.getParseResult(uri);
+		// Resolve include-file defines before parsing so that object-like macros
+		// defined in headers (e.g. `#define Boolean Integer`) are expanded in the
+		// document text fed to ANTLR. Without this, type-alias defines from included
+		// files cause false syntax errors (issue #133).
+		const includeDefines = await this.includeService.getIncludeDefines(uri);
+		const extraDefines = includeDefines
+			.filter(d => !d.defineParams?.length && d.value !== undefined && d.value !== '')
+			.map(d => ({ name: d.name, value: d.value! }));
+
+		// When include-file defines are present, re-parse the document with them
+		// so the expanded text is used for all validation. Fall back to the
+		// cached result when there are no extra defines to avoid the extra parse.
+		let parseResult = this.documentService.getParseResult(uri);
+		if (extraDefines.length > 0) {
+			const text = this.documentService.getText(uri);
+			if (text != null) {
+				parseResult = parse(text, extraDefines);
+			}
+		}
 		if (!parseResult) return [];
 
 		const diagnostics: Diagnostic[] = [];

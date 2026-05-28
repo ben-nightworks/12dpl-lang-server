@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { describe, expect, test } from "bun:test";
-import { parse, expandObjectLikeMacros } from "../server/src/core/parsePipeline";
+import { parse, expandObjectLikeMacros, stripConditionalDirectives } from "../server/src/core/parsePipeline";
 import { collectSymbolTable, deriveViews, parseDefines } from "../server/src/core/symbolCollector";
 import { validateVariableRedeclarations, validateFunctionRedeclarations, validateUndeclaredIdentifiers, validateDeprecatedCalls, validateVoidFunctionReturnValues, FunctionSignatureMap, validateFunctionArguments, validateReturnStatements, validateArraySize } from "../server/src/core/validators";
 import type { OverloadReturnType } from "../server/src/core/validators";
@@ -4258,6 +4258,75 @@ Number value = 3.14;
 `;
 		const result = parse(code);
 		expect(result.syntaxErrors.length).toBe(0);
+	});
+});
+
+// ─── #define type substitution from header files (issue #133) ────────────────
+//
+// When object-like type-alias defines are declared in a header file and not in
+// the current document, they must still be expanded before parsing. The
+// `parse()` function accepts an optional `extraDefines` parameter for this.
+
+describe("#define type substitution from included headers (issue #133)", () => {
+	test("type alias from header allows variable declaration without syntax error", () => {
+		// Simulates: test.h defines `#define Boolean Integer`, test.c includes it.
+		const code = `
+Integer Test(Text test) {
+    Boolean bool = 0;
+    return 0;
+}
+`;
+		const extraDefines = [{ name: 'Boolean', value: 'Integer' }];
+		const result = parse(code, extraDefines);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("constants from header allow use in expressions without syntax error", () => {
+		const code = `
+void main() {
+    Boolean active = FALSE;
+    Boolean done = TRUE;
+}
+`;
+		const extraDefines = [
+			{ name: 'Boolean', value: 'Integer' },
+			{ name: 'FALSE', value: '0' },
+			{ name: 'TRUE', value: '1' },
+		];
+		const result = parse(code, extraDefines);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("expandObjectLikeMacros applies extraDefines from header not in rawText", () => {
+		// rawText has no #define — defines come from a header file.
+		const rawText = `Integer Test(Text test) {\n    Boolean flag = 0;\n    return 0;\n}\n`;
+		const { text: stripped } = stripConditionalDirectives(rawText);
+		const extraDefines = [{ name: 'Boolean', value: 'Integer' }];
+		const expanded = expandObjectLikeMacros(stripped, rawText, extraDefines);
+		expect(expanded).toContain('Integer flag = 0;');
+	});
+
+	test("local file defines take precedence over header extraDefines", () => {
+		// If the same name is defined locally, the local define wins.
+		const rawText = `#define Boolean Real\nBoolean x = 1;\n`;
+		const { text: stripped } = require('../server/src/core/parsePipeline').stripConditionalDirectives(rawText);
+		const extraDefines = [{ name: 'Boolean', value: 'Integer' }];
+		const expanded = expandObjectLikeMacros(stripped, rawText, extraDefines);
+		// Local `#define Boolean Real` should win — result is `Real`, not `Integer`.
+		expect(expanded).toContain('Real x = 1;');
+		expect(expanded).not.toContain('Integer x = 1;');
+	});
+
+	test("header type alias does not suppress unrelated syntax errors", () => {
+		const code = `
+void main() {
+    Boolean active = ;
+}
+`;
+		const extraDefines = [{ name: 'Boolean', value: 'Integer' }];
+		const result = parse(code, extraDefines);
+		// There is a real syntax error (missing value after `=`)
+		expect(result.syntaxErrors.length).toBeGreaterThan(0);
 	});
 });
 
