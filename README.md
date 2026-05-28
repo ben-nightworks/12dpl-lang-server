@@ -48,15 +48,19 @@ This repository’s documentation is split into the following Markdown files:
 
 ---
 
-### What's New in v1.5.4
+### What's New in v1.5.6
 
-**Preprocessor Macro Substitution** ✨
-- Macros are now expanded during validation so the validator correctly analyses code that uses macro-defined values
-- Original macro symbols are preserved alongside expanded forms, keeping completion and hover working on macro names
+**Pass-by-Reference Temporary Value Warnings** ✨
+- Passing a literal or temporary value to a `&` (pass-by-reference) parameter now produces a warning, since the callee cannot write back to a temporary
+
+**Block-Scope Variable Leak Detection** ✨
+- Variables declared inside a block (`if`, `for`, etc.) are no longer accessible outside that block; using them after scope ends is reported as an error
+
+**Preprocessor Defines from Headers** ✨
+- `#define` macros from included header files are now collected and substituted before validation, eliminating false positives from macro-defined values in headers
 
 **Bug Fixes**
-- Block comment bracket colours: brackets inside block comments are no longer coloured as code brackets
-- Forward declaration false positives in header files are no longer incorrectly reported as redeclarations
+- Switch statement formatting: cases with compound bodies are now indented correctly
 
 
 
