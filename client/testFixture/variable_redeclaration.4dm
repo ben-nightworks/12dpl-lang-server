@@ -401,12 +401,12 @@ void main() {
 		Integer main_local = 3;     // WARNING: shadows variable from main function scope
 	}
 
-	// OK: For-loop creates own scope
+	// OK: For-loop shares scope above
 	for (Integer i = 0; i < 5; i++) {
 		Integer loop_body = i;      // OK: Inside for-loop scope
 	}
-	for (Integer i = 0; i < 3; i++) {
-		Integer loop_body = i;      // OK: Different for-loop scope
+	for (Integer i = 0; i < 3; i++) { // ERROR: Variable is defined in previous loop
+		Integer loop_body = i;      
 	}
 }
 
@@ -440,8 +440,7 @@ void main() {
 // Line 246: Real calculate();       - False positive variable re-declaration
 // Line 326: Text include_var        - Include file conflict (in combined test)
 // Line 387: Text include_var        - Include file conflict (in main)
-// Line 394: Integer main_local = 2; - Re-declaration in same scope (in main)
-//
+// Line 394: Integer main_local = 2; - Re-declaration in same scope (in main)// Line 409: Integer loop_body       - Variable already defined in previous for-loop body//
 // WARNINGS (DiagnosticSeverity.Warning = 2, Yellow Squiggle):
 // -----------------------------------------------------------------------------
 // Line 107: Text global_name        - Shadows same-file global

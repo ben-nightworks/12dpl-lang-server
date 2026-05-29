@@ -365,7 +365,7 @@ export function expandObjectLikeMacros(
 
 	for (const line of lines) {
 		// Match: #define NAME<no '(' here> <whitespace> value
-		const m = line.match(/^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)(?!\()[ \t]+(.+\S)/);
+		const m = line.match(/^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)(?!\()[ \t]+(\S.*)/);
 		if (!m) continue;
 		const name = m[1];
 		const value = m[2].trim();
@@ -511,27 +511,28 @@ export function parse(
 ): ParseResult {
 	const { text: strippedText, conditionalLines } = stripConditionalDirectives(documentText);
 
-	// Strip standalone macro calls first -- shared step for both paths below.
+	// -- Original path: lex the unexpanded text to produce the token stream --
+	// Preserves original token names (MAX_SIZE, TIMEOUT, ...) so that rename and
+	// deprecated-call detection can find them by name in the source.
+	// Strip standalone function-like macro calls so the lexer doesn't choke on them.
 	const macroStrippedText = stripStandaloneMacroUsages(
 		strippedText,
 		documentText,
 		extraDefines?.map(d => d.name)
 	);
-
-	// -- Original path: lex the unexpanded text to produce the token stream --
-	// Preserves original token names (MAX_SIZE, TIMEOUT, ...) so that rename and
-	// deprecated-call detection can find them by name in the source.
 	const originalTransformed = wrapTopLevelScriptsPreservingLines(macroStrippedText);
 	const originalLexer = new proglang12dLexer(new CharStream(originalTransformed));
 	const originalTokens = new CommonTokenStream(originalLexer);
 	originalTokens.fill();
 
 	// -- Expanded path: expand all object-like macros before parsing --
-	// The ANTLR parser receives e.g. `Integer` instead of `Boolean`, so
-	// type-alias defines and other object-like substitutions do not produce
-	// spurious syntax errors.
-	const expandedText = expandObjectLikeMacros(macroStrippedText, documentText, extraDefines);
-	const transformedText = wrapTopLevelScriptsPreservingLines(expandedText);
+	// Expansion runs on the conditionally-stripped text BEFORE standalone-macro stripping.
+	// This ensures that object-like macro names used as arguments in multi-line calls
+	// (e.g. MESSAGE_LEVEL_GOOD as the last arg) are substituted with their values first,
+	// so stripStandaloneMacroUsages only needs to handle unexpanded function-like macros.
+	const expandedText = expandObjectLikeMacros(strippedText, documentText, extraDefines);
+	const expandedMacroStripped = stripStandaloneMacroUsages(expandedText, documentText, extraDefines?.map(d => d.name));
+	const transformedText = wrapTopLevelScriptsPreservingLines(expandedMacroStripped);
 
 	const chars = new CharStream(transformedText);
 	const lexer = new proglang12dLexer(chars);
