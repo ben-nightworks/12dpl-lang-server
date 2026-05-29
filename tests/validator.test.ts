@@ -3694,6 +3694,74 @@ void func()
 		const errors = diagnostics.filter(d => d.severity === 1 /* Error */);
 		expect(errors.length).toBe(0);
 	});
+
+	// ── Issue #157 regression ──────────────────────────────────────────────────
+	// A macro constant used as the final argument to a multi-line function call
+	// was being stripped (treated as a standalone statement), making the argument
+	// list appear empty and producing spurious syntax errors.
+
+	test("macro constant as last arg in multi-line call does not produce syntax errors (#157)", () => {
+		const code = `
+#define MESSAGE_LEVEL_GOOD 4
+#define TEST "Test"
+
+void main()
+{
+	Set_data(
+		boxMessage,
+		"Test",
+		MESSAGE_LEVEL_GOOD
+	);
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("macro constant as middle arg in multi-line call does not produce syntax errors (#157)", () => {
+		const code = `
+#define MESSAGE_LEVEL_GOOD 4
+
+void main()
+{
+	Set_data(
+		boxMessage,
+		MESSAGE_LEVEL_GOOD,
+		"extra"
+	);
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("macro used as sole arg in multi-line call does not produce syntax errors (#157)", () => {
+		const code = `
+#define MY_VALUE 42
+
+void main()
+{
+	DoSomething(
+	MY_VALUE
+	);
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
+
+	test("macro constant used in an inline assignment is valid with no errors", () => {
+		const code = `
+#define VALUE 1
+
+void main()
+{
+	Integer test = VALUE;
+}
+`;
+		const result = parse(code);
+		expect(result.syntaxErrors.length).toBe(0);
+	});
 });
 
 // ─── parseDefines extraction ─────────────────────────────────────────────────
@@ -4115,7 +4183,7 @@ void main() {
 		const src = fs.readFileSync(fixturePath, "utf-8");
 		const defines = parseDefines(src);
 		const knownSymbols: KnownSymbols = {
-			functions: new Set(["Print", "To_text", "someOtherfunction"]),
+			functions: new Set(["Print", "To_text", "someOtherfunction", "Create_colour_message_box", "Set_data"]),
 			variables: new Set(),
 			defines: new Set(defines.map(d => d.name)),
 		};
