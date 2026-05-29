@@ -317,9 +317,45 @@ void main() {
 }
 `;
 		const diagnostics = Validate(code);
-		// for-loop creates its own scope, so this should be allowed
+		// for-loop header variable shadows the outer variable (warning), no error
 		const redeclErrors = diagnostics.filter(d =>
 			d.severity === 1 /* Error */ && d.message.includes("already declared")
+		);
+		expect(redeclErrors.length).toBe(1);
+	});
+
+	test("Error same header variable name across multiple for-loops", () => {
+		const code = `
+void main() {
+    for (Integer i = 0; i < 5; i++) {
+    }
+    for (Integer i = 0; i < 3; i++) {
+    }
+    for (Integer i = 0; i < 10; i++) {
+    }
+}
+`;
+		const diagnostics = Validate(code);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && (d.message.includes("already declared") || d.message.includes("already defined"))
+		);
+		expect(redeclErrors.length).toBe(2);
+	});
+
+	test("allows body variable in a subsequent for-loop", () => {
+		const code = `
+void main() {
+    for (Integer i = 0; i < 5; i++) {
+        Integer loop_body = i;
+    }
+    for (Integer i = 0; i < 3; i++) {
+        Integer loop_body = i;
+    }
+}
+`;
+		const diagnostics = Validate(code);
+		const redeclErrors = diagnostics.filter(d =>
+			d.severity === 1 /* Error */ && d.message.includes("loop_body")
 		);
 		expect(redeclErrors.length).toBe(0);
 	});
