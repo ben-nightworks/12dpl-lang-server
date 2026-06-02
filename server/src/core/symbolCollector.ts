@@ -6,6 +6,7 @@
  */
 
 import type { ParseResult, SymbolTable, ScopeNode, SymbolDeclaration, ParameterSymbolInfo, SymbolRange, DerivedSymbolViews } from './types';
+import { stripLineComment } from './parsePipeline';
 import type { DirectDeclaratorContext, DeclaratorContext } from '../antlr/src/proglang12dParser';
 
 const GENERATED_WRAPPER_PREFIX = '__12dpl__script__';
@@ -159,7 +160,7 @@ export function parseDefines(text: string, definedInFsPath?: string): SymbolDecl
 		if (!m) continue;
 		const name = m[1];
 		const rawParams = m[2];
-		const value = (m[3] ?? '').trim();
+		const value = stripLineComment((m[3] ?? '').trim());
 		const params = typeof rawParams === 'string'
 			? rawParams.split(',').map(p => p.trim()).filter(Boolean)
 			: undefined;

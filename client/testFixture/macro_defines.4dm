@@ -17,8 +17,8 @@ void func()
 	someOtherfunction();
 }
 
-#define MESSAGE_LEVEL_GOOD 4
-#define TEST "Test"
+#define MESSAGE_LEVEL_GOOD 4 //
+#define TEST "Test" //
 #define BRACKETS(x) x
 
 void func2()
