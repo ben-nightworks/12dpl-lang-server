@@ -368,7 +368,7 @@ export function expandObjectLikeMacros(
 		const m = line.match(/^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)(?!\()[ \t]+(\S.*)/);
 		if (!m) continue;
 		const name = m[1];
-		const value = m[2].trim();
+		const value = stripLineComment(m[2].trim());
 		// Skip multi-line macro values (backslash continuation)
 		if (value.endsWith('\\')) continue;
 		defines.push({ name, value });
@@ -400,6 +400,41 @@ export function expandObjectLikeMacros(
 
 function escapeRegExp(s: string): string {
 	return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Strips trailing line comments (// ...) and block comments (/* ... *\/)
+ * from a #define value string, respecting string literals so that // or /*
+ * inside a quoted string is preserved.
+ */
+export function stripLineComment(value: string): string {
+	let i = 0;
+	while (i < value.length) {
+		const ch = value[i];
+		if (ch === '"' || ch === "'") {
+			const quote = ch;
+			i++;
+			while (i < value.length) {
+				if (value[i] === '\\') {
+					i += 2;
+				} else if (value[i] === quote) {
+					i++;
+					break;
+				} else {
+					i++;
+				}
+			}
+		} else if (ch === '/' && value[i + 1] === '/') {
+			return value.slice(0, i).trimEnd();
+		} else if (ch === '/' && value[i + 1] === '*') {
+			const end = value.indexOf('*/', i + 2);
+			if (end === -1) return value.slice(0, i).trimEnd();
+			value = value.slice(0, i) + value.slice(end + 2);
+		} else {
+			i++;
+		}
+	}
+	return value;
 }
 
 /**
