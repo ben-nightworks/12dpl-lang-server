@@ -227,6 +227,8 @@ Maintainer: Ben Olsen (ben@nightworks.dev)
 
 Main Contributor: Kamal Jarada
 
+Community Contributors: [Phil Temple-Watts](https://github.com/PhilTemple-Watts), [Kleber](https://github.com/KleberNZ) — and everyone who has reported bugs and suggested features.
+
 ---
 
 Thanks for contributing — pull requests, issues and documentation improvements are welcome.

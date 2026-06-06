@@ -48,7 +48,7 @@ This repository’s documentation is split into the following Markdown files:
 
 ---
 
-### What's New in v1.5.6
+### What's New in v1.5.8
 
 **Pass-by-Reference Temporary Value Warnings** ✨
 - Passing a literal or temporary value to a `&` (pass-by-reference) parameter now produces a warning, since the callee cannot write back to a temporary
@@ -60,6 +60,9 @@ This repository’s documentation is split into the following Markdown files:
 - `#define` macros from included header files are now collected and substituted before validation, eliminating false positives from macro-defined values in headers
 
 **Bug Fixes**
+- Macro `#define` bodies now have comments stripped before substitution, so inline or trailing comments no longer corrupt the substituted value (v1.5.8)
+- `for` loop header variables (e.g. `for(Integer i = 0; ...)`) are no longer incorrectly flagged as re-declarations (v1.5.7)
+- Further fixes to preprocessor `#define` collection and substitution from headers (v1.5.7)
 - Switch statement formatting: cases with compound bodies are now indented correctly
 
 
@@ -168,4 +171,11 @@ Contributions welcome! Please submit pull requests or issues.
 
 **Ben Olsen**
 
-**Kamal Jarada** 
+**Kamal Jarada**
+
+### Community Contributors
+
+Thanks to everyone helping to improve the extension by reporting bugs and suggesting features:
+
+- [Phil Temple-Watts](https://github.com/PhilTemple-Watts)
+- [Kleber](https://github.com/KleberNZ)
