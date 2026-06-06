@@ -3235,7 +3235,7 @@
         "type": "Integer"
       }
     ],
-    "description": "This function basically calls the Microsoft CreateProcess function as defined in http://msdn.microsoft.com/en-us/library/ms682425%28v=vs.85%29.aspx. The 12d function gives access to the Microsoft CreateProcess arguments that are in bold (and also do not have a // in front of them): BOOL WINAPI CreateProcess( __in_opt LPCTSTR lpApplicationName, __inout_opt LPTSTR lpCommandLine, // __in_opt LPSECURITY_ATTRIBUTES lpProcessAttributes, // __in_opt LPSECURITY_ATTRIBUTES lpThreadAttributes, __in BOOL bInheritHandles, __in DWORD dwCreationFlags, // __in_opt LPVOID lpEnvironment, __in_opt LPCTSTR lpCurrentDirectory, // __in LPSTARTUPINFO lpStartupInfo, System Page 155 12d Model Macro Manual // __out LPPROCESS_INFORMATION lpProcessInformation ); where program_name is passed as lpApplicationName, command_line is passed as dwCreationFlags lpCommandLine, start_directory is passed as lpCurrentDirectory, flags is passed as dwCreationFlags and inherit is passed as bInheritHandles. If wait = 1, the macro will wait until the process finishes before continuing. If wait = 0, the macro won\u2019t wait until the process finishes before continuing. A function return value of zero indicates the function was successful. Note: Create_process can not be called from the 12d Model Practise version."
+    "description": "This function basically calls the Microsoft CreateProcess function as defined in http://msdn.microsoft.com/en-us/library/ms682425%28v=vs.85%29.aspx. The 12d function gives access to the Microsoft CreateProcess arguments that are in bold (and also do not have a // in front of them): BOOL WINAPI CreateProcess( __in_opt LPCTSTR lpApplicationName, __inout_opt LPTSTR lpCommandLine, // __in_opt LPSECURITY_ATTRIBUTES lpProcessAttributes, // __in_opt LPSECURITY_ATTRIBUTES lpThreadAttributes, __in BOOL bInheritHandles, __in DWORD dwCreationFlags, // __in_opt LPVOID lpEnvironment, __in_opt LPCTSTR lpCurrentDirectory, // __in LPSTARTUPINFO lpStartupInfo, System Page 155 12d Model Macro Manual // __out LPPROCESS_INFORMATION lpProcessInformation ); where program_name is passed as lpApplicationName, command_line is passed as dwCreationFlags lpCommandLine, start_directory is passed as lpCurrentDirectory, flags is passed as dwCreationFlags and inherit is passed as bInheritHandles. If wait = 1, the macro will wait until the process finishes before continuing. If wait = 0, the macro won’t wait until the process finishes before continuing. A function return value of zero indicates the function was successful. Note: Create_process can not be called from the 12d Model Practise version."
   },
   {
     "name": "Create_process",
@@ -14855,7 +14855,23 @@
         "type": "Text"
       }
     ],
-    "description": "Get the name of the Tin tin. The tin name is returned in the Text tin_name. A function return value of zero indicates success. If tin is null, the function return value is non-zero. Tin_models(Tin tin, Dynamic_Text &models_used) Name Integer Tin_models(Tin tin, Dynamic_Text &models_used) Description Get the names of all the models that were used to create the Tin tin. The model names are returned in the Dynamic_Text models_used. A function return value of zero indicates that the view names were returned successfully."
+    "description": "Get the name of the Tin tin. The tin name is returned in the Text tin_name. A function return value of zero indicates success. If tin is null, the function return value is non-zero."
+  },
+  {
+    "name": "Tin_models",
+    "id": 431,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "tin",
+        "type": "Tin"
+      },
+      {
+        "name": "models",
+        "type": "Dynamic_Text"
+      }
+    ],
+    "description": "Get the names of all the models that were used to create the Tin tin. The model names are returned in the Dynamic_Text models_used. A function return value of zero indicates that the view names were returned successfully."
   },
   {
     "name": "Get_time_updated",
@@ -39770,7 +39786,71 @@
         "type": "Integer"
       }
     ],
-    "description": "Get the (x,y,z) data for the first max_pts points of the 3d Element elt. The (x,y,z) values at each string point are returned in the Real arrays x[], y[] and z[]. The maximum number of points that can be returned is given by max_pts (usually the size of the arrays). The point data returned starts at the first point and goes up to the minimum of max_pts and the number of points in the string. The actual number of points returned is returned by Integer num_pts num_pts <= max_pts If the Element elt is not of type 3d, then num_pts is returned as zero and the function return value is set to a non-zero value. A function return value of zero indicates the data was successfully returned. Get_3d_data(Element elt,Real x[],Real y[],Real z[],Integer max_pts,Integer &num_pts,Integer start_pt) Name Integer Get_3d_data(Element elt,Real x[],Real y[],Real z[],Integer max_pts,Integer &num_pts,Integer start_pt) Description For a 3d Element elt, get the (x,y,z) data for max_pts points starting at point number start_pt. This routine allows the user to return the data from a 3d string in user specified chunks. This is necessary if the number of points in the string is greater than the size of the arrays available to contain the information. As in the previous function, the maximum number of points that can be returned is given by max_pts (usually the size of the arrays). However, for this function, the point data returned starts at point number start_pt rather than point one. The (x,y,z) values at each string point are returned in the Real arrays x[], y[] and z[]. The actual number of points returned is given by Integer num_pts num_pts <= max_pts If the Element elt is not of type 3d, then num_pts is set to zero and the function return value is set to a non-zero value. A function return value of zero indicates the data was successfully returned. Note Strings Replaced by Super Strings Page 847 12d Model Macro Manual A start_pt of one gives the same result as for the previous function. Get_3d_data(Element elt,Integer i, Real &x,Real &y,Real &z) Name Integer Get_3d_data(Element elt,Integer i, Real &x,Real &y,Real &z) Description Get the (x,y,z) data for the ith point of the string. The x value is returned in Real x. The y value is returned in Real y. The z value is returned in Real z. A function return value of zero indicates the data was successfully returned. Set_3d_data(Element elt,Real x[],Real y[],Real z[],Integer num_pts) Name Integer Set_3d_data(Element elt,Real x[],Real y[],Real z[],Integer num_pts) Description Set the (x,y,z) data for the first num_pts points of the 3d Element elt. This function allows the user to modify a large number of points of the string in one call. The maximum number of points that can be set is given by the number of points in the string. The (x,y,z) values for each string point are given in the Real arrays x[], y[] and z[]. The number of points to be set is given by Integer num_pts If the Element elt is not of type 3d, then nothing is modified and the function return value is set to a non-zero value. A function return value of zero indicates the data was successfully set. Note This function can not create new 3d Elements but only modify existing 3d Elements."
+    "description": "Get the (x,y,z) data for the first max_pts points of the 3d Element elt. The (x,y,z) values at each string point are returned in the Real arrays x[], y[] and z[]. The maximum number of points that can be returned is given by max_pts (usually the size of the arrays). The point data returned starts at the first point and goes up to the minimum of max_pts and the number of points in the string. The actual number of points returned is returned by Integer num_pts num_pts <= max_pts If the Element elt is not of type 3d, then num_pts is returned as zero and the function return value is set to a non-zero value. A function return value of zero indicates the data was successfully returned."
+  },
+  {
+    "name": "Get_3d_data",
+    "id": 79,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "element",
+        "type": "Element"
+      },
+      {
+        "name": "x",
+        "type": "Real"
+      },
+      {
+        "name": "y",
+        "type": "Real"
+      },
+      {
+        "name": "z",
+        "type": "Real"
+      },
+      {
+        "name": "max_pts",
+        "type": "Integer"
+      },
+      {
+        "name": "num_pts",
+        "type": "Integer"
+      },
+      {
+        "name": "offset",
+        "type": "Integer"
+      }
+    ],
+    "description": "For a 3d Element elt, get the (x,y,z) data for max_pts points starting at point number start_pt. This routine allows the user to return the data from a 3d string in user specified chunks. This is necessary if the number of points in the string is greater than the size of the arrays available to contain the information. As in the previous function, the maximum number of points that can be returned is given by max_pts (usually the size of the arrays). However, for this function, the point data returned starts at point number start_pt rather than point one. The (x,y,z) values at each string point are returned in the Real arrays x[], y[] and z[]. The actual number of points returned is given by Integer num_pts num_pts <= max_pts If the Element elt is not of type 3d, then num_pts is set to zero and the function return value is set to a non-zero value. A function return value of zero indicates the data was successfully returned. Note A start_pt of one gives the same result as for the previous function."
+  },
+  {
+    "name": "Get_3d_data",
+    "id": 82,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "element",
+        "type": "Element"
+      },
+      {
+        "name": "i",
+        "type": "Integer"
+      },
+      {
+        "name": "x",
+        "type": "Real"
+      },
+      {
+        "name": "y",
+        "type": "Real"
+      },
+      {
+        "name": "z",
+        "type": "Real"
+      }
+    ],
+    "description": "Get the (x,y,z) data for the ith point of the string. The x value is returned in Real x. The y value is returned in Real y. The z value is returned in Real z. A function return value of zero indicates the data was successfully returned."
   },
   {
     "name": "Set_3d_data",
@@ -39798,7 +39878,7 @@
         "type": "Integer"
       }
     ],
-    "description": "12dPL function Set_3d_data"
+    "description": "Set the (x,y,z) data for the first num_pts points of the 3d Element elt. This function allows the user to modify a large number of points of the string in one call. The maximum number of points that can be set is given by the number of points in the string. The (x,y,z) values for each string point are given in the Real arrays x[], y[] and z[]. The number of points to be set is given by Integer num_pts If the Element elt is not of type 3d, then nothing is modified and the function return value is set to a non-zero value. A function return value of zero indicates the data was successfully set. Note This function can not create new 3d Elements but only modify existing 3d Elements."
   },
   {
     "name": "Set_3d_data",
@@ -39830,7 +39910,35 @@
         "type": "Integer"
       }
     ],
-    "description": "For the 3d Element elt, set the (x,y,z) data for num_pts points, starting at point number start_pt. This function allows the user to modify a large number of points of the string in one call starting at point number start_pt rather than point one. The maximum number of points that can be set is given by the difference between the number of points in the string and the value of start_pt. The (x,y,z) values for the string points are given in the Real arrays x[], y[] and z[]. The number of the first string point to be modified is start_pt. The total number of points to be set is given by Integer num_pts If the Element elt is not of type 3d, then nothing is modified and the function return value is set to a Page 848 Strings Replaced by Super Strings Chapter 5 12dPL Library Calls non- zero value. A function return value of zero indicates the data was successfully set. Notes (a) A start_pt of one gives the same result as the previous function. (b) This function can not create new 3d Elements but only modify existing 3d Elements. Set_3d_data(Element elt,Integer i,Real x,Real y,Real z) Name Integer Set_3d_data(Element elt,Integer i,Real x,Real y,Real z) Description Set the (x,y,z) data for the ith point of the string. The x value is given in Real x. The y value is given in Real y. The z value is given in Real z. A function return value of zero indicates the data was successfully set."
+    "description": "For the 3d Element elt, set the (x,y,z) data for num_pts points, starting at point number start_pt. This function allows the user to modify a large number of points of the string in one call starting at point number start_pt rather than point one. The maximum number of points that can be set is given by the difference between the number of points in the string and the value of start_pt. The (x,y,z) values for the string points are given in the Real arrays x[], y[] and z[]. The number of the first string point to be modified is start_pt. The total number of points to be set is given by Integer num_pts If the Element elt is not of type 3d, then nothing is modified and the function return value is set to a non- zero value. A function return value of zero indicates the data was successfully set. Notes (a) A start_pt of one gives the same result as the previous function. (b) This function can not create new 3d Elements but only modify existing 3d Elements."
+  },
+  {
+    "name": "Set_3d_data",
+    "id": 83,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "element",
+        "type": "Element"
+      },
+      {
+        "name": "i",
+        "type": "Integer"
+      },
+      {
+        "name": "x",
+        "type": "Real"
+      },
+      {
+        "name": "y",
+        "type": "Real"
+      },
+      {
+        "name": "z",
+        "type": "Real"
+      }
+    ],
+    "description": "Set the (x,y,z) data for the ith point of the string. The x value is given in Real x. The y value is given in Real y. The z value is given in Real z. A function return value of zero indicates the data was successfully set."
   },
   {
     "name": "Create_4d",
@@ -40794,7 +40902,35 @@
         "type": "Integer"
       }
     ],
-    "description": "Page 866 Strings Replaced by Super Strings Chapter 5 12dPL Library Calls Get the (x,y,z) data for the first max_pts points of the pipe Element elt. The (x,y,z) values at each string point are returned in the Real arrays x[], y[] and z[]. The maximum number of points that can be returned is given by max_pts (usually the size of the arrays). The point data returned starts at the first point and goes up to the minimum of max_pts and the number of points in the string. The actual number of points returned is returned by Integer num_pts num_pts <= max_pts If the Element elt is not of type pipe, then num_pts is returned as zero and the function return value is set to a non-zero value. A function return value of zero indicates the data was successfully returned. Set_pipe_data(Element elt,Real x[],Real y[],Real z[],Integer num_pts) Name Integer Set_pipe_data(Element elt,Real x[],Real y[],Real z[],Integer num_pts) Description Set the (x,y,z) data for the first num_pts points of the pipe Element elt. This function allows the user to modify a large number of points of the string in one call. The maximum number of points that can be set is given by the number of points in the string. The (x,y,z) values for each string point are given in the Real arrays x[], y[] and z[]. The number of points to be set is given by Integer num_pts If the Element elt is not of type pipe, then nothing is modified and the function return value is set to a non-zero value. A function return value of zero indicates the data was successfully set. Note This function can not create new pipe Elements but only modify existing pipe Elements."
+    "description": "Get the (x,y,z) data for the first max_pts points of the pipe Element elt. The (x,y,z) values at each string point are returned in the Real arrays x[], y[] and z[]. The maximum number of points that can be returned is given by max_pts (usually the size of the arrays). The point data returned starts at the first point and goes up to the minimum of max_pts and the number of points in the string. The actual number of points returned is returned by Integer num_pts num_pts <= max_pts If the Element elt is not of type pipe, then num_pts is returned as zero and the function return value is set to a non-zero value. A function return value of zero indicates the data was successfully returned."
+  },
+  {
+    "name": "Set_pipe_data",
+    "id": 80,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "element",
+        "type": "Element"
+      },
+      {
+        "name": "x",
+        "type": "Real"
+      },
+      {
+        "name": "y",
+        "type": "Real"
+      },
+      {
+        "name": "z",
+        "type": "Real"
+      },
+      {
+        "name": "num_pts",
+        "type": "Integer"
+      }
+    ],
+    "description": "Set the (x,y,z) data for the first num_pts points of the pipe Element elt. This function allows the user to modify a large number of points of the string in one call. The maximum number of points that can be set is given by the number of points in the string. The (x,y,z) values for each string point are given in the Real arrays x[], y[] and z[]. The number of points to be set is given by Integer num_pts If the Element elt is not of type pipe, then nothing is modified and the function return value is set to a non-zero value. A function return value of zero indicates the data was successfully set. Note This function can not create new pipe Elements but only modify existing pipe Elements."
   },
   {
     "name": "Get_pipe_data",
@@ -40830,7 +40966,95 @@
         "type": "Integer"
       }
     ],
-    "description": "For a pipe Element elt, get the (x,y,z) data for max_pts points starting at point number start_pt. This routine allows the user to return the data from a pipe string in user specified chunks. This is necessary if the number of points in the string is greater than the size of the arrays available to contain the information. As in the previous function, the maximum number of points that can be returned is given by max_pts (usually the size of the arrays). However, for this function, the point data returned starts at point number start_pt rather than point one. The (x,y,z) values at each string point are returned in the Real arrays x[], y[] and z[]. The actual number of points returned is given by Integer num_pts Strings Replaced by Super Strings Page 867 12d Model Macro Manual num_pts <= max_pts If the Element elt is not of type pipe, then num_pts is set to zero and the function return value is set to a non-zero value. A function return value of zero indicates the data was successfully returned. Note A start_pt of one gives the same result as for the previous function. Set_pipe_data(Element elt,Real x[],Real y[],Real z[],Integer num_pts,Integer start_pt) Name Integer Set_pipe_data(Element elt,Real x[],Real y[],Real z[],Integer num_pts,Integer start_pt) Description For the pipe Element elt, set the (x,y,z) data for num_pts points, starting at point number start_pt. This function allows the user to modify a large number of points of the string in one call starting at point number start_pt rather than point one. The maximum number of points that can be set is given by the difference between the number of points in the string and the value of start_pt. The (x,y,z) values for the string points are given in the Real arrays x[], y[] and z[]. The number of the first string point to be modified is start_pt. The total number of points to be set is given by Integer num_pts If the Element elt is not of type pipe, then nothing is modified and the function return value is set to a non-zero value. A function return value of zero indicates the data was successfully set. Notes (a) A start_pt of one gives the same result as the previous function. (b) This function can not create new pipe Elements but only modify existing pipe Elements. Get_pipe_data(Element elt,Integer i, Real &x,Real &y,Real &z) Name Integer Get_pipe_data(Element elt,Integer i, Real &x,Real &y,Real &z) Description Get the (x,y,z) data for the ith point of the string. The x value is returned in Real x. The y value is returned in Real y. The z value is returned in Real z. A function return value of zero indicates the data was successfully returned. Set_pipe_data(Element elt,Integer i,Real x,Real y,Real z) Name Integer Set_pipe_data(Element elt,Integer i,Real x,Real y,Real z) Description Set the (x,y,z) data for the ith point of the string. Page 868 Strings Replaced by Super Strings Chapter 5 12dPL Library Calls The x value is given in Real x. The y value is given in Real y. The z value is given in Real z. A function return value of zero indicates the data was successfully set."
+    "description": "For a pipe Element elt, get the (x,y,z) data for max_pts points starting at point number start_pt. This routine allows the user to return the data from a pipe string in user specified chunks. This is necessary if the number of points in the string is greater than the size of the arrays available to contain the information. As in the previous function, the maximum number of points that can be returned is given by max_pts (usually the size of the arrays). However, for this function, the point data returned starts at point number start_pt rather than point one. The (x,y,z) values at each string point are returned in the Real arrays x[], y[] and z[]. The actual number of points returned is given by Integer num_pts num_pts <= max_pts If the Element elt is not of type pipe, then num_pts is set to zero and the function return value is set to a non-zero value. A function return value of zero indicates the data was successfully returned. Note A start_pt of one gives the same result as for the previous function."
+  },
+  {
+    "name": "Set_pipe_data",
+    "id": 81,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "element",
+        "type": "Element"
+      },
+      {
+        "name": "x",
+        "type": "Real"
+      },
+      {
+        "name": "y",
+        "type": "Real"
+      },
+      {
+        "name": "z",
+        "type": "Real"
+      },
+      {
+        "name": "num_pts",
+        "type": "Integer"
+      },
+      {
+        "name": "offset",
+        "type": "Integer"
+      }
+    ],
+    "description": "For the pipe Element elt, set the (x,y,z) data for num_pts points, starting at point number start_pt. This function allows the user to modify a large number of points of the string in one call starting at point number start_pt rather than point one. The maximum number of points that can be set is given by the difference between the number of points in the string and the value of start_pt. The (x,y,z) values for the string points are given in the Real arrays x[], y[] and z[]. The number of the first string point to be modified is start_pt. The total number of points to be set is given by Integer num_pts If the Element elt is not of type pipe, then nothing is modified and the function return value is set to a non-zero value. A function return value of zero indicates the data was successfully set. Notes (a) A start_pt of one gives the same result as the previous function. (b) This function can not create new pipe Elements but only modify existing pipe Elements."
+  },
+  {
+    "name": "Get_pipe_data",
+    "id": 82,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "element",
+        "type": "Element"
+      },
+      {
+        "name": "i",
+        "type": "Integer"
+      },
+      {
+        "name": "x",
+        "type": "Real"
+      },
+      {
+        "name": "y",
+        "type": "Real"
+      },
+      {
+        "name": "z",
+        "type": "Real"
+      }
+    ],
+    "description": "Get the (x,y,z) data for the ith point of the string. The x value is returned in Real x. The y value is returned in Real y. The z value is returned in Real z. A function return value of zero indicates the data was successfully returned."
+  },
+  {
+    "name": "Set_pipe_data",
+    "id": 83,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "element",
+        "type": "Element"
+      },
+      {
+        "name": "i",
+        "type": "Integer"
+      },
+      {
+        "name": "x",
+        "type": "Real"
+      },
+      {
+        "name": "y",
+        "type": "Real"
+      },
+      {
+        "name": "z",
+        "type": "Real"
+      }
+    ],
+    "description": "Set the (x,y,z) data for the ith point of the string. The x value is given in Real x. The y value is given in Real y. The z value is given in Real z. A function return value of zero indicates the data was successfully set."
   },
   {
     "name": "Get_pipe_diameter",
@@ -43596,7 +43820,7 @@
         "type": "Text"
       }
     ],
-    "description": "ID = 3547 Get_project_setting_real(Text name) Name Real Get_project_setting_real(Text name) Description"
+    "description": "12dPL function Get_project_setting_integer"
   },
   {
     "name": "Get_project_setting_text",
@@ -43608,7 +43832,7 @@
         "type": "Text"
       }
     ],
-    "description": "ID = 3549 Project Setting Page 915 12d Model Macro Manual Get_project_setting_colour(Text name) Name Integer Get_project_setting_colour(Text name) Description"
+    "description": "12dPL function Get_project_setting_text"
   },
   {
     "name": "Set_project_setting_integer",
@@ -43640,7 +43864,7 @@
         "type": "Real"
       }
     ],
-    "description": "ID = 3553 Set_project_setting_text(Text name,Text value) Name Integer Set_project_setting_text(Text name,Text value) Description"
+    "description": "12dPL function Set_project_setting_real"
   },
   {
     "name": "Set_project_setting_colour",
@@ -45015,7 +45239,19 @@
         "type": "Widget"
       }
     ],
-    "description": "When a Widget is created, it is given a unique identifying number (id) in the project. This function get the id of the Widget widget and returns id as the function return value. That is, the Integer function return value is the Widget id. D = 879 Set_focus(Widget widget) Name Integer Set_focus(Widget widget) Description Set the focus to the typed input area for an Input Widget widget, or on the button for a Button Widget widget. After this call all typed input will go to this widget. A function return value of zero indicates the focus was successfully set."
+    "description": "When a Widget is created, it is given a unique identifying number (id) in the project. This function get the id of the Widget widget and returns id as the function return value. That is, the Integer function return value is the Widget id."
+  },
+  {
+    "name": "Set_focus",
+    "id": 1097,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "widget",
+        "type": "Widget"
+      }
+    ],
+    "description": "Set the focus to the typed input area for an Input Widget widget, or on the button for a Button Widget widget. After this call all typed input will go to this widget. A function return value of zero indicates the focus was successfully set."
   },
   {
     "name": "Set_tooltip",
@@ -51854,7 +52090,39 @@
         "type": "Text"
       }
     ],
-    "description": "Panels and Widgets Page 1163 12d Model Macro Manual Set the snap mode mode and snap control control for the Select_Button select. When snap mode is: Name_Snap 6 Tin_Snap 7 Model_Snap 8 the snap_text must be string name; tin name, model name accordingly, otherwise, leave the snap_text blank “”. A function return value of zero indicates the type was successfully set. Get_select_coordinate(Select_Button select,Real &x,Real &y,Real &z,Real &ch,Real &ht) Name Integer Get_select_coordinate(Select_Button select,Real &x,Real &y,Real &z,Real &ch,Real &ht) Description Get the coordinate of the selected snap point. The return value of x, y, z, ch and ht must be type of Real. A function return value of zero indicates the coordinate was successfully returned."
+    "description": "Set the snap mode mode and snap control control for the Select_Button select. When snap mode is: Name_Snap 6 Tin_Snap 7 Model_Snap 8 the snap_text must be string name; tin name, model name accordingly, otherwise, leave the snap_text blank “”. A function return value of zero indicates the type was successfully set."
+  },
+  {
+    "name": "Get_select_coordinate",
+    "id": 1047,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "select",
+        "type": "Select_Button"
+      },
+      {
+        "name": "x",
+        "type": "Real"
+      },
+      {
+        "name": "y",
+        "type": "Real"
+      },
+      {
+        "name": "z",
+        "type": "Real"
+      },
+      {
+        "name": "ch",
+        "type": "Real"
+      },
+      {
+        "name": "ht",
+        "type": "Real"
+      }
+    ],
+    "description": "Get the coordinate of the selected snap point. The return value of x, y, z, ch and ht must be type of Real. A function return value of zero indicates the coordinate was successfully returned."
   },
   {
     "name": "Create_help_button",
@@ -52882,7 +53150,31 @@
         "type": "Dynamic_Element"
       }
     ],
-    "description": "Drape all the Elements in the Model model onto the Tin tin. The draped Elements are returned in the Dynamic_Element draped_elts. A function return value of zero indicates the drape was successful. Drape(Tin tin,Dynamic_Element de, Dynamic_Element &draped_elts) Name Integer Drape(Tin tin,Dynamic_Element de, Dynamic_Element &draped_elts) Description Drape all the Elements in the Dynamic_Element de onto the Tin tin. The draped Elements are returned in the Dynamic_Element draped_elts. A function return value of zero indicates the drape was successful. Drape(Tin tin,Dynamic_Element de, Dynamic_Element &draped_elts, Integer create_supers) Name Integer Drape(Tin tin,Dynamic_Element de, Dynamic_Element &draped_elts, Integer create_supers) Description Drape all the Elements in the Dynamic_Element de onto the Tin tin. The draped Elements are returned in the Dynamic_Element draped_elts. The resulting elements in draped_elts will be super string only if create_supers is non zero. A function return value of zero indicates the drape was successful."
+    "description": "Drape all the Elements in the Model model onto the Tin tin. The draped Elements are returned in the Dynamic_Element draped_elts. A function return value of zero indicates the drape was successful."
+  },
+  {
+    "name": "Drape",
+    "id": 3790,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "tin",
+        "type": "Tin"
+      },
+      {
+        "name": "model",
+        "type": "Dynamic_Element"
+      },
+      {
+        "name": "draped_strings",
+        "type": "Dynamic_Element"
+      },
+      {
+        "name": "create_supers",
+        "type": "Integer"
+      }
+    ],
+    "description": "Drape all the Elements in the Dynamic_Element de onto the Tin tin. The draped Elements are returned in the Dynamic_Element draped_elts. The resulting elements in draped_elts will be super string only if create_supers is non zero. A function return value of zero indicates the drape was successful."
   },
   {
     "name": "Face_drape",
@@ -53766,7 +54058,31 @@
         "type": "Real"
       }
     ],
-    "description": "ID = 1440 Split_string(Element string,Real chainage,Element &string1,Element &string2) Name Integer Split_string(Element string,Real chainage,Element &string1,Element &string2) Description Split a string about a chainage for ELement string This will result in 2 new strings being created. The part that exists before Real chainage is returned in Element string1. The part that exists after Real chainage is returned in Element string2. General Page 1213 12d Model Macro Manual A function return value of zero indicates the split was successful."
+    "description": "12dPL function Polygons_clip"
+  },
+  {
+    "name": "Split_string",
+    "id": 543,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "string",
+        "type": "Element"
+      },
+      {
+        "name": "chainage",
+        "type": "Real"
+      },
+      {
+        "name": "string1",
+        "type": "Element"
+      },
+      {
+        "name": "string2",
+        "type": "Element"
+      }
+    ],
+    "description": "Split a string about a chainage for ELement string This will result in 2 new strings being created. The part that exists before Real chainage is returned in Element string1. The part that exists after Real chainage is returned in Element string2. A function return value of zero indicates the split was successful."
   },
   {
     "name": "Join_strings",
