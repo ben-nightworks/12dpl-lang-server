@@ -408,6 +408,17 @@ void main() {
 	for (Integer i = 0; i < 3; i++) { // ERROR: Variable is defined in previous loop
 		Integer loop_body = i;      
 	}
+
+	for (i = 0; i < 3; i++) { // OK: Loop variable 'i' is not re-declared, just used (assuming 'i' is declared in an outer scope)
+		Integer loop_body = i;      
+	}
+
+	for (Integer j = 0; j < 3; j++) { // OK: New loop variable 'j' in new for-loop scope
+		Integer loop_body = j;      
+	}
+	for (j = 0; j < 3; j++) { // OK: New loop variable 'j' in new for-loop scope
+		Integer loop_body = j;      
+	}
 }
 
 
