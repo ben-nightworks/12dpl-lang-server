@@ -426,6 +426,27 @@ Release of [v1.3.0] to the VS Code Marketplace.
 
 ---
 
+## [v1.5.7] - (29/05/2026)
+
+### Bug Fixes
+- **For-Loop Header Variable Re-declaration** (#158): Variables declared in a `for` loop header (e.g. `for(Integer i = 0; ...)`) were incorrectly reported as re-declarations. Loop-header declarations are now scoped the same way as ordinary block-scoped variables.
+- **Preprocessor Define Substitution** (#159): Follow-up fixes to the header `#define` collection and substitution pass introduced in v1.5.6, resolving remaining false positives from macro-defined values.
+
+---
+
+## [v1.5.8] - (02/06/2026)
+
+### Bug Fixes
+- **Macro Comment Stripping** (#161): Comments inside a `#define` macro body are now stripped before the macro is substituted, so inline or trailing comments in a definition no longer corrupt the substituted value.
+
+---
+
+## [v1.5.9] - (02/06/2026)
+
+### Bug Fixes
+- **For Loop Variable Not Defined** : For loop variable re-used in loop header declarations are now no longer validated as errors
+
+---
 # Template
 
 ## [vX.X.X] - (Date)

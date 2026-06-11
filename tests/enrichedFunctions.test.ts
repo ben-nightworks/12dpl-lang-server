@@ -271,6 +271,61 @@ describe("functions.enriched.json validation against functions.compiler.json", (
 		expect(duplicates).toEqual([]);
 	});
 
+	test("no enriched description embeds another function's manual entry (issue #125)", () => {
+		// The manual extraction used the "ID = <number>" footer as the function-entry
+		// boundary. When that footer is malformed (e.g. "D = 879") or missing, the next
+		// function's manual block is swallowed into the previous function's description,
+		// e.g. Set_focus ended up buried inside Get_id. Detect any such embedded entry by
+		// the manual heading structure, which restates the signature around
+		// Name/Description:   Fn(<params>) Name <ReturnType> Fn(<params>) Description
+		const compilerNameSet = new Set(compilerFunctions.map((f) => f.name));
+		const headingBlock =
+			/([A-Z][A-Za-z0-9_]*)\s*\(([^)]*)\)\s+Name\s+[A-Za-z_][A-Za-z0-9_]*\s+\1\s*\([^)]*\)\s+Description\b/g;
+
+		const typeSig = (params: FunctionParam[]): string =>
+			params.map((p) => normalizeType(p.type).toLowerCase()).join(",");
+
+		// Parameter types as written in a manual heading, e.g.
+		// "Element elt,Real x[],Integer &num_pts" -> "element,real,integer".
+		const headingTypeSig = (rawParams: string): string => {
+			const trimmed = rawParams.trim();
+			if (trimmed === "") return "";
+			return trimmed
+				.split(",")
+				.map((p) => p.trim().split(/\s+/)[0].replace(/[^A-Za-z0-9_].*$/, "").toLowerCase())
+				.filter((t) => t.length > 0)
+				.join(",");
+		};
+
+		const merged: string[] = [];
+		for (const fn of enrichedFunctions) {
+			// A heading for the entry's own overload is a harmless self-restatement;
+			// only a heading for a *different* function/overload signals a swallowed entry.
+			const hostKey = `${fn.name.toLowerCase()}|${typeSig(fn.parameters)}`;
+			headingBlock.lastIndex = 0;
+			let m: RegExpExecArray | null;
+			while ((m = headingBlock.exec(fn.description)) !== null) {
+				const embeddedName = m[1];
+				if (!compilerNameSet.has(embeddedName)) continue;
+				const embeddedKey = `${embeddedName.toLowerCase()}|${headingTypeSig(m[2])}`;
+				if (embeddedKey !== hostKey) {
+					merged.push(
+						`${fn.name}(${typeSig(fn.parameters)}) embeds ${embeddedName}(${headingTypeSig(m[2])})`
+					);
+				}
+			}
+		}
+
+		if (merged.length > 0) {
+			console.warn(
+				`\n⚠ ${merged.length} enriched entries embed another function's manual entry ` +
+					`(swallowed via a malformed/missing "ID = ..." footer):\n` +
+					merged.map((d) => `  - ${d}`).join("\n")
+			);
+		}
+		expect(merged).toEqual([]);
+	});
+
 	test("summary statistics", () => {
 		const matchResults = {
 			"name+params": 0,

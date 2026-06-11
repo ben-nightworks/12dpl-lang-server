@@ -9,7 +9,7 @@
 	],
 	"license": "MIT",
 	"displayName": "12dPL Language",
-	"version": "1.5.8",
+	"version": "1.5.9",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ben-nightworks/12dpl-lang-server"

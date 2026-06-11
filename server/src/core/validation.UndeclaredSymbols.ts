@@ -182,14 +182,8 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 			return undefined;
 		},
 		visitIterationStatement(ctx: any) {
-			try {
-				if (ctx?.For?.()) {
-					pushScope();
-					visitor.visitChildren(ctx);
-					popScope();
-					return undefined;
-				}
-			} catch { /* ignore */ }
+			// For-loop header shares the enclosing scope; the body compound statement
+			// creates its own sub-scope via visitCompoundStatement.
 			return visitor.visitChildren(ctx);
 		},
 		visitDeclaration(ctx: any) {
