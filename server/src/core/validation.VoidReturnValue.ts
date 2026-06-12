@@ -17,6 +17,24 @@ import {
 } from './validation.Common';
 
 /**
+ * Counts the number of parameters in a function definition's declarator.
+ */
+function countFunctionDefParams(declarator: any): number {
+	try {
+		const directDecl = declarator?.directDeclarator?.();
+		if (!directDecl) return 0;
+		const paramTypeList = directDecl?.parameterTypeList?.();
+		if (!paramTypeList) return 0;
+		const paramList = paramTypeList?.parameterList?.();
+		if (!paramList) return 0;
+		const paramDecls = paramList?.parameterDeclaration_list?.();
+		return paramDecls?.length ?? 0;
+	} catch {
+		return 0;
+	}
+}
+
+/**
  * Checks whether a function call's return value is being consumed
  * (i.e. used in an expression context rather than as a standalone statement).
  *
@@ -69,22 +87,31 @@ function isReturnValueConsumed(postfixExprCtx: any): boolean {
 }
 
 /**
+ * Overload return type entry — one per overload of a function.
+ */
+export interface OverloadReturnType {
+	paramCount: number;
+	returnType: string;
+}
+
+/**
  * Validates that void-returning functions are not used in expression contexts
  * where a value is expected.
  *
  * @param tree - ANTLR parse tree
- * @param functionReturnTypes - Map of function name → return type.
- *   A function is considered void if its return type is "void".
- *   For overloaded functions, only included if ALL overloads return void.
+ * @param functionReturnTypes - Map of function name → overload return types.
+ *   Each overload has a paramCount and returnType. At a call site, only
+ *   overloads matching the argument count are considered. A call is flagged
+ *   only if ALL matching overloads return void.
  */
 export function validateVoidFunctionReturnValues(
 	tree: any,
-	functionReturnTypes: Map<string, string>
+	functionReturnTypes: Map<string, OverloadReturnType[]>
 ): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];
 
 	// Phase 1: Collect local function definitions and their return types
-	const localReturnTypes = new Map<string, string>();
+	const localReturnTypes = new Map<string, OverloadReturnType[]>();
 
 	const getReturnType = (ctx: any): string | undefined => {
 		try {
@@ -107,7 +134,10 @@ export function validateVoidFunctionReturnValues(
 			const decl = ctx?.declarator?.();
 			const info = extractIdentifierFromDeclarator(decl);
 			if (info && returnType) {
-				localReturnTypes.set(info.name, returnType);
+				const paramCount = countFunctionDefParams(decl);
+				const existing = localReturnTypes.get(info.name) ?? [];
+				existing.push({ paramCount, returnType });
+				localReturnTypes.set(info.name, existing);
 			}
 			return collector.visitChildren(ctx);
 		}
@@ -116,8 +146,30 @@ export function validateVoidFunctionReturnValues(
 	try { tree.accept(collector); } catch { /* ignore */ }
 
 	// Phase 2: Find void function calls used as values
-	const resolveReturnType = (name: string): string | undefined => {
-		return localReturnTypes.get(name) ?? functionReturnTypes.get(name);
+	/**
+	 * Resolves the return type for a function call, taking argument count into
+	 * account. Returns 'void' only if ALL matching overloads return void.
+	 * Returns undefined if the function is unknown.
+	 */
+	const resolveReturnType = (name: string, argCount: number): string | undefined => {
+		const localOverloads = localReturnTypes.get(name) ?? [];
+		const protoOverloads = functionReturnTypes.get(name) ?? [];
+		const overloads = [...localOverloads, ...protoOverloads];
+		if (overloads.length === 0) return undefined;
+
+		// Find overloads matching the argument count
+		const matching = overloads.filter(o => o.paramCount === argCount);
+
+		// If an overload matches by count, use those
+		if (matching.length > 0) {
+			const allVoid = matching.every(o => o.returnType === 'void');
+			return allVoid ? 'void' : matching.find(o => o.returnType !== 'void')!.returnType;
+		}
+
+		// No exact count match — fall back to all overloads
+		// (argument count validation is handled by a separate validator)
+		const allVoid = overloads.every(o => o.returnType === 'void');
+		return allVoid ? 'void' : overloads.find(o => o.returnType !== 'void')!.returnType;
 	};
 
 	const checker: any = {
@@ -143,7 +195,13 @@ export function validateVoidFunctionReturnValues(
 				const funcName = safeTokenText(idNode);
 				if (!funcName) return checker.visitChildren(ctx);
 
-				const returnType = resolveReturnType(funcName);
+				// Count arguments at the call site
+				const argLists = ctx?.argumentExpressionList_list?.() ?? [];
+				const argList = argLists.length > 0 ? argLists[0] : null;
+				const argExprs = argList?.assignmentExpression_list?.() ?? [];
+				const argCount = argExprs.length;
+
+				const returnType = resolveReturnType(funcName, argCount);
 				if (!returnType || returnType !== 'void') {
 					return checker.visitChildren(ctx);
 				}

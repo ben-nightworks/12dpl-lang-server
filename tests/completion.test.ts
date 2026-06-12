@@ -5,6 +5,7 @@ import { parse } from '../server/src/core/parsePipeline';
 import { collectSymbolTable, deriveViews } from '../server/src/core/symbolCollector';
 import { PrototypeService } from '../server/src/services/prototypeService';
 import type { SymbolDeclaration, DerivedSymbolViews } from '../server/src/core/types';
+import { getDirectiveReplacementRange } from '../server/src/providers/completionProvider';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -375,5 +376,79 @@ void foo() {
 
 		expect(names).toContain('MyVar');
 		expect(names).toContain('myVar2');
+	});
+});
+
+// ─── Issue #88: #include autocomplete double-hash bug ───────────────────────
+// When the user types `#` then triggers completion, the `#include` item must
+// replace the entire `#word` token -- not just the word -- otherwise VS Code
+// inserts `#include` after the existing `#`, producing `##include`.
+
+describe('getDirectiveReplacementRange', () => {
+	test('includes preceding # when user typed #inc', () => {
+		// Line: "#inc", cursor at end (character 4)
+		const result = getDirectiveReplacementRange('#inc', 4);
+		expect(result).toEqual({ start: 0, end: 4 });
+	});
+
+	test('includes preceding # when user typed just #', () => {
+		// Line: "#", cursor after the hash (character 1)
+		const result = getDirectiveReplacementRange('#', 1);
+		expect(result).toEqual({ start: 0, end: 1 });
+	});
+
+	test('includes preceding # with full word #include', () => {
+		// Line: "#include", cursor at end (character 8)
+		const result = getDirectiveReplacementRange('#include', 8);
+		expect(result).toEqual({ start: 0, end: 8 });
+	});
+
+	test('no preceding # -- plain word "include"', () => {
+		// Line: "include", cursor at end (character 7)
+		const result = getDirectiveReplacementRange('include', 7);
+		expect(result).toEqual({ start: 0, end: 7 });
+	});
+
+	test('handles leading whitespace before #', () => {
+		// Line: "  #inc", cursor at character 6
+		const result = getDirectiveReplacementRange('  #inc', 6);
+		expect(result).toEqual({ start: 2, end: 6 });
+	});
+
+	test('handles cursor mid-word', () => {
+		// Line: "#include", cursor at character 4 (after "#inc")
+		const result = getDirectiveReplacementRange('#include', 4);
+		expect(result).toEqual({ start: 0, end: 4 });
+	});
+
+	test('handles # after other code on the line', () => {
+		// Line: "x = #inc", cursor at character 8 (end of "#inc")
+		const result = getDirectiveReplacementRange('x = #inc', 8);
+		expect(result).toEqual({ start: 4, end: 8 });
+	});
+
+	test('cursor at position 0 (empty / no input)', () => {
+		const result = getDirectiveReplacementRange('', 0);
+		expect(result).toEqual({ start: 0, end: 0 });
+	});
+
+	test('# with whitespace between hash and word does not extend', () => {
+		// Line: "# inc", cursor at 5 -- whitespace between # and word, so the
+		// word "inc" is NOT immediately preceded by '#' (there's a space).
+		const result = getDirectiveReplacementRange('# inc', 5);
+		expect(result).toEqual({ start: 2, end: 5 });
+	});
+
+	test('start character is # when the range begins at a hash', () => {
+		// Verify the caller can detect a hash at dirRange.start
+		const result = getDirectiveReplacementRange('#inc', 4);
+		const lineText = '#inc';
+		expect(lineText[result.start]).toBe('#');
+	});
+
+	test('start character is NOT # when there is no preceding hash', () => {
+		const result = getDirectiveReplacementRange('inc', 3);
+		const lineText = 'inc';
+		expect(lineText[result.start]).not.toBe('#');
 	});
 });

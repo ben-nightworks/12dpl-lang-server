@@ -38,7 +38,7 @@ Changelog notes in [v1.1.0]
 	- Migrated build scripts to use `bun` for faster performance.
 
 ### Changed
-- Updated `Test.4dm` to include a comprehensive macro example demonstrating all supported features.
+- Updated `realworld_smoke_test.4dm` (formerly `Test.4dm`) to include a comprehensive macro example demonstrating all supported features.
 
 ## Release Overview
 
@@ -337,6 +337,116 @@ Please provide feedback through the official 12d Forums or on github if you noti
 
 ---
 
+## [v1.3.1] - (04/04/2026)
+
+Release of [v1.3.0] to the VS Code Marketplace.
+
+### Added
+- **Array Size Validation** (#73): Unsized array declarations in function bodies and at script level are now flagged as errors.
+- **Undeclared Function Call Detection** (#75, #76): Calls to functions that are not declared locally, in included headers, or in the built-in prototype list are now flagged as errors.
+- **Document Outline** (#78): The VS Code outline panel and breadcrumb bar now show functions and global variables from the current file.
+- **Bundled Publishing** (#85): The extension is now built with ESBuild for a smaller and faster install.
+
+### Fixed
+- **Prototype Definitions** (#79): Corrected enriched function signatures to match the 12d Model compiler and documentation.
+- **Include Path Search** (#80): The base compilation target directory is now automatically added to the include path search when resolving header files.
+- **Conditional Code False Positives** (#84): Undeclared-identifier and redeclaration diagnostics are now suppressed for identifiers that appear inside `#if`/`#ifdef` conditional blocks.
+- **Dependency Upgrades** (#77): All npm dependencies updated to latest versions.
+
+---
+
+## [v1.5.0] - (10/05/2026)
+
+### Added
+- **Signature Help** (#122): Parameter info tooltip appears as you type a function call, showing the active parameter highlighted and all overload signatures. Completion no longer inserts a full function snippet -- it inserts just the name and lets signature help take over.
+- **Rename All Symbols** (#121): Rename a symbol (variable, function, parameter) across the current file using F2 or right-click > Rename Symbol. Rename is scope-aware and only renames references within the correct scope.
+- **Control Flow Validation** (#112): Detects unreachable statements after `return`/`break`/`continue`, missing `break` before the next `case` in a `switch`, and `switch` blocks without a `default` label.
+- **Assignment Type Validation** (#113, #100): Reports an error when a value of an incompatible type is assigned to a variable (e.g. assigning a `Text` to an `Integer`). Reports a warning for lossy promotions (e.g. `Real` to `Integer`).
+- **Logical Condition Validation** (#114, #101, #102): Warns when a `while` loop condition is a non-boolean expression (e.g. an assignment), and reports other common logical condition mistakes.
+- **6 New Built-in Types** (#115, #103): Added `Macro_Handle`, `Panel_Column`, `Panel_Row`, `Tree_View`, `Tree_View_Column`, and `List_Box_Ex` to the grammar, type keywords, and type documentation.
+- **Formatter Enhancements** (#120): New formatting options including `bracketStyle` (preserve / same-line K&R / new-line Allman), `indentStyle` (spaces or tabs), `preserveBlankLines`, and `maxLineLength` automatic line-break wrapping.
+- **Docs Website** (#116): Auto-generated documentation website deployed via Vercel, built from the built-in function prototype and type documentation JSON.
+
+### Fixed
+- **Macro with Nested Parentheses** (#123): Function-like macros whose arguments contain nested function calls (e.g. `MACRO(someFunc())`) no longer produce a false-positive missing-semicolon syntax error. The preprocessor stripper now walks balanced parentheses instead of using a flat regex.
+- **Tin Type Promotion** (#118): `Tin` is now correctly treated as promotable to `Element` in type compatibility checks, preventing false-positive type mismatch errors.
+- **Standalone Macro False Positives** (#108): Bare macro invocations used as statements (with no trailing semicolon) are now stripped before parsing, avoiding spurious syntax errors.
+- **Goto Definition Prefers Definition** (#110): Go-to-definition now resolves to the function body definition rather than a forward declaration when both are present.
+- **#include Autocomplete Extra Hash** (#111): Selecting an `#include` completion no longer inserts a duplicate `#` when the `#` is already typed.
+- **Multiline Parameter Highlighting** (#109): Function parameters that span multiple lines in the TextMate grammar are now highlighted correctly.
+- **Prompt() Void Return False Positive** (#94): `Prompt()` and similar functions that return a value used only for side effects no longer trigger a spurious void-return diagnostic.
+
+### Changed
+- Completion provider no longer inserts full function snippets with parameter placeholders; signature help now provides that context inline as you type.
+---
+
+## [v1.5.2] - (12/05/2026)
+
+### New Features
+- **Preprocessor Definition Highlighting** (#119): Preprocessor definitions are now highlighted using semantic highlighting. Special thanks to @KleberNZ for his contribution.
+
+---
+
+## [v1.5.3] - (18/05/2026)
+
+### Bug Fixes
+- **Nested Function variable definition checks** (#138): Functions nested in brackets are now all checked.
+- **Prototypes vs User Defined Functions** (#137): When a user defines an overload of a 12d prototype function the return types are now correctly checked.
+- **Block Comment Fix** (#136): When a block comment was used before a piece of valid code it was cleaned by the parser, this has now been corrected.
+
+---
+
+## [v1.5.4] - (24/05/2026)
+
+### New Features
+- **Preprocessor Macro Substitution** (#144): Preprocessor macros are now expanded during validation, allowing the validator to correctly analyse code that uses macro-defined values. The original symbols are preserved alongside the expanded forms so completion and hover continue to work on macro names.
+
+### Bug Fixes
+- **Block Comment Bracket Colours** (#143): Brackets inside block comments are no longer coloured as code brackets by the syntax highlighter.
+- **Forward Declaration False Positive** (#142): Functions forward-declared in a header file no longer incorrectly trigger a redeclaration error when the same function is also defined in the same or an included file.
+
+---
+
+## [v1.5.5] - (25/05/2026)
+
+### Bug Fixes
+- **Fix for block comment** syntax highlight
+
+---
+
+## [v1.5.6] - (28/05/2026)
+
+### New Features
+- **Temporary Value Warnings for Pass-by-Reference** (#151): A warning is now emitted when a literal or temporary value is passed to a `&` (pass-by-reference) parameter, since the callee cannot meaningfully write back to a temporary.
+- **Block-Scope Variable Leak Detection** (#150): Variables declared inside a block (e.g. `if`, `for`) are no longer considered accessible outside that block. Using such a variable after its scope ends is now reported as an undeclared-symbol error.
+- **Preprocessor Defines from Headers** (#155): The validation pipeline now performs a double parse so that `#define` statements from included header files are collected and substituted before the main validation pass, resolving false positives caused by macro-defined values from headers.
+
+### Bug Fixes
+- **Switch Statement Formatting**: Switch cases with compound bodies were indented incorrectly by the formatter; this has been corrected.
+
+---
+
+## [v1.5.7] - (29/05/2026)
+
+### Bug Fixes
+- **For-Loop Header Variable Re-declaration** (#158): Variables declared in a `for` loop header (e.g. `for(Integer i = 0; ...)`) were incorrectly reported as re-declarations. Loop-header declarations are now scoped the same way as ordinary block-scoped variables.
+- **Preprocessor Define Substitution** (#159): Follow-up fixes to the header `#define` collection and substitution pass introduced in v1.5.6, resolving remaining false positives from macro-defined values.
+
+---
+
+## [v1.5.8] - (02/06/2026)
+
+### Bug Fixes
+- **Macro Comment Stripping** (#161): Comments inside a `#define` macro body are now stripped before the macro is substituted, so inline or trailing comments in a definition no longer corrupt the substituted value.
+
+---
+
+## [v1.5.9] - (02/06/2026)
+
+### Bug Fixes
+- **For Loop Variable Not Defined** : For loop variable re-used in loop header declarations are now no longer validated as errors
+
+---
 # Template
 
 ## [vX.X.X] - (Date)

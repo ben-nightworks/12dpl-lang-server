@@ -122,6 +122,37 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 	let awaitingFunctionBody = false;
 
 	const isLineStart = (i: number) => i === 0 || text[i - 1] === '\n' || text[i - 1] === '\r';
+
+	/**
+	 * True if only whitespace and closed block comments precede position i on its line.
+	 * This allows wrapping `{` that appears after a comment on the same line, e.g.:
+	 *   `/* Global variables *‌/ {`
+	 */
+	const isEffectiveLineStart = (i: number): boolean => {
+		if (isLineStart(i)) return true;
+		let j = i - 1;
+		while (j >= 0) {
+			const c = text[j];
+			if (c === '\n' || c === '\r') return true;
+			if (c === ' ' || c === '\t') { j--; continue; }
+			// Check for the end of a block comment: `*/`
+			if (c === '/' && j > 0 && text[j - 1] === '*') {
+				j -= 2; // move before the `*/`
+				// Walk backward to find the matching `/*`
+				while (j >= 1) {
+					if (text[j - 1] === '/' && text[j] === '*') {
+						j -= 2; // move before the `/*`
+						break;
+					}
+					j--;
+				}
+				continue;
+			}
+			return false;
+		}
+		return true; // reached start of file
+	};
+
 	const isIdentChar = (ch: string) => /[A-Za-z0-9_]/.test(ch);
 	const skipWhitespace = (i: number) => {
 		while (i < text.length && (text[i] === ' ' || text[i] === '\t')) i++;
@@ -209,7 +240,7 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 				braceDepth === 0 &&
 				parenDepth === 0 &&
 				bracketDepth === 0 &&
-				isLineStart(i) &&
+				isEffectiveLineStart(i) &&
 				!tryMatchFunctionSignatureAt(i) &&
 				lineHasRealCode(i) &&
 				!inScriptWrapper
@@ -298,6 +329,191 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 	return out;
 }
 
+/**
+ * Expands object-like (no-parameter) `#define` macros by substituting their names
+ * with their values throughout the stripped text.
+ *
+ * This allows patterns such as:
+ * ```
+ * #define Boolean Integer
+ * Boolean active = TRUE;
+ * ```
+ * to parse correctly as `Integer active = TRUE;`.
+ *
+ * Only object-like macros are expanded -- those without a parameter list immediately
+ * after the name. Function-like macros (e.g. `#define MACRO(x) ...`) and macros with
+ * backslash-continuation values are skipped.
+ *
+ * This function is applied to the text fed to ANTLR for parsing. The original
+ * (unexpanded) token stream is preserved separately for token-based features such
+ * as rename and deprecated-call detection. See `parse()` for the dual-text strategy.
+ *
+ * Line numbers are preserved because substitutions never add or remove newlines.
+ *
+ * @param strippedText - Text after standalone macro usages have been stripped.
+ * @param rawText - The original document text, used to extract define definitions.
+ */
+export function expandObjectLikeMacros(
+	strippedText: string,
+	rawText: string,
+	extraDefines?: readonly { name: string; value: string }[]
+): string {
+	// Collect object-like defines: #define NAME value
+	// A define is function-like (and must be skipped) when '(' appears immediately after NAME.
+	const defines: Array<{ name: string; value: string }> = [];
+	const lines = rawText.split(/\r?\n/);
+
+	for (const line of lines) {
+		// Match: #define NAME<no '(' here> <whitespace> value
+		const m = line.match(/^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)(?!\()[ \t]+(\S.*)/);
+		if (!m) continue;
+		const name = m[1];
+		const value = stripLineComment(m[2].trim());
+		// Skip multi-line macro values (backslash continuation)
+		if (value.endsWith('\\')) continue;
+		defines.push({ name, value });
+	}
+
+	// Prepend extra defines (e.g. from included header files), deduplicating by name.
+	// Local defines take precedence over extra defines.
+	if (extraDefines && extraDefines.length > 0) {
+		const localNames = new Set(defines.map(d => d.name));
+		for (const d of extraDefines) {
+			if (!localNames.has(d.name)) {
+				defines.unshift(d);
+			}
+		}
+	}
+
+	if (defines.length === 0) return strippedText;
+
+	// Apply whole-word substitutions in order of definition.
+	// Use a function replacement to avoid special `$` patterns in replacement strings.
+	let result = strippedText;
+	for (const { name, value } of defines) {
+		const re = new RegExp(`\\b${escapeRegExp(name)}\\b`, 'g');
+		result = result.replace(re, () => value);
+	}
+
+	return result;
+}
+
+function escapeRegExp(s: string): string {
+	return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Strips trailing line comments (// ...) and block comments (/* ... *\/)
+ * from a #define value string, respecting string literals so that // or /*
+ * inside a quoted string is preserved.
+ */
+export function stripLineComment(value: string): string {
+	let i = 0;
+	while (i < value.length) {
+		const ch = value[i];
+		if (ch === '"' || ch === "'") {
+			const quote = ch;
+			i++;
+			while (i < value.length) {
+				if (value[i] === '\\') {
+					i += 2;
+				} else if (value[i] === quote) {
+					i++;
+					break;
+				} else {
+					i++;
+				}
+			}
+		} else if (ch === '/' && value[i + 1] === '/') {
+			return value.slice(0, i).trimEnd();
+		} else if (ch === '/' && value[i + 1] === '*') {
+			const end = value.indexOf('*/', i + 2);
+			if (end === -1) return value.slice(0, i).trimEnd();
+			value = value.slice(0, i) + value.slice(end + 2);
+		} else {
+			i++;
+		}
+	}
+	return value;
+}
+
+/**
+ * Replaces standalone macro usage lines with empty lines to prevent ANTLR parse errors.
+ *
+ * When a `#define MACRO_NAME ...` is used as a statement on its own line (e.g. `MACRO_EXAMPLE`
+ * or `LOG("hello")`), the bare identifier is not valid 12dPL grammar without a trailing
+ * semicolon. Since macro expansion happens in the compiler, we replace those lines with
+ * empty lines to preserve line numbers while avoiding false-positive syntax errors.
+ *
+ * @param strippedText - Text after `stripConditionalDirectives` (define lines already empty).
+ * @param rawText - The original document text, used to extract define names.
+ */
+export function stripStandaloneMacroUsages(
+	strippedText: string,
+	rawText: string,
+	extraDefineNames?: readonly string[]
+): string {
+	// Collect all define names from the original (unstripped) text
+	const defineNames = new Set<string>();
+	const defineRe = /^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)/gm;
+	let m: RegExpExecArray | null;
+	while ((m = defineRe.exec(rawText)) !== null) {
+		defineNames.add(m[1]);
+	}
+	if (extraDefineNames) {
+		for (const name of extraDefineNames) defineNames.add(name);
+	}
+	if (defineNames.size === 0) return strippedText;
+
+	// Replace lines that are ONLY a macro name (with optional args) and no trailing semicolon.
+	// Walks balanced parentheses so nested calls like MACRO(foo()) are handled correctly.
+	const lines = strippedText.split('\n');
+	for (let i = 0; i < lines.length; i++) {
+		const trimmed = lines[i].trim();
+		if (!trimmed) continue;
+
+		const identMatch = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)/);
+		if (!identMatch || !defineNames.has(identMatch[1])) continue;
+
+		const rest = trimmed.slice(identMatch[1].length).trimStart();
+
+		// No arguments — bare macro identifier with nothing after it
+		if (rest === '') {
+			lines[i] = '';
+			continue;
+		}
+
+		// Must start with '(' to be a function-like macro invocation
+		if (!rest.startsWith('(')) continue;
+
+		// Walk balanced parentheses, respecting strings, to find the closing paren
+		let depth = 0;
+		let j = 0;
+		let inStr = false;
+		let strChar = '';
+		for (; j < rest.length; j++) {
+			const c = rest[j];
+			if (inStr) {
+				if (c === '\\') { j++; continue; }
+				if (c === strChar) inStr = false;
+				continue;
+			}
+			if (c === '"' || c === "'") { inStr = true; strChar = c; continue; }
+			if (c === '(') { depth++; continue; }
+			if (c === ')') {
+				depth--;
+				if (depth === 0) { j++; break; }
+			}
+		}
+
+		// Only strip if parens balanced and nothing (no semicolon) follows
+		if (depth === 0 && rest.slice(j).trim() === '') {
+			lines[i] = '';
+		}
+	}
+	return lines.join('\n');
+}
+
 class SyntaxErrorListener implements ErrorListener<any> {
 	public errors: SyntaxError[] = [];
 
@@ -324,9 +540,34 @@ class SyntaxErrorListener implements ErrorListener<any> {
  * Performs preprocessing (strip conditionals, wrap scripts) then ANTLR lexing/parsing.
  * The returned result is the single artifact all downstream consumers share.
  */
-export function parse(documentText: string): ParseResult {
+export function parse(
+	documentText: string,
+	extraDefines?: readonly { name: string; value: string }[]
+): ParseResult {
 	const { text: strippedText, conditionalLines } = stripConditionalDirectives(documentText);
-	const transformedText = wrapTopLevelScriptsPreservingLines(strippedText);
+
+	// -- Original path: lex the unexpanded text to produce the token stream --
+	// Preserves original token names (MAX_SIZE, TIMEOUT, ...) so that rename and
+	// deprecated-call detection can find them by name in the source.
+	// Strip standalone function-like macro calls so the lexer doesn't choke on them.
+	const macroStrippedText = stripStandaloneMacroUsages(
+		strippedText,
+		documentText,
+		extraDefines?.map(d => d.name)
+	);
+	const originalTransformed = wrapTopLevelScriptsPreservingLines(macroStrippedText);
+	const originalLexer = new proglang12dLexer(new CharStream(originalTransformed));
+	const originalTokens = new CommonTokenStream(originalLexer);
+	originalTokens.fill();
+
+	// -- Expanded path: expand all object-like macros before parsing --
+	// Expansion runs on the conditionally-stripped text BEFORE standalone-macro stripping.
+	// This ensures that object-like macro names used as arguments in multi-line calls
+	// (e.g. MESSAGE_LEVEL_GOOD as the last arg) are substituted with their values first,
+	// so stripStandaloneMacroUsages only needs to handle unexpanded function-like macros.
+	const expandedText = expandObjectLikeMacros(strippedText, documentText, extraDefines);
+	const expandedMacroStripped = stripStandaloneMacroUsages(expandedText, documentText, extraDefines?.map(d => d.name));
+	const transformedText = wrapTopLevelScriptsPreservingLines(expandedMacroStripped);
 
 	const chars = new CharStream(transformedText);
 	const lexer = new proglang12dLexer(chars);
@@ -343,7 +584,7 @@ export function parse(documentText: string): ParseResult {
 
 	return {
 		tree,
-		tokens,
+		tokens: originalTokens,
 		transformedText,
 		conditionalLines,
 		syntaxErrors: errorListener.errors,

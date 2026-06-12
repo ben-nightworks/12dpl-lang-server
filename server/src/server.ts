@@ -34,6 +34,10 @@ import { registerDefinitionProvider } from './providers/definitionProvider';
 import { registerHoverProvider } from './providers/hoverProvider';
 import { registerFormattingProvider } from './providers/formattingProvider';
 import { registerValidationProvider } from './providers/validationProvider';
+import { registerDocumentSymbolProvider } from './providers/documentSymbolProvider';
+import { registerRenameProvider } from './providers/renameProvider';
+import { registerSignatureHelpProvider } from './providers/signatureHelpProvider';
+import { registerSemanticHighlightProvider, semanticHighlightLegend } from './providers/semanticHighlightProvider';
 
 // Create a connection for the server, using Node's IPC as a transport.
 const connection = createConnection(ProposedFeatures.all);
@@ -107,11 +111,23 @@ connection.onInitialize((params: InitializeParams) => {
 		capabilities: {
 			textDocumentSync: TextDocumentSyncKind.Full,
 			completionProvider: {
-				resolveProvider: true
+				resolveProvider: true,
+				triggerCharacters: ['"', "'", '<']
+			},
+			signatureHelpProvider: {
+				triggerCharacters: ['(', ','],
+				retriggerCharacters: [',']
 			},
 			hoverProvider: true,
 			definitionProvider: true,
-			documentFormattingProvider: true
+			documentFormattingProvider: true,
+			documentSymbolProvider: true,
+			renameProvider: { prepareProvider: true },
+			semanticTokensProvider: {
+				legend: semanticHighlightLegend,
+				full: true,
+				range: false,
+			}
 		}
 	};
 	if (hasWorkspaceFolderCapability) {
@@ -174,8 +190,12 @@ documents.onDidChangeContent(change => {
 registerCompletionProvider({ connection, documents, documentService, includeService, prototypeService, symbolResolver });
 registerDefinitionProvider({ connection, documents, symbolResolver });
 registerHoverProvider({ connection, documents, symbolResolver, prototypeService });
+registerSignatureHelpProvider({ connection, documents, documentService, includeService, prototypeService });
 registerFormattingProvider({ connection, documents });
+registerRenameProvider({ connection, documents, documentService, symbolResolver });
 registerValidationProvider({ connection, documents, diagnosticService, prototypeService });
+registerDocumentSymbolProvider({ connection, documents, documentService });
+registerSemanticHighlightProvider({ connection, documents, documentService, includeService });
 
 // Make the text document manager listen on the connection
 documents.listen(connection);

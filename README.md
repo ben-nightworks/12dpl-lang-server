@@ -28,37 +28,42 @@ This repository’s documentation is split into the following Markdown files:
 - **AST Parsing** - Complete abstract syntax tree generation
 - **Function Documentation** - Hover over builtins, local symbols, include symbols, and `#define` macros
 - **Go to Definition** - Works for local symbols and across included files (including `#define` macros)
-- **Formatting** - Basic brace-based formatting (supports format-on-save)
-- **Preprocessor Support** - `#include`/`#define` suggestions, include-path completion, and macro completion
-- **Fuzzy Matching** - IntelliSense-like fuzzy matching for completion results
+- **Signature Help** - Parameter info tooltip appears as you type, with active parameter highlighted and all overloads shown
+- **Rename All Symbols** - Scope-aware rename across the current file (F2 or right-click > Rename Symbol)
+- **Formatting** - Brace-based formatting with configurable bracket style, indent style, and line-length wrapping (supports format-on-save)
+- **Preprocessor Support** - `#include`/`#define` suggestions, include-path completion, macro completion, and macro expansion during validation
 - **Advanced Grammar Support** - Arrays, Switch statements, Pass-by-reference, Macros
-- **Goto Definition** - Navigation to definitions 
+- **Document Outline** - Functions and global variables shown in the VS Code outline panel and breadcrumb bar
+- **Semantic Highlighting** - Macro definitions and uppercase constants are highlighted distinctly
+- **Control Flow Validation** - Detects unreachable code, missing `break` in `switch` cases, and `switch` without `default`
+- **Assignment Type Validation** - Reports type mismatches and lossy promotions in assignments
+- **Logical Condition Validation** - Warns on non-boolean loop/condition expressions
+- **Array Size Validation** - Flags unsized array declarations in function bodies
+- **Undeclared Symbol Detection** - Flags calls to functions not declared locally, in headers, or in built-in prototypes
 
 ### Coming Soon
-- Document Highlights: highlights all 'equal' symbols in a text document
-- Signature Help: provides signature help during function calls
+- Document Highlights: highlights all matching symbols in a text document
 - Find References: find all references to a symbol
-- List Document Symbols: lists all symbols in current document
 - List Workspace Symbols: lists all project-wide symbols
-- Rename: project-wide symbol renaming
 
 ---
 
-### What's New in v1.3.0
+### What's New in v1.5.8
 
-**Enhanced Validation & Type System** ✨
-- **Advanced Function Argument Validation** — Validates argument types against function signatures with type promotion support
-- **Return Type Validation** — Checks that return values match function return types and handles void functions correctly
-- **Type Inheritance** — Proper type hierarchy support (e.g., Panel inherits from Widget) with automatic type promotion
-- **Scope-Aware Validation** — Improved variable and function definition tracking to reduce false errors
-- **Function Overloading** — Full support for functions with the same name but different parameter signatures
-- **Case Sensitivity Fixes** — Proper handling of type and symbol name resolution
+**Pass-by-Reference Temporary Value Warnings** ✨
+- Passing a literal or temporary value to a `&` (pass-by-reference) parameter now produces a warning, since the callee cannot write back to a temporary
 
-**Architectural Improvements**
-- Refactored validator infrastructure for easier extension
-- Enhanced symbol collection and caching
-- Better include-file integration
+**Block-Scope Variable Leak Detection** ✨
+- Variables declared inside a block (`if`, `for`, etc.) are no longer accessible outside that block; using them after scope ends is reported as an error
 
+**Preprocessor Defines from Headers** ✨
+- `#define` macros from included header files are now collected and substituted before validation, eliminating false positives from macro-defined values in headers
+
+**Bug Fixes**
+- Macro `#define` bodies now have comments stripped before substitution, so inline or trailing comments no longer corrupt the substituted value (v1.5.8)
+- `for` loop header variables (e.g. `for(Integer i = 0; ...)`) are no longer incorrectly flagged as re-declarations (v1.5.7)
+- Further fixes to preprocessor `#define` collection and substitution from headers (v1.5.7)
+- Switch statement formatting: cases with compound bodies are now indented correctly
 
 
 
@@ -166,4 +171,11 @@ Contributions welcome! Please submit pull requests or issues.
 
 **Ben Olsen**
 
-**Kamal Jarada** 
+**Kamal Jarada**
+
+### Community Contributors
+
+Thanks to everyone helping to improve the extension by reporting bugs and suggesting features:
+
+- [Phil Temple-Watts](https://github.com/PhilTemple-Watts)
+- [Kleber](https://github.com/KleberNZ)

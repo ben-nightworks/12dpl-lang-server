@@ -20,12 +20,41 @@ import { fileUriToFsPath } from '../services/includeUtils.js';
 import { buildFunctionCallSnippet, fuzzyScore, getWordAtPosition } from '../core/utils.js';
 import { visibleSymbolsAt } from '../core/symbolCollector.js';
 import type { SymbolDeclaration } from '../core/types';
+import { getCallContext } from './signatureHelpProvider.js';
 
 type IncludePathContext = {
 	startCharacter: number;
 	endCharacter: number;
 	prefix: string;
 };
+
+/**
+ * Computes the character range [start, end) on a line that should be replaced
+ * when a preprocessor directive completion (#include / #define) is accepted.
+ *
+ * The key insight: `#` is not a word character, so `getWordAtPosition` returns
+ * only the text *after* the `#`.  If we used `insertText` without a `textEdit`,
+ * VS Code would replace just the word portion and leave the original `#` in
+ * place, producing `##include ...`.  By including the preceding `#` in the
+ * replacement range we avoid the double-hash.
+ *
+ * Examples (| marks cursor):
+ *   "#inc|"    → { start: 0, end: 4 }  (includes the `#`)
+ *   "#|"       → { start: 0, end: 1 }  (just the `#`)
+ *   "inc|"     → { start: 0, end: 3 }  (no preceding `#`, plain word)
+ *   "  #inc|"  → { start: 2, end: 6 }  (handles leading whitespace)
+ */
+export function getDirectiveReplacementRange(
+	lineText: string,
+	charPos: number
+): { start: number; end: number } {
+	let wordStart = charPos;
+	while (wordStart > 0 && /[a-zA-Z0-9_]/.test(lineText[wordStart - 1])) {
+		wordStart--;
+	}
+	const start = (wordStart > 0 && lineText[wordStart - 1] === '#') ? wordStart - 1 : wordStart;
+	return { start, end: charPos };
+}
 
 /**
  * Detects whether the cursor is currently inside a `#include "..."` or `#include <...>` path.
@@ -101,7 +130,15 @@ function listIncludePathCompletionItems(opts: {
 			label,
 			kind: entry.isDirectory() ? CompletionItemKind.Folder : CompletionItemKind.File,
 			detail: entry.isDirectory() ? 'Include folder' : 'Include file',
+			// filterText must be the full relative path (e.g. "subfolder/foo.h") so
+			// that VS Code's prefix filter — which derives its prefix from the
+			// textEdit range text ("subfolder/") — keeps the item visible.
+			filterText: insertPath,
 			textEdit: TextEdit.replace(range as any, insertPath),
+			// After accepting a folder, re-trigger completions so the user
+			// immediately sees the contents of that folder without having to
+			// type another character.
+			...(entry.isDirectory() ? { command: { command: 'editor.action.triggerSuggest', title: 'Re-trigger completions' } } : {})
 		});
 	}
 
@@ -115,6 +152,56 @@ function buildDefineSnippet(name: string, params: string[] | undefined): { inser
 	}
 	const placeholders = params.map((p, i) => `\${${i + 1}:${p}}`).join(', ');
 	return { insertText: `${name}(${placeholders})$0`, insertTextFormat: InsertTextFormat.Snippet };
+}
+
+/**
+ * Collects the set of expected parameter types at `argIndex` for all overloads
+ * of `name`, searching document functions, include functions, and prototypes.
+ * Returns lowercased type strings for case-insensitive comparison.
+ *
+ * @internal Exported for unit testing.
+ */
+export async function getExpectedParamTypes(
+	name: string,
+	argIndex: number,
+	uri: string,
+	documentService: DocumentService,
+	includeService: IncludeService,
+	prototypeService: PrototypeService
+): Promise<Set<string>> {
+	const types = new Set<string>();
+
+	// 1. Document functions (all overloads)
+	const views = documentService.getDerivedViews(uri);
+	for (const decl of views?.allFunctions.get(name) ?? []) {
+		const t = decl.params?.[argIndex]?.type;
+		if (t) types.add(t.toLowerCase());
+	}
+
+	// 2. Include functions (all overloads)
+	const includeSymbols = await includeService.getIncludeSymbols(uri);
+	for (const decl of includeSymbols.functions.get(name) ?? []) {
+		const t = decl.params?.[argIndex]?.type;
+		if (t) types.add(t.toLowerCase());
+	}
+
+	// 3. Built-in prototype overloads
+	await prototypeService.ready;
+	for (const func of prototypeService.getPrototypes(name)) {
+		const t = func.parameters[argIndex]?.type;
+		if (t) types.add(t.toLowerCase());
+	}
+
+	return types;
+}
+
+/** Extracts the declared type from a completion item's data payload, lowercased. */
+function getItemType(item: CompletionItem): string | null {
+	const data: any = (item as any).data;
+	if (data && typeof data === 'object' && typeof data.type === 'string' && data.type.length) {
+		return data.type.toLowerCase();
+	}
+	return null;
 }
 
 function defineToCompletionItem(def: SymbolDeclaration): CompletionItem {
@@ -170,6 +257,9 @@ function resolvedSymbolToCompletionItem(sym: ResolvedSymbol): CompletionItem {
 	if (isFn && sym.params) {
 		item.insertTextFormat = InsertTextFormat.Snippet;
 		item.insertText = buildFunctionCallSnippet(sym.name, sym.params);
+		if (sym.params.length > 0) {
+			item.command = { command: 'editor.action.triggerParameterHints', title: 'Trigger Signature Help' };
+		}
 	}
 
 	return item;
@@ -273,6 +363,7 @@ const detailText = primaryFn.signature ?? '';
 				filterText: primaryFn.name,
 				insertTextFormat: InsertTextFormat.Snippet,
 				insertText: buildFunctionCallSnippet(primaryFn.name, primaryFn.params),
+				...(primaryFn.params && primaryFn.params.length > 0 ? { command: { command: 'editor.action.triggerParameterHints', title: 'Trigger Signature Help' } } : {}),
 				data: { source: 'document', kind: 'function', signature: primaryFn.signature }
 			} as any);
 		}
@@ -341,6 +432,7 @@ const detailText = primaryFn.signature ?? '';
 				filterText: primaryFn.name,
 				insertTextFormat: InsertTextFormat.Snippet,
 				insertText: buildFunctionCallSnippet(primaryFn.name, primaryFn.params),
+				...(primaryFn.params && primaryFn.params.length > 0 ? { command: { command: 'editor.action.triggerParameterHints', title: 'Trigger Signature Help' } } : {}),
 				data: { source: 'include', kind: 'function', signature: primaryFn.signature }
 			} as any);
 		}
@@ -356,6 +448,40 @@ const detailText = primaryFn.signature ?? '';
 		// 4. Prototypes (pre-built by PrototypeService)
 		const prototypeItems = prototypeService.getCompletionItems();
 
+		// Compute the replacement range for preprocessor directive completions.
+		// When the user has typed `#inc` the word is just `inc` (# is not a word
+		// character), so without an explicit textEdit VS Code would replace only
+		// `inc`, leaving the original `#` in place and producing `##include...`.
+		// Using a textEdit that spans back to include the `#` fixes the double-hash.
+		//
+		// Filter text must also start with `#` when the range covers the `#`,
+		// otherwise VS Code uses `#inc` as the matching prefix (derived from the
+		// textEdit start position) but filters against `filterText: 'include'`,
+		// which doesn't start with `#` and causes the item to be hidden.
+		const directiveLine = textDocumentPosition.position.line;
+		const directiveChar = textDocumentPosition.position.character;
+		let includeFilterText = 'include';
+		let defineFilterText = 'define';
+		let includeTextEdit: TextEdit | undefined;
+		let defineTextEdit: TextEdit | undefined;
+		if (doc) {
+			const directiveLineText = doc.getText().split('\n')[directiveLine] ?? '';
+			const dirRange = getDirectiveReplacementRange(directiveLineText, directiveChar);
+			const editRange = {
+				start: { line: directiveLine, character: dirRange.start },
+				end: { line: directiveLine, character: dirRange.end }
+			};
+			includeTextEdit = TextEdit.replace(editRange as any, '#include $0');
+			defineTextEdit = TextEdit.replace(editRange as any, '#define ${1:NAME} ${2:value}$0');
+			// When the range starts at a '#', VS Code derives the matching prefix as
+			// '#...' so filterText must also start with '#' to survive client-side
+			// filtering.
+			if (directiveLineText[dirRange.start] === '#') {
+				includeFilterText = '#include';
+				defineFilterText = '#define';
+			}
+		}
+
 		// Combine with keyword completions
 		const keywordItems: CompletionItem[] = [
 			{
@@ -364,7 +490,8 @@ const detailText = primaryFn.signature ?? '';
 				detail: 'Preprocessor include directive',
 				insertTextFormat: InsertTextFormat.Snippet,
 				insertText: '#include "${1:header.h}"$0',
-				filterText: 'include',
+				...(includeTextEdit ? { textEdit: includeTextEdit } : {}),
+				filterText: includeFilterText,
 				data: { source: 'keyword', kind: 'directive', name: '#include' }
 			},
 			{
@@ -373,7 +500,8 @@ const detailText = primaryFn.signature ?? '';
 				detail: 'Preprocessor include directive',
 				insertTextFormat: InsertTextFormat.Snippet,
 				insertText: '#include "${1:header.h}"$0',
-				filterText: 'include',
+				...(includeTextEdit ? { textEdit: includeTextEdit } : {}),
+				filterText: includeFilterText,
 				data: { source: 'keyword', kind: 'directive', name: '#include' }
 			},
 			{
@@ -382,7 +510,8 @@ const detailText = primaryFn.signature ?? '';
 				detail: 'Preprocessor macro definition',
 				insertTextFormat: InsertTextFormat.Snippet,
 				insertText: '#define ${1:NAME} ${2:value}$0',
-				filterText: 'define',
+				...(defineTextEdit ? { textEdit: defineTextEdit } : {}),
+				filterText: defineFilterText,
 				data: { source: 'keyword', kind: 'directive', name: '#define' }
 			},
 			{
@@ -391,7 +520,8 @@ const detailText = primaryFn.signature ?? '';
 				detail: 'Preprocessor macro definition',
 				insertTextFormat: InsertTextFormat.Snippet,
 				insertText: '#define ${1:NAME} ${2:value}$0',
-				filterText: 'define',
+				...(defineTextEdit ? { textEdit: defineTextEdit } : {}),
+				filterText: defineFilterText,
 				data: { source: 'keyword', kind: 'directive', name: '#define' }
 			},
 			{ label: 'if', kind: CompletionItemKind.Keyword, detail: 'Conditional statement', data: 1 },
@@ -428,26 +558,40 @@ const detailText = primaryFn.signature ?? '';
 			out.push({ ...originalItem });
 		}
 
+		// ── Type-sensitive boosting ───────────────────────────────────────────
+		// If the cursor is inside a function call, collect the expected parameter
+		// type(s) at the current arg index and use them to float matching items.
+		const callCtxOffset = doc ? doc.offsetAt(textDocumentPosition.position) : 0;
+		const callCtx = doc ? getCallContext(doc.getText(), callCtxOffset) : null;
+		const expectedTypes = callCtx
+			? await getExpectedParamTypes(callCtx.name, callCtx.argIndex, uri, documentService, includeService, prototypeService)
+			: new Set<string>();
+
+		// ─────────────────────────────────────────────────────────────────────
+
+		const groupPriority = (item: CompletionItem): number => {
+			const data: any = (item as any).data;
+			if (data && typeof data === 'object' && typeof data.source === 'string') {
+				// Highest priority: in-document and included-file functions/variables.
+				if (data.source === 'document') return 600;
+				if (data.source === 'include') return 590;
+				// Lower than symbols: preprocessor defines/directives.
+				if (data.source === 'define') return 350;
+				if (data.source === 'keyword') return 200;
+			}
+			// Heuristics for items without structured data.
+			if (item.kind === CompletionItemKind.Class) return 180; // types
+			if (item.kind === CompletionItemKind.Function) return 160; // prototypes (data is string)
+			return 100;
+		};
+
+		// Bonus applied to items whose type matches the expected parameter type.
+		const TYPE_MATCH_BONUS = 10000;
+
 		// Fuzzy filter: allow non-prefix matches by subsequence scoring.
 		// Also set filterText=query for returned items so VS Code's client-side prefix filtering doesn't hide them.
 		const q = query.trim();
 		if (q.length >= 2) {
-			const groupPriority = (item: CompletionItem): number => {
-				const data: any = (item as any).data;
-				if (data && typeof data === 'object' && typeof data.source === 'string') {
-					// Highest priority: in-document and included-file functions/variables.
-					if (data.source === 'document') return 600;
-					if (data.source === 'include') return 590;
-					// Lower than symbols: preprocessor defines/directives.
-					if (data.source === 'define') return 350;
-					if (data.source === 'keyword') return 200;
-				}
-				// Heuristics for items without structured data.
-				if (item.kind === CompletionItemKind.Class) return 180; // types
-				if (item.kind === CompletionItemKind.Function) return 160; // prototypes (data is string)
-				return 100;
-			};
-
 			const qLower = q.toLowerCase();
 			const scored: Array<{ item: CompletionItem; score: number; group: number; label: string }> = [];
 			for (const item of out) {
@@ -461,6 +605,12 @@ const detailText = primaryFn.signature ?? '';
 				if (labelLower === qLower) s += 5000;
 				else if (labelLower.startsWith(qLower)) s += 2000;
 				else if (labelLower.includes(qLower)) s += 200;
+
+				// Type-sensitive boost: float items whose type matches the expected parameter type.
+				if (expectedTypes.size > 0) {
+					const itemType = getItemType(item);
+					if (itemType && expectedTypes.has(itemType)) s += TYPE_MATCH_BONUS;
+				}
 
 				scored.push({ item, score: s, group: groupPriority(item), label });
 			}
@@ -481,6 +631,19 @@ const detailText = primaryFn.signature ?? '';
 			}
 
 			return scored.map(x => x.item);
+		}
+
+		// No query or single character — apply type-sensitive sort via sortText so
+		// type-matched variables float to the top of their group.
+		if (expectedTypes.size > 0) {
+			for (const item of out) {
+				const itemType = getItemType(item);
+				const typeMatches = itemType !== null && expectedTypes.has(itemType);
+				const gp = groupPriority(item);
+				const typeRank = typeMatches ? '0' : '1';
+				const groupRank = (999 - Math.max(0, Math.min(999, gp))).toString().padStart(3, '0');
+				item.sortText = `${typeRank}-${groupRank}-${getLabelText(item)}`;
+			}
 		}
 
 		return out;

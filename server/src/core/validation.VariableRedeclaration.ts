@@ -75,7 +75,7 @@ export function validateVariableRedeclarations(
 
 		const existing = scopeVars.get(info.name);
 		if (existing) {
-			if (existing.isFunction && isFunction) return;
+			if (existing.isFunction || isFunction) return;
 			if (condLines.has(existing.line) || condLines.has(info.line)) return;
 			diagnostics.push({
 				severity: DiagnosticSeverity.Error,
@@ -198,14 +198,8 @@ export function validateVariableRedeclarations(
 			return undefined;
 		},
 		visitIterationStatement(ctx: any) {
-			try {
-				if (ctx?.For?.()) {
-					enterScope();
-					visitor.visitChildren(ctx);
-					exitScope();
-					return undefined;
-				}
-			} catch { /* ignore */ }
+			// For-loop header shares the enclosing scope; the body compound statement
+			// creates its own sub-scope via visitCompoundStatement.
 			return visitor.visitChildren(ctx);
 		},
 		visitDeclaration(ctx: any) {

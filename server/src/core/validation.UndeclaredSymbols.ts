@@ -22,13 +22,14 @@ import {
 	type SwitchCaseMismatch,
 } from './validation.Common';
 
-export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymbols): Diagnostic[] {
+export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymbols, conditionalLines?: Set<number>): Diagnostic[] {
 	const diagnostics: Diagnostic[] = [];
 	const switchCaseMismatches: SwitchCaseMismatch[] = [];
 
 	// Scope stack: index 0 is the global scope, higher indices are nested scopes.
 	const scopeStack: Map<string, DeclaredSymbol>[] = [new Map()];
 	let inWrapperFunction = false;
+	let inFunctionBody = false;
 
 	const pushScope = () => { scopeStack.push(new Map()); };
 	const popScope = () => { if (scopeStack.length > 1) scopeStack.pop(); };
@@ -53,11 +54,13 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 
 	/** Check an identifier usage inline; emit diagnostic if undeclared. */
 	const checkUsage = (text: string, line: number, column: number, isFunctionCall: boolean) => {
+		// Skip identifiers on conditional lines (#if/#ifdef kept branches)
+		if (conditionalLines?.has(line)) return;
+
 		if (lookupSymbol(text)) return;
 		if (isFunctionCall && knownSymbols.functions.has(text)) return;
 		if (knownSymbols.variables.has(text)) return;
 		if (knownSymbols.defines.has(text)) return;
-		if (isFunctionCall) return;
 
 		diagnostics.push({
 			severity: DiagnosticSeverity.Error,
@@ -65,7 +68,9 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 				start: { line: line - 1, character: column },
 				end: { line: line - 1, character: column + text.length }
 			},
-			message: `'${text}' is not declared`
+			message: isFunctionCall
+				? `Function '${text}' is not declared`
+				: `'${text}' is not declared`
 		});
 	};
 
@@ -152,14 +157,34 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 			if (info) scopeStack[0].set(funcName, info);
 
 			const prevWrapper = inWrapperFunction;
+			const prevInFunctionBody = inFunctionBody;
 			inWrapperFunction = funcName.startsWith('__12dpl__');
 
 			pushScope();
+			inFunctionBody = true;
 			visitor.visitChildren(ctx);
+			inFunctionBody = false;
 			popScope();
 
 			inWrapperFunction = prevWrapper;
+			inFunctionBody = prevInFunctionBody;
 			return undefined;
+		},
+		visitCompoundStatement(ctx: any) {
+			if (inFunctionBody) {
+				inFunctionBody = false;
+				visitor.visitChildren(ctx);
+				return undefined;
+			}
+			pushScope();
+			visitor.visitChildren(ctx);
+			popScope();
+			return undefined;
+		},
+		visitIterationStatement(ctx: any) {
+			// For-loop header shares the enclosing scope; the body compound statement
+			// creates its own sub-scope via visitCompoundStatement.
+			return visitor.visitChildren(ctx);
 		},
 		visitDeclaration(ctx: any) {
 			const declType = getDeclarationTypeText(ctx);
@@ -234,6 +259,7 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 			return visitor.visitChildren(ctx);
 		},
 		visitPostfixExpression(ctx: PostfixExpressionContext | any) {
+			let isMacroCall = false;
 			try {
 				const primary = ctx?.primaryExpression?.();
 				const idNode = primary?.Identifier?.();
@@ -245,19 +271,33 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 				if (text && line !== null && column !== null) {
 					checkUsage(text, line, column, !!isFunctionCall);
 				}
+				// Skip argument validation for function-like macro calls
+				if (isFunctionCall && text && knownSymbols.defines.has(text)) {
+					isMacroCall = true;
+				}
 			} catch { /* ignore */ }
+			if (isMacroCall) {
+				// For macro calls, skip argument validation entirely
+				return undefined;
+			}
 			const children: any[] = ctx?.children ?? [];
 			for (const child of children) {
 				if (child && typeof child.accept === 'function') {
 					const isPrimary = child.ruleIndex !== undefined && child.constructor?.name === 'PrimaryExpressionContext';
-					if (!isPrimary) child.accept(visitor);
+					if (!isPrimary) {
+						child.accept(visitor);
+					} else {
+						// If the primary is a parenthesized expression '(expr)', visit the inner
+						// expression so undeclared symbols inside nested parens are still checked.
+						// Plain-identifier primaries (e.g. the function name) have no expression()
+						// child, so they are still skipped to avoid double-visiting.
+						const innerExpr = child?.expression?.();
+						if (innerExpr && typeof innerExpr.accept === 'function') {
+							innerExpr.accept(visitor);
+						}
+					}
 				}
 			}
-			try {
-				for (const argList of ctx?.argumentExpressionList_list?.() ?? []) {
-					argList?.accept?.(visitor);
-				}
-			} catch { /* ignore */ }
 			return undefined;
 		},
 		visitPrimaryExpression(ctx: PrimaryExpressionContext | any) {

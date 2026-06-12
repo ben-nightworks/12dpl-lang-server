@@ -1,5 +1,5 @@
 // ============================================================================
-// Test5.4dm - Regression Tests for Issues Fixed 2026-02-24
+// regression_tests.4dm - Regression Tests for Issues Fixed 2026-02-24
 // ============================================================================
 // This file tests fixes for:
 //   1. Function overloading (same name, different signatures) → OK
@@ -164,17 +164,17 @@ Element get_element()
 
 // --- 4a: Brace indented with tab ---
 Integer tabbed_brace_function(Text input)
-	{
+{
 	Integer len = Text_length(input);
 	return len;
-	}
+}
 
 // --- 4b: Brace indented with spaces ---
 Integer spaced_brace_function(Text input)
-   {
-   Integer len = Text_length(input);
-   return len;
-   }
+{
+	Integer len = Text_length(input);
+	return len;
+}
 
 // --- 4c: Brace on same line (normal style, should still work) ---
 Integer normal_brace_function(Text input) {
@@ -208,17 +208,17 @@ Integer commented_brace_function(Text input)
 
 // --- 5a: Simple #if 0 block ---
 #if 0
-	This is dead code that would normally cause parse errors.
-	Integer ghost_var = 999;
-	switch(id) {
-		clearly invalid syntax here @@@ ###
-	}
+This is dead code that would normally cause parse errors.
+Integer ghost_var = 999;
+switch(id) {
+	clearly invalid syntax here @@@ ###
+}
 #endif
 
 // --- 5b: #if 0 with #else (code after #else is live) ---
 #if 0
-	Dead code branch - should be stripped
-	Invalid stuff &*^% here
+Dead code branch - should be stripped
+Invalid stuff &*^% here
 #else
 Integer live_after_else()
 {
@@ -228,11 +228,11 @@ Integer live_after_else()
 
 // --- 5c: Nested #if inside #if 0 ---
 #if 0
-	Outer dead code
-	#if 1
-		Still dead - nested inside #if 0
-	#endif
-	Still dead
+Outer dead code
+#if 1
+Still dead - nested inside #if 0
+#endif
+Still dead
 #endif
 
 // --- 5d: Variable after #if 0 block must not be affected ---
@@ -249,10 +249,10 @@ Integer live_after_else()
 
 // --- 6a: Overloaded functions with non-standard brace placement ---
 Log_Line make_log(Text msg)
-	{
+{
 	Log_Line result;
 	return result;
-	}
+}
 
 Log_Line make_log(Text msg, Integer level)
 {
@@ -283,10 +283,10 @@ Integer count_items(Text input, Integer max)
 
 // --- 6c: Dead code containing overloaded function names ---
 #if 0
-	void count_items(Text input, Integer max, Real factor)
-	{
-		// This dead overload should be stripped entirely
-	}
+void count_items(Text input, Integer max, Real factor)
+{
+	// This dead overload should be stripped entirely
+}
 #endif
 
 // Using 'i' here should be fine — it was only local to count_items above

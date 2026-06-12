@@ -1,5 +1,5 @@
 // ============================================================================
-// Test6.4dm - Comprehensive Real-World Pattern Tests
+// syntax_patterns.4dm - Comprehensive Real-World Pattern Tests
 // ============================================================================
 // Patterns sourced from macros/ and macros_mattmonk/ folders.
 // Every section should produce ZERO diagnostics unless annotated otherwise.
@@ -132,19 +132,19 @@ void test_comma_declarations()
 
 // --- 5e: Multi-line #define macros with \ continuation ---
 #define PRINTD(x)           \
-	do                      \
-	{                       \
-		Print((x) + "\n");  \
-	} while (0)
+do                      \
+{                       \
+	Print((x) + "\n");  \
+} while (0)
 
 #define BITSET_(f, i)     \
-	do                    \
-	{                     \
-		f = f | i;        \
-	} while (0)
+do                    \
+{                     \
+	f = f | i;        \
+} while (0)
 
 #define BITCHK_(f, i)     \
-	((f) & (i))
+((f) & (i))
 
 // --- 5f: #ifndef / #endif guards (inline, not include-guard) ---
 #ifndef LOG_LINE_NONE_T6
@@ -180,11 +180,11 @@ void test_comma_declarations()
 
 // --- 5k: #if 0 block with code that would fail to parse ---
 #if 0
-	This is dead code.
-	switch(invalid_syntax) {
-		clearly not parseable @@@ %%%
-	}
-	Integer ghost_variable = 42;
+This is dead code.
+switch(invalid_syntax) {
+	clearly not parseable @@@ %%%
+}
+Integer ghost_variable = 42;
 #endif
 
 
@@ -199,21 +199,21 @@ Integer classify_string_type(Text type)
 {
 	Integer result = 0;
 	switch(type) {
-		case "2d" : {
+	case "2d" : {
 			result = 1;
 		} break;
-		case "3d" : {
+	case "3d" : {
 			result = 2;
 		} break;
-		case "4d" : {
+	case "4d" : {
 			result = 3;
 		} break;
-		case "Polyline" :
-		case "Super"    : {
+	case "Polyline" :
+	case "Super"    : {
 			result = 4;
 		} break;
-		case "Alignment" :
-		case "Pipeline"  : {
+	case "Alignment" :
+	case "Pipeline"  : {
 			result = 5;
 		} break;
 		default : {
@@ -240,10 +240,10 @@ void test_switch_with_get_id()
 		if (cmd == "keystroke") continue;
 
 		switch(id) {
-			case Get_id(panel) : {
+		case Get_id(panel) : {
 				if (cmd == "Panel Quit") doit = 0;
 			} break;
-			case Get_id(finish) : {
+		case Get_id(finish) : {
 				if (cmd == "finish") doit = 0;
 			} break;
 		}
@@ -255,16 +255,16 @@ Integer decode_mode(Integer mode)
 {
 	Integer result = 0;
 	switch (mode) {
-		case (0): {
+	case (0): {
 			result = 10;
 		} break;
-		case (1): {
+	case (1): {
 			result = 20;
 		} break;
-		case (2): {
+	case (2): {
 			result = 30;
 		} break;
-		default: {
+	default: {
 			result = -1;
 		} break;
 	}
@@ -556,9 +556,9 @@ Integer compute_length(Element string, Text &result)
 // --- 13b: Doxygen comment between signature and brace ---
 void process_data(Dynamic_Element &data, Integer mode)
 /*! @brief Processes a set of elements.
- *  @param data     Source data elements
- *  @param mode     Processing mode flags
- */
+*  @param data     Source data elements
+*  @param mode     Processing mode flags
+*/
 {
 	Integer count = 0;
 }
@@ -577,15 +577,15 @@ Integer analyse_model(Model model)
 
 // --- 13d: Indented brace (tab) ---
 Integer tabbed_function(Text name)
-	{
+{
 	return Text_length(name);
-	}
+}
 
 // --- 13e: Indented brace (spaces) ---
 Integer spaced_function(Text name)
-    {
-    return Text_length(name);
-    }
+{
+	return Text_length(name);
+}
 
 
 // ############################################################################
@@ -611,15 +611,15 @@ Integer manage_test_panel()
 		if (cmd == "keystroke") continue;
 
 		switch(id) {
-			case Get_id(panel) : {
+		case Get_id(panel) : {
 				if (cmd == "Panel Quit")
-					doit = 0;
+				doit = 0;
 			} break;
-			case Get_id(finish) : {
+		case Get_id(finish) : {
 				if (cmd == "finish")
-					doit = 0;
+				doit = 0;
 			} break;
-			case Get_id(apply) : {
+		case Get_id(apply) : {
 				// Process
 				Integer rv = 0;
 			} break;
@@ -632,9 +632,9 @@ Integer manage_test_panel()
 Integer test_single_line_if(Integer x)
 {
 	if (x < 0)
-		return -1;
+	return -1;
 	if (x == 0)
-		return 0;
+	return 0;
 	return 1;
 }
 
@@ -660,7 +660,7 @@ void test_do_while()
 	{
 		attempts++;
 		if (attempts > 3)
-			success = 1;
+		success = 1;
 	} while (!success);
 }
 
@@ -695,9 +695,9 @@ void test_chain_assignment()
 Integer test_logical_ops(Text type)
 {
 	if (type == "2d" || type == "3d" || type == "4d" || type == "Polyline" || type == "Super")
-		return 1;
+	return 1;
 	if (type == "Alignment" || type == "Pipeline")
-		return 2;
+	return 2;
 	return 0;
 }
 
@@ -707,9 +707,9 @@ void test_negation()
 	Model model;
 	Element elt;
 	if (!Model_exists(model))
-		return;
+	return;
 	if (!Element_exists(elt))
-		return;
+	return;
 }
 
 // --- 15d: Math expressions ---
@@ -749,14 +749,14 @@ Integer xeqy(Real x, Real y)
 {
 	Real mindif = 1.0e-6;
 	if (Absolute(x - y) < mindif)
-		return 1;
+	return 1;
 	return 0;
 }
 
 Integer xeqy(Real x, Real y, Real tolerance)
 {
 	if (Absolute(x - y) < tolerance)
-		return 1;
+	return 1;
 	return 0;
 }
 
