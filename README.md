@@ -48,7 +48,7 @@ This repository’s documentation is split into the following Markdown files:
 
 ---
 
-### What's New in v1.5.8
+### What's New in v1.6.0
 
 **Pass-by-Reference Temporary Value Warnings** ✨
 - Passing a literal or temporary value to a `&` (pass-by-reference) parameter now produces a warning, since the callee cannot write back to a temporary

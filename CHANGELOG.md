@@ -447,6 +447,12 @@ Release of [v1.3.0] to the VS Code Marketplace.
 - **For Loop Variable Not Defined** : For loop variable re-used in loop header declarations are now no longer validated as errors
 
 ---
+
+## [v1.6.0] - (02/06/2026)
+
+### Overview
+- **New Release** : Updates the release version of the extension from v1.3.0
+---
 # Template
 
 ## [vX.X.X] - (Date)
