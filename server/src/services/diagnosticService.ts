@@ -21,7 +21,8 @@ import { validateVariableRedeclarations,
 	validateControlFlow,
 	validateAssignmentTypes,
 	validateLogicalConditions,
-	validateDynamicArrayNull} from '../core/validators';
+	validateDynamicArrayNull,
+	validateUnusedVariables} from '../core/validators';
 import type { FunctionSignatureMap, OverloadReturnType } from '../core/validators';
 import type { KnownSymbols, ParameterSymbolInfo } from '../core/types';
 
@@ -140,6 +141,13 @@ export class DiagnosticService {
 				parseResult.conditionalLines
 			);
 			diagnostics.push(...dynamicArrayNullDiagnostics);
+
+			// 3l. Unused local variable detection
+			const unusedVariableDiagnostics = validateUnusedVariables(
+				parseResult.tree,
+				parseResult.conditionalLines
+			);
+			diagnostics.push(...unusedVariableDiagnostics);
 		}
 
 		return diagnostics;

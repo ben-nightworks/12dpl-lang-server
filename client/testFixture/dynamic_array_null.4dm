@@ -40,7 +40,8 @@ void takes_parameter(Dynamic_Element items) {
 }
 
 void unused_array() {
-    // No diagnostic: declared but never used.
+    // No Null reminder: declared but never used.
+    // The unused-variable check flags 'dr' as a faded Hint instead.
     Dynamic_Real dr;
     Integer i = 1;
     Print(i);
