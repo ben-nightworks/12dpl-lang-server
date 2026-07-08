@@ -123,6 +123,17 @@ The Output also prints the detected `cc4d` compiler version, and the Play button
 
 To compile with selectable flags, use the **Gear** button (`⚙ 12dPL`) in the status bar or run **“12dPL: Compile Current File (Select Flags)”**.
 
+#### Set a Compile Target (Pin a File)
+
+When working in header files you can pin a `.4dm` file as the compile target, so the Play button and compile commands always build that file without switching back to it:
+
+1. Right-click a `.4dm` file in the Explorer or editor and select **“12dPL: Set as Compile Target”**
+2. The Play button shows the pinned file name (`▶ 12dPL: macro.4dm`) and stays available while editing `.h` files
+3. All dirty `.4dm`/`.h` files are saved before compiling, so header edits are always included
+4. Right-click a file explicitly and choosing **“12dPL: Compile Current File”** still compiles that specific file
+
+To go back to compiling the active file, run **“12dPL: Clear Compile Target”** (also in the right-click menu while a target is set). The target is remembered per workspace.
+
 ---
 
 ## 🔧 Configuration

@@ -2,14 +2,26 @@
 import * as path from 'path';
 import * as cp from 'child_process';
 import * as fs from 'fs';
-import { commands, ExtensionContext, StatusBarAlignment, StatusBarItem, window, workspace } from 'vscode';
+import { commands, ExtensionContext, StatusBarAlignment, StatusBarItem, Uri, window, workspace } from 'vscode';
 
 type CompilerInfo = {
     versionLine?: string;
 };
 
 const selectedCompilerFlagsKey = '12dpl.selectedCompilerFlags';
+const compileTargetKey = '12dpl.compileTarget';
+const hasCompileTargetContextKey = '12dpl.hasCompileTarget';
 let cachedCompilerInfo: CompilerInfo | undefined;
+
+function is4dmFile(fsPath: string | undefined): boolean {
+    return !!fsPath && path.extname(fsPath).toLowerCase() === '.4dm';
+}
+
+function is12dplSourceFile(fsPath: string | undefined): boolean {
+    if (!fsPath) return false;
+    const ext = path.extname(fsPath).toLowerCase();
+    return ext === '.4dm' || ext === '.h';
+}
 
 async function getCompilerInfo(compilerExe: string): Promise<CompilerInfo> {
     return new Promise((resolve) => {
@@ -110,35 +122,71 @@ export function registerCompileFeatures(context: ExtensionContext) {
 
     const compileCommandId = '12dpl.compile';
     const compileWithFlagsCommandId = '12dpl.compileWithFlags';
+    const setCompileTargetCommandId = '12dpl.setCompileTarget';
+    const clearCompileTargetCommandId = '12dpl.clearCompileTarget';
 
-    const compileCurrentEditor = async (pickFlags: boolean) => {
+    const getCompileTarget = (): string | undefined => {
+        const target = context.workspaceState.get<string>(compileTargetKey);
+        return typeof target === 'string' && target.length > 0 ? target : undefined;
+    };
+
+    const setCompileTarget = async (fsPath: string | undefined) => {
+        await context.workspaceState.update(compileTargetKey, fsPath);
+        void commands.executeCommand('setContext', hasCompileTargetContextKey, !!fsPath);
+        refreshStatusBar();
+    };
+
+    /**
+     * Resolves which file to compile (issue #93):
+     *   1. the file the command was invoked on (explorer/editor context menu),
+     *   2. the pinned compile target,
+     *   3. the active editor's .4dm file.
+     * Notifies the user and returns undefined when nothing can be compiled.
+     */
+    const resolveCompileFile = async (explicitUri: Uri | undefined): Promise<string | undefined> => {
+        if (explicitUri?.scheme === 'file' && is4dmFile(explicitUri.fsPath)) {
+            return explicitUri.fsPath;
+        }
+
+        const target = getCompileTarget();
+        if (target) {
+            if (fs.existsSync(target)) return target;
+            await setCompileTarget(undefined);
+            void window.showWarningMessage(`Compile target no longer exists and was cleared: ${target}`);
+            return undefined;
+        }
+
+        const active = window.activeTextEditor?.document;
+        if (active?.uri.scheme === 'file' && is4dmFile(active.fileName)) {
+            return active.fileName;
+        }
+        void window.showInformationMessage('Open a .4dm file to compile, or right-click one and select "12dPL: Set as Compile Target".');
+        return undefined;
+    };
+
+    const runCompile = async (pickFlags: boolean, explicitUri?: Uri) => {
         if (process.platform !== 'win32') {
             void window.showErrorMessage('12dPL compiler is only supported on Windows (cc4d.exe).');
             return;
         }
 
-        const editor = window.activeTextEditor;
-        const document = editor?.document;
+        const inputFile = await resolveCompileFile(explicitUri);
+        if (!inputFile) return;
+        const inputUri = Uri.file(inputFile);
 
-        if (!document || document.uri.scheme !== 'file') {
-            void window.showInformationMessage('Open a .4dm file to compile.');
-            return;
-        }
-
-        if (path.extname(document.fileName).toLowerCase() !== '.4dm') {
-            void window.showInformationMessage('Open a .4dm file to compile.');
-            return;
-        }
-
-        if (document.isDirty) {
-            const saved = await document.save();
-            if (!saved) {
-                void window.showWarningMessage('Save the file before compiling.');
-                return;
+        // Save every dirty 12dPL source so the compile sees fresh content —
+        // the compile target typically #includes the header being edited.
+        for (const doc of workspace.textDocuments) {
+            if (doc.isDirty && doc.uri.scheme === 'file' && is12dplSourceFile(doc.fileName)) {
+                const saved = await doc.save();
+                if (!saved) {
+                    void window.showWarningMessage(`Save failed for ${path.basename(doc.fileName)}. Compile cancelled.`);
+                    return;
+                }
             }
         }
 
-        const config = workspace.getConfiguration('12dpl', document.uri);
+        const config = workspace.getConfiguration('12dpl', inputUri);
         const configuredCompilerFolder = String(config.get<string>('compiler.path') ?? '').trim();
 
         if (!configuredCompilerFolder) {
@@ -157,12 +205,11 @@ export function registerCompileFeatures(context: ExtensionContext) {
             cachedCompilerInfo = await getCompilerInfo(compilerExe);
         }
 
-        const inputFile = document.fileName;
         const expectedOutput = inputFile.replace(/\.4dm$/i, '.4do');
 
         let selectedFlags: string[] = [];
         if (pickFlags) {
-            const config = workspace.getConfiguration('12dpl', document.uri);
+            const config = workspace.getConfiguration('12dpl', inputUri);
             const availableFlags = (config.get<string[]>('compiler.availableFlags', []) ?? [])
                 .map((f) => String(f).trim())
                 .filter(Boolean);
@@ -208,7 +255,7 @@ export function registerCompileFeatures(context: ExtensionContext) {
         outputChannel.appendLine(`> ${compilerExe} ${args.join(' ')}`);
         outputChannel.show(true);
 
-        const configTop = workspace.getConfiguration('12dpl', document.uri);
+        const configTop = workspace.getConfiguration('12dpl', inputUri);
         const includePathsTop = (configTop.get<string[]>('compiler.includePaths') ?? []).map((p) => String(p).trim()).filter(Boolean);
         const envTop = { ...process.env };
         if (includePathsTop.length > 0) {
@@ -254,57 +301,65 @@ export function registerCompileFeatures(context: ExtensionContext) {
     };
 
     context.subscriptions.push(
-        commands.registerCommand(compileCommandId, async () => {
-            await compileCurrentEditor(false);
+        commands.registerCommand(compileCommandId, async (uri?: Uri) => {
+            await runCompile(false, uri);
         })
     );
     context.subscriptions.push(
-        commands.registerCommand(compileWithFlagsCommandId, async () => {
-            await compileCurrentEditor(true);
+        commands.registerCommand(compileWithFlagsCommandId, async (uri?: Uri) => {
+            await runCompile(true, uri);
+        })
+    );
+    context.subscriptions.push(
+        commands.registerCommand(setCompileTargetCommandId, async (uri?: Uri) => {
+            const active = window.activeTextEditor?.document;
+            const fsPath = uri?.scheme === 'file'
+                ? uri.fsPath
+                : (active?.uri.scheme === 'file' ? active.fileName : undefined);
+            if (!is4dmFile(fsPath)) {
+                void window.showInformationMessage('Select a .4dm file to set as the compile target.');
+                return;
+            }
+            await setCompileTarget(fsPath);
+            void window.showInformationMessage(`Compile target set: ${path.basename(fsPath!)}. The play button and compile commands now build this file.`);
+        })
+    );
+    context.subscriptions.push(
+        commands.registerCommand(clearCompileTargetCommandId, async () => {
+            const target = getCompileTarget();
+            await setCompileTarget(undefined);
+            void window.showInformationMessage(target
+                ? `Compile target cleared: ${path.basename(target)}. Compile commands build the active file again.`
+                : 'No compile target was set.');
         })
     );
 
     const playButton: StatusBarItem = window.createStatusBarItem(StatusBarAlignment.Left, 100);
-    playButton.text = '$(play) 12dPL';
     playButton.command = compileCommandId;
-    playButton.tooltip = 'Compile current .4dm with cc4d';
     context.subscriptions.push(playButton);
 
     const flagsButton: StatusBarItem = window.createStatusBarItem(StatusBarAlignment.Left, 99);
     flagsButton.text = '$(gear) 12dPL';
     flagsButton.command = compileWithFlagsCommandId;
-    flagsButton.tooltip = 'Compile current .4dm with cc4d (select flags)';
     context.subscriptions.push(flagsButton);
 
-    if (process.platform === 'win32') {
-        const config = workspace.getConfiguration('12dpl');
-        const configuredCompilerFolder = String(config.get<string>('compiler.path') ?? '').trim();
-        if (!configuredCompilerFolder) {
-            playButton.tooltip = 'Compile current .4dm with cc4d (configure 12dpl.compiler.path)';
-            flagsButton.tooltip = 'Compile current .4dm with cc4d (select flags) (configure 12dpl.compiler.path)';
-        } else {
-            const compilerExe = path.join(configuredCompilerFolder, 'cc4d.exe');
-            if (fs.existsSync(compilerExe)) {
-                void getCompilerInfo(compilerExe).then((info) => {
-                    cachedCompilerInfo = info;
-                    if (info.versionLine) {
-                        playButton.tooltip = `Compile current .4dm with cc4d (Version: ${info.versionLine})`;
-                        flagsButton.tooltip = `Compile current .4dm with cc4d (select flags) (Version: ${info.versionLine})`;
-                    }
-                });
-            } else {
-                playButton.tooltip = 'Compile current .4dm with cc4d (compiler not found; check 12dpl.compiler.path)';
-                flagsButton.tooltip = 'Compile current .4dm with cc4d (select flags) (compiler not found; check 12dpl.compiler.path)';
-            }
-        }
-    }
+    // Suffix appended to both tooltips: compiler version or configuration hint.
+    let tooltipSuffix = '';
 
-    const updatePlayButtonVisibility = () => {
+    const refreshStatusBar = () => {
+        const target = getCompileTarget();
+        const targetName = target ? path.basename(target) : undefined;
+        const subject = targetName ? `${targetName} (compile target)` : 'current .4dm';
+        playButton.text = targetName ? `$(play) 12dPL: ${targetName}` : '$(play) 12dPL';
+        playButton.tooltip = `Compile ${subject} with cc4d${tooltipSuffix}`;
+        flagsButton.tooltip = `Compile ${subject} with cc4d (select flags)${tooltipSuffix}`;
+
         const active = window.activeTextEditor?.document;
+        const ext = active ? path.extname(active.fileName).toLowerCase() : '';
         const visible =
             !!active &&
             active.uri.scheme === 'file' &&
-            path.extname(active.fileName).toLowerCase() === '.4dm';
+            (ext === '.4dm' || (ext === '.h' && !!target));
         if (visible) {
             playButton.show();
             flagsButton.show();
@@ -314,6 +369,28 @@ export function registerCompileFeatures(context: ExtensionContext) {
         }
     };
 
-    context.subscriptions.push(window.onDidChangeActiveTextEditor(updatePlayButtonVisibility));
-    updatePlayButtonVisibility();
+    if (process.platform === 'win32') {
+        const config = workspace.getConfiguration('12dpl');
+        const configuredCompilerFolder = String(config.get<string>('compiler.path') ?? '').trim();
+        if (!configuredCompilerFolder) {
+            tooltipSuffix = ' (configure 12dpl.compiler.path)';
+        } else {
+            const compilerExe = path.join(configuredCompilerFolder, 'cc4d.exe');
+            if (fs.existsSync(compilerExe)) {
+                void getCompilerInfo(compilerExe).then((info) => {
+                    cachedCompilerInfo = info;
+                    if (info.versionLine) {
+                        tooltipSuffix = ` (Version: ${info.versionLine})`;
+                        refreshStatusBar();
+                    }
+                });
+            } else {
+                tooltipSuffix = ' (compiler not found; check 12dpl.compiler.path)';
+            }
+        }
+    }
+
+    void commands.executeCommand('setContext', hasCompileTargetContextKey, !!getCompileTarget());
+    context.subscriptions.push(window.onDidChangeActiveTextEditor(refreshStatusBar));
+    refreshStatusBar();
 }
