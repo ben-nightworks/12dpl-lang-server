@@ -20,7 +20,8 @@ import { validateVariableRedeclarations,
 	validateArraySize,
 	validateControlFlow,
 	validateAssignmentTypes,
-	validateLogicalConditions} from '../core/validators';
+	validateLogicalConditions,
+	validateDynamicArrayNull} from '../core/validators';
 import type { FunctionSignatureMap, OverloadReturnType } from '../core/validators';
 import type { KnownSymbols, ParameterSymbolInfo } from '../core/types';
 
@@ -132,6 +133,13 @@ export class DiagnosticService {
 			// 3j. Logical condition validation (issue #101)
 			const logicalConditionDiagnostics = validateLogicalConditions(parseResult.tree);
 			diagnostics.push(...logicalConditionDiagnostics);
+
+			// 3k. Dynamic array Null reminder (issue #107)
+			const dynamicArrayNullDiagnostics = validateDynamicArrayNull(
+				parseResult.tree,
+				parseResult.conditionalLines
+			);
+			diagnostics.push(...dynamicArrayNullDiagnostics);
 		}
 
 		return diagnostics;
