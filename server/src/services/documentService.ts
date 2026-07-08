@@ -7,7 +7,7 @@
 
 import * as fs from 'fs';
 import { parse } from '../core/parsePipeline';
-import { collectSymbolTable, deriveViews, parseDefines } from '../core/symbolCollector';
+import { collectSymbolTable, deriveViews } from '../core/symbolCollector';
 import { canonicalizeFsPath, fileUriToFsPath } from './includeUtils';
 import type {
 	ParseResult,

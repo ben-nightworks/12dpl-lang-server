@@ -40,7 +40,7 @@ export function validateDeprecatedCalls(result: ParseResult): Diagnostic[] {
 						start: { line, character: column },
 						end: { line, character: column + 4 }
 					},
-					message: DEPRECATED_FUNCTIONS['Time'].message,
+					message: DEPRECATED_FUNCTIONS['Time']?.message ?? "'Time' is deprecated",
 					source: '12dPL'
 				});
 			}

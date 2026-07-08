@@ -156,8 +156,9 @@ export function parseDefines(text: string, definedInFsPath?: string): SymbolDecl
 	const lines = text.split(/\r?\n/);
 	for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
 		const line = lines[lineIndex];
+		if (line === undefined) continue;
 		const m = DEFINE_RE.exec(line);
-		if (!m) continue;
+		if (!m || m[1] === undefined) continue;
 		const name = m[1];
 		const rawParams = m[2];
 		const value = stripLineComment((m[3] ?? '').trim());
@@ -211,7 +212,7 @@ export function collectSymbolTable(parseResult: ParseResult, rawText?: string, f
 	};
 
 	const scopeStack: ScopeNode[] = [root];
-	const currentScope = () => scopeStack[scopeStack.length - 1];
+	const currentScope = () => scopeStack[scopeStack.length - 1] ?? root;
 
 	let inRealFunction = false;
 	let inDeclaration = false;
@@ -431,7 +432,7 @@ export function visibleSymbolsAt(root: ScopeNode, position: { line: number; char
 	const result: SymbolDeclaration[] = [];
 	// Walk from innermost to outermost, skip duplicates (inner wins)
 	for (let i = chain.length - 1; i >= 0; i--) {
-		for (const decl of chain[i].declarations) {
+		for (const decl of chain[i]?.declarations ?? []) {
 			const key = decl.name;
 			if (!seen.has(key)) {
 				seen.add(key);
@@ -446,9 +447,11 @@ export function visibleSymbolsAt(root: ScopeNode, position: { line: number; char
 export function findDeclaringScope(root: ScopeNode, position: { line: number; character: number }, name: string): { scope: ScopeNode; declaration: SymbolDeclaration } | null {
 	const chain = scopeChainAt(root, position);
 	for (let i = chain.length - 1; i >= 0; i--) {
-		for (const decl of chain[i].declarations) {
+		const scope = chain[i];
+		if (!scope) continue;
+		for (const decl of scope.declarations) {
 			if (decl.name === name) {
-				return { scope: chain[i], declaration: decl };
+				return { scope, declaration: decl };
 			}
 		}
 	}

@@ -13,7 +13,6 @@ import type { IncludeService } from './includeService';
 import type { PrototypeService } from './prototypeService';
 import { findDeclaringScope, visibleSymbolsAt, isGeneratedWrapperFunctionName } from '../core/symbolCollector';
 import { typeDocumentation } from '../data/typeDocumentation';
-import { fsPathToFileUri } from './includeUtils';
 import type { SymbolDeclaration, SymbolRange, ParameterSymbolInfo } from '../core/types';
 
 export type SymbolSource = 'document' | 'include' | 'define' | 'prototype' | 'type' | 'keyword';
@@ -24,25 +23,25 @@ export interface ResolvedSymbol {
 	kind: 'function' | 'variable' | 'parameter' | 'define' | 'type' | 'keyword';
 
 	// Declaration data
-	type?: string;
-	signature?: string;
-	params?: ParameterSymbolInfo[];
-	range?: SymbolRange;
+	type?: string | undefined;
+	signature?: string | undefined;
+	params?: ParameterSymbolInfo[] | undefined;
+	range?: SymbolRange | undefined;
 
 	// Location for go-to-definition
-	uri?: string;
-	fsPath?: string;
+	uri?: string | undefined;
+	fsPath?: string | undefined;
 
 	// Define-specific
-	defineParams?: string[];
-	defineValue?: string;
+	defineParams?: string[] | undefined;
+	defineValue?: string | undefined;
 
 	// Prototype-specific
-	prototypeSignature?: string;
-	prototypeDescription?: string;
+	prototypeSignature?: string | undefined;
+	prototypeDescription?: string | undefined;
 
 	// Type documentation
-	typeDoc?: string;
+	typeDoc?: string | undefined;
 }
 
 const KEYWORD_LIST = ['if', 'else', 'while', 'for', 'return', 'break', 'continue', 'switch', 'case', 'default', 'do', 'goto', 'label'];
@@ -93,10 +92,10 @@ export class SymbolResolver {
 		// 3. Include symbols (functions + variables)
 		const includeSymbols = await this.includeService.getIncludeSymbols(uri);
 		const incFunctions = includeSymbols.functions.get(name);
-		if (incFunctions && incFunctions.length > 0) {
+		const preferredInc = incFunctions?.find(d => !d.isForwardDeclaration) ?? incFunctions?.[0];
+		if (preferredInc) {
 			const incFsPath = await this.findIncludeFsPathForSymbol(uri, name);
-			const preferred = incFunctions.find(d => !d.isForwardDeclaration) ?? incFunctions[0];
-			return this.declarationToResolved(preferred, 'include', undefined, incFsPath);
+			return this.declarationToResolved(preferredInc, 'include', undefined, incFsPath);
 		}
 		const incVariable = includeSymbols.variables.get(name);
 		if (incVariable) {

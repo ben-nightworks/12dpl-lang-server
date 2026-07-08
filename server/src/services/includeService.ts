@@ -7,7 +7,6 @@
 
 import type { DocumentService } from './documentService';
 import { collectRecursiveIncludeFiles, fileUriToFsPath } from './includeUtils';
-import { parseDefines } from '../core/symbolCollector';
 import type {
 	SymbolDeclaration,
 } from '../core/types';

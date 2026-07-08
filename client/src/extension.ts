@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as path from 'path';
-import { ExtensionContext, window, workspace } from 'vscode';
+import { ExtensionContext, workspace } from 'vscode';
 import { registerCompileFeatures } from './compileFeature';
 import { registerFormattingFeatures } from './formattingFeature';
 

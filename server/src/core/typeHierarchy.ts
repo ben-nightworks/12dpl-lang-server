@@ -19,6 +19,7 @@ import proglang12dParser from '../antlr/src/proglang12dParser';
 function extractTypesFromRule(ruleIndex: number): Set<string> {
 	const atn = proglang12dParser._ATN;
 	const startState = atn.ruleToStartState[ruleIndex];
+	if (!startState) return new Set<string>();
 	const tokenSet = atn.nextTokens(startState);
 
 	const types = new Set<string>();

@@ -194,8 +194,8 @@ export class DiagnosticService {
 		for (const [name, overloads] of overloadMap) {
 			if (overloads.length > 0) {
 				// Prefer a non-void overload if one exists
-				const nonVoid = overloads.find(o => o.returnType !== 'void');
-				result.set(name, nonVoid ? nonVoid.returnType : overloads[0].returnType);
+				const nonVoid = overloads.find(o => o.returnType !== 'void') ?? overloads[0];
+				if (nonVoid) result.set(name, nonVoid.returnType);
 			}
 		}
 		return result;

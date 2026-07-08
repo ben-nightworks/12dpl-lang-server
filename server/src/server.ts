@@ -69,8 +69,9 @@ async function getIncludeDirs(uri: string): Promise<string[]> {
 					? fileUriToFsPath(matchingFolder.uri) ?? undefined
 					: matchingFolder.uri;
 			}
-			if (!workspaceFolderPath) {
-				const folderUri = workspaceFolders[0].uri;
+			const firstFolder = workspaceFolders[0];
+			if (!workspaceFolderPath && firstFolder) {
+				const folderUri = firstFolder.uri;
 				workspaceFolderPath = folderUri.startsWith('file://')
 					? fileUriToFsPath(folderUri) ?? undefined
 					: folderUri;
@@ -78,8 +79,8 @@ async function getIncludeDirs(uri: string): Promise<string[]> {
 		}
 
 		includeDirs = includeDirs.map((p: string) => resolvePathVariables(p, {
-			workspaceFolderPath,
-			fileFsPath: docFsPath ?? undefined,
+			...(workspaceFolderPath !== undefined ? { workspaceFolderPath } : {}),
+			...(docFsPath != null ? { fileFsPath: docFsPath } : {}),
 			cwd: process.cwd()
 		}));
 	} catch {
@@ -157,17 +158,11 @@ interface ServerSettings {
 	maxNumberOfProblems: number;
 }
 
-const defaultSettings: ServerSettings = { maxNumberOfProblems: 1000 };
-let globalSettings: ServerSettings = defaultSettings;
 const documentSettings: Map<string, Thenable<ServerSettings>> = new Map();
 
-connection.onDidChangeConfiguration(change => {
+connection.onDidChangeConfiguration(() => {
 	if (hasConfigurationCapability) {
 		documentSettings.clear();
-	} else {
-		globalSettings = <ServerSettings>(
-			(change.settings.langServer || defaultSettings)
-		);
 	}
 });
 

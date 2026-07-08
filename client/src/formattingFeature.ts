@@ -1,4 +1,4 @@
-import { commands, ExtensionContext, TextEdit, window, workspace } from 'vscode';
+import { commands, ExtensionContext, TextEdit, workspace } from 'vscode';
 
 export function registerFormattingFeatures(context: ExtensionContext) {
     context.subscriptions.push(

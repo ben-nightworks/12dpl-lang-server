@@ -46,7 +46,7 @@ export interface DeclaredVariable {
 
 export interface DeclaredSymbol {
 	name: string;
-	type?: string;
+	type?: string | undefined;
 	line: number;
 	column: number;
 }
