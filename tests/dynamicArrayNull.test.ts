@@ -66,10 +66,11 @@ void fn() {
     Dynamic_Text dt;
     Dynamic_Integer di;
     Dynamic_Real dr;
-    Set_size(de, 1);
-    Set_size(dt, 1);
-    Set_size(di, 1);
-    Set_size(dr, 1);
+    Integer count;
+    Get_number_of_items(de, count);
+    Get_number_of_items(dt, count);
+    Get_number_of_items(di, count);
+    Get_number_of_items(dr, count);
 }`);
 		expect(forVariable(diags, 'de')).toHaveLength(1);
 		expect(forVariable(diags, 'dt')).toHaveLength(1);
@@ -123,8 +124,9 @@ void bad(Model model) {
 	test('function parameters are not flagged', () => {
 		const diags = validate(`
 void helper(Dynamic_Element de) {
-    Integer size = Get_size(de);
-    Print(size);
+    Integer count;
+    Get_number_of_items(de, count);
+    Print(count);
 }`);
 		expect(forVariable(diags, 'de')).toHaveLength(0);
 	});
@@ -133,7 +135,8 @@ void helper(Dynamic_Element de) {
 		const diags = validate(`
 Dynamic_Element de;
 Integer total;
-Get_elements(Get_model("survey"), de, total);
+Model survey = Get_model("survey");
+Get_elements(survey, de, total);
 Null(de);
 `);
 		expect(forVariable(diags, 'de')).toHaveLength(0);
@@ -143,7 +146,8 @@ Null(de);
 		const diags = validate(`
 Dynamic_Element de;
 Integer total;
-Get_elements(Get_model("survey"), de, total);
+Model survey = Get_model("survey");
+Get_elements(survey, de, total);
 `);
 		expect(forVariable(diags, 'de')).toHaveLength(1);
 	});
@@ -154,9 +158,9 @@ Dynamic_Element de;
 void cleanup() {
     Null(de);
 }
-void main() {
+void main(Model survey) {
     Integer total;
-    Get_elements(Get_model("survey"), de, total);
+    Get_elements(survey, de, total);
     cleanup();
 }`);
 		expect(forVariable(diags, 'de')).toHaveLength(0);
@@ -166,8 +170,9 @@ void main() {
 		const diags = validate(`
 void fn() {
     Dynamic_Text a, b;
-    Set_size(a, 1);
-    Set_size(b, 1);
+    Integer count;
+    Get_number_of_items(a, count);
+    Get_number_of_items(b, count);
     Null(a);
 }`);
 		expect(forVariable(diags, 'a')).toHaveLength(0);

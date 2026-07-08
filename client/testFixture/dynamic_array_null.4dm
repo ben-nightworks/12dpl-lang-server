@@ -34,8 +34,9 @@ void conditional_release(Model model, Integer flag) {
 
 void takes_parameter(Dynamic_Element items) {
     // No diagnostic: parameters are owned by the caller.
-    Integer size = Get_size(items);
-    Print(size);
+    Integer count;
+    Get_number_of_items(items, count);
+    Print(count);
 }
 
 void unused_array() {
@@ -47,7 +48,9 @@ void unused_array() {
 
 void main() {
     Integer total;
-    Get_elements(Get_model("survey"), global_elements, total);
-    Set_size(global_names, 1);
+    Integer name_count;
+    Model survey = Get_model("survey");
+    Get_elements(survey, global_elements, total);
+    Get_number_of_items(global_names, name_count);
     Null(global_elements);
 }
