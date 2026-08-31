@@ -16,7 +16,6 @@ import {
 	safeTokenLine,
 	safeTokenColumn,
 	extractIdentifierFromDeclarator,
-	type DeclaredSymbol,
 } from './validation.Common';
 import { isSubtypeOf, isPromotableTo } from './typeHierarchy';
 

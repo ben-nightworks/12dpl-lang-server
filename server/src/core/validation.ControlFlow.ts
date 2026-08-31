@@ -15,7 +15,6 @@ import {
 
 // Rule indices from the generated parser (proglang12dParser.RULE_*)
 const RULE_SELECTION_STATEMENT = 57;
-const RULE_ITERATION_STATEMENT = 58;
 
 type FlowContext = 'loop' | 'switch';
 

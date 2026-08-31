@@ -6,10 +6,23 @@
 		"moduleResolution": "bundler",
 		"sourceMap": true,
 		"strict": true,
+		"exactOptionalPropertyTypes": true,
+		"noUncheckedIndexedAccess": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"noImplicitOverride": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"allowUnreachableCode": false,
+		"allowUnusedLabels": false,
 		"outDir": "out",
 		"rootDir": "src",
 		"skipLibCheck": true
 	},
 	"include": ["src"],
-	"exclude": ["node_modules", ".vscode-test"]
+	"exclude": ["node_modules", ".vscode-test", "src/antlr"],
+	"references": [
+		{ "path": "./src/antlr" }
+	]
 }

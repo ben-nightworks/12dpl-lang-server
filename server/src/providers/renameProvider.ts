@@ -173,8 +173,8 @@ export function registerRenameProvider(opts: {
 		const lineText = doc.getText().split('\n')[params.position.line] ?? '';
 		let start = params.position.character;
 		let end = params.position.character;
-		while (start > 0 && /[a-zA-Z0-9_]/.test(lineText[start - 1])) start--;
-		while (end < lineText.length && /[a-zA-Z0-9_]/.test(lineText[end])) end++;
+		while (start > 0 && /[a-zA-Z0-9_]/.test(lineText.charAt(start - 1))) start--;
+		while (end < lineText.length && /[a-zA-Z0-9_]/.test(lineText.charAt(end))) end++;
 
 		return {
 			range: Range.create(params.position.line, start, params.position.line, end),

@@ -18,7 +18,6 @@ import {
 	safeTokenColumn,
 	extractIdentifierFromDeclarator,
 	type DeclaredSymbol,
-	type IdentifierUsage,
 	type SwitchCaseMismatch,
 } from './validation.Common';
 
@@ -37,16 +36,16 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 	/** Declare a symbol. Wrapper-function locals go to global scope (index 0). */
 	const declareSymbol = (name: string, symbol: DeclaredSymbol) => {
 		if (inWrapperFunction) {
-			scopeStack[0].set(name, symbol);
+			scopeStack[0]?.set(name, symbol);
 		} else {
-			scopeStack[scopeStack.length - 1].set(name, symbol);
+			scopeStack[scopeStack.length - 1]?.set(name, symbol);
 		}
 	};
 
 	/** Look up a symbol walking from innermost scope outward. */
 	const lookupSymbol = (name: string): DeclaredSymbol | undefined => {
 		for (let i = scopeStack.length - 1; i >= 0; i--) {
-			const sym = scopeStack[i].get(name);
+			const sym = scopeStack[i]?.get(name);
 			if (sym) return sym;
 		}
 		return undefined;
@@ -154,7 +153,7 @@ export function validateUndeclaredIdentifiers(tree: any, knownSymbols: KnownSymb
 			const funcName = info?.name ?? '';
 
 			// Function names are always global
-			if (info) scopeStack[0].set(funcName, info);
+			if (info) scopeStack[0]?.set(funcName, info);
 
 			const prevWrapper = inWrapperFunction;
 			const prevInFunctionBody = inFunctionBody;

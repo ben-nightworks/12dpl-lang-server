@@ -18,38 +18,38 @@ export interface SymbolRange {
 // ─── Parameter info ─────────────────────────────────────────────────────────
 
 export interface ParameterSymbolInfo {
-	name?: string;
-	type?: string;
-	byRef?: boolean;
-	isArray?: boolean;
+	name?: string | undefined;
+	type?: string | undefined;
+	byRef?: boolean | undefined;
+	isArray?: boolean | undefined;
 }
 
 // ─── Symbol Declaration ─────────────────────────────────────────────────────
 
 export interface SymbolDeclaration {
 	name: string;
-	type?: string;
+	type?: string | undefined;
 	range: SymbolRange;
 	kind: 'variable' | 'function' | 'parameter' | 'define';
 
 	// function-specific
-	signature?: string;
-	params?: ParameterSymbolInfo[];
-	returnType?: string;
-	isForwardDeclaration?: boolean;
+	signature?: string | undefined;
+	params?: ParameterSymbolInfo[] | undefined;
+	returnType?: string | undefined;
+	isForwardDeclaration?: boolean | undefined;
 
 	// define-specific
-	defineParams?: string[];
-	value?: string;
+	defineParams?: string[] | undefined;
+	value?: string | undefined;
 	/** Filesystem path of the file where this define was found. */
-	definedInFsPath?: string;
+	definedInFsPath?: string | undefined;
 }
 
 // ─── Scope Node ─────────────────────────────────────────────────────────────
 
 export interface ScopeNode {
 	kind: 'global' | 'function' | 'block' | 'for';
-	name?: string;
+	name?: string | undefined;
 	range: SymbolRange;
 	declarations: SymbolDeclaration[];
 	children: ScopeNode[];

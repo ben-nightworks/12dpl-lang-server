@@ -82,7 +82,7 @@ export function getCallContext(text: string, offset: number): CallContext | null
 				if (j < 0) return null;
 				// Walk back over identifier characters.
 				// 12dPL allows digit-prefixed names like "2d_point", "3d_vector".
-				while (j >= 0 && /[a-zA-Z0-9_]/.test(text[j])) j--;
+				while (j >= 0 && /[a-zA-Z0-9_]/.test(text.charAt(j))) j--;
 				const name = text.slice(j + 1, nameEnd);
 				// Reject: empty name, purely numeric token (e.g. cast `(int)` won't have one)
 				if (!name || /^\d+$/.test(name)) return null;
@@ -135,7 +135,6 @@ function buildSignatureFromDeclaration(decl: SymbolDeclaration): SignatureInform
 
 	return {
 		label: signature,
-		documentation: undefined,
 		parameters: paramInfos,
 	};
 }
@@ -175,6 +174,7 @@ function computeParamRanges(signature: string, paramLabels: string[]): Parameter
 
 	for (let k = 0; k < paramLabels.length; k++) {
 		const label = paramLabels[k];
+		if (label === undefined) continue;
 		const found = signature.indexOf(label, pos);
 		if (found < 0) {
 			// Fallback: use the param label as a plain string

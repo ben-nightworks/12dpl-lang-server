@@ -18,7 +18,7 @@ async function getCompilerInfo(compilerExe: string): Promise<CompilerInfo> {
         const env = { ...process.env };
         if (includePaths.length > 0) {
             const sep = process.platform === 'win32' ? ';' : ':';
-            env.PATH = `${includePaths.join(sep)}${sep}${env.PATH ?? ''}`;
+            env['PATH'] = `${includePaths.join(sep)}${sep}${env['PATH'] ?? ''}`;
         }
 
         const child = cp.spawn(compilerExe, ['?'], {
@@ -49,8 +49,8 @@ async function getCompilerInfo(compilerExe: string): Promise<CompilerInfo> {
         });
         child.on('close', () => {
             clearTimeout(timeout);
-            const versionMatch = combined.match(/^\s*Version\s*:\s*(.+)$/mi);
-            resolve({ versionLine: versionMatch?.[1]?.trim() });
+            const versionLine = combined.match(/^\s*Version\s*:\s*(.+)$/mi)?.[1]?.trim();
+            resolve(versionLine ? { versionLine } : {});
         });
     });
 }
@@ -213,7 +213,7 @@ export function registerCompileFeatures(context: ExtensionContext) {
         const envTop = { ...process.env };
         if (includePathsTop.length > 0) {
             const sep = ':';
-            envTop.CPLUS_INCLUDE_PATH = `${envTop.CPLUS_INCLUDE_PATH ?? ''}${sep}${includePathsTop.join(sep)}${sep}${inputFileFolder}`;
+            envTop['CPLUS_INCLUDE_PATH'] = `${envTop['CPLUS_INCLUDE_PATH'] ?? ''}${sep}${includePathsTop.join(sep)}${sep}${inputFileFolder}`;
         }
 
         const child = cp.spawn(compilerExe, args, {

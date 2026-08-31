@@ -15,7 +15,7 @@ import * as path from 'path';
 	export function resolvePathVariables(pathStr: string, options?: { workspaceFolderPath?: string; fileFsPath?: string; cwd?: string; }): string {
 		let result = pathStr; const { workspaceFolderPath, fileFsPath, cwd } = options ?? {};
 		// Resolve ${userHome}
-		const homeDir = process.env.HOME || process.env.USERPROFILE;
+		const homeDir = process.env['HOME'] || process.env['USERPROFILE'];
 		if (homeDir) { result = result.replace(/\$\{userHome\}/g, homeDir);}
 		// Resolve ${workspaceFolder}
 		if (workspaceFolderPath) 
@@ -82,7 +82,7 @@ import * as path from 'path';
 		const re = /^\s*#\s*include\s*[<"]([^>"]+)[>"]/gm;
 		let m: RegExpExecArray | null;
 		while ((m = re.exec(text)) !== null) {
-			out.push(m[1]);
+			if (m[1] !== undefined) out.push(m[1]);
 		}
 		return out;
 	}

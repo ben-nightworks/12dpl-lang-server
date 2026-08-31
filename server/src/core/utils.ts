@@ -16,10 +16,10 @@ export function getWordAtPosition(textDocument: TextDocument | undefined, positi
 	let start = position.character;
 	let end = position.character;
 
-	while (start > 0 && /[a-zA-Z0-9_]/.test(lineText[start - 1])) {
+	while (start > 0 && /[a-zA-Z0-9_]/.test(lineText.charAt(start - 1))) {
 		start--;
 	}
-	while (end < lineText.length && /[a-zA-Z0-9_]/.test(lineText[end])) {
+	while (end < lineText.length && /[a-zA-Z0-9_]/.test(lineText.charAt(end))) {
 		end++;
 	}
 
@@ -81,8 +81,8 @@ export function fuzzyScore(query: string, candidate: string): number | null {
 
 	const isWordStart = (index: number): boolean => {
 		if (index <= 0) return true;
-		const prev = c[index - 1];
-		const cur = c[index];
+		const prev = c.charAt(index - 1);
+		const cur = c.charAt(index);
 		if (isSeparator(prev) && isAlphaNum(cur)) return true;
 		// camelCase / PascalCase boundary: aB
 		if (isLower(prev) && isUpper(cur)) return true;

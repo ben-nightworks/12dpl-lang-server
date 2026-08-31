@@ -49,7 +49,7 @@ export function getDirectiveReplacementRange(
 	charPos: number
 ): { start: number; end: number } {
 	let wordStart = charPos;
-	while (wordStart > 0 && /[a-zA-Z0-9_]/.test(lineText[wordStart - 1])) {
+	while (wordStart > 0 && /[a-zA-Z0-9_]/.test(lineText.charAt(wordStart - 1))) {
 		wordStart--;
 	}
 	const start = (wordStart > 0 && lineText[wordStart - 1] === '#') ? wordStart - 1 : wordStart;
@@ -67,6 +67,7 @@ function getIncludePathContext(textDocument: TextDocument, position: { line: num
 	if (!match) return null;
 
 	const openDelim = match[1];
+	if (openDelim === undefined) return null;
 	const openIndex = lineText.indexOf(openDelim);
 	if (openIndex < 0) return null;
 
@@ -236,15 +237,16 @@ function resolvedSymbolToCompletionItem(sym: ResolvedSymbol): CompletionItem {
 		if (callSig) label = `${sym.name} ${callSig}`;
 	}
 
+	const detail = sym.kind === 'function' ? sym.signature
+		: sym.kind === 'variable' || sym.kind === 'parameter' ? (sym.type ? `${sym.type} ${sym.name}` : sym.name)
+		: undefined;
 	const item: CompletionItem = {
 		label,
 		kind: sym.kind === 'function' ? CompletionItemKind.Function
 			: sym.kind === 'parameter' ? CompletionItemKind.Variable
 			: sym.kind === 'variable' ? CompletionItemKind.Variable
 			: CompletionItemKind.Text,
-		detail: sym.kind === 'function' ? sym.signature
-			: sym.kind === 'variable' || sym.kind === 'parameter' ? (sym.type ? `${sym.type} ${sym.name}` : sym.name)
-			: undefined,
+		...(detail !== undefined ? { detail } : {}),
 		filterText: sym.name,
 		data: {
 			source: sym.source,
@@ -277,7 +279,7 @@ export function registerCompletionProvider(opts: {
 	 * NOTE: This provider intentionally returns a fully-ranked completion list.
 	 * VS Code will still apply some client-side heuristics, so we set `filterText`/`sortText` when fuzzing.
 	 */
-	const { connection, documents, documentService, includeService, prototypeService, symbolResolver } = opts;
+	const { connection, documents, documentService, includeService, prototypeService } = opts;
 
 	const getLabelText = (item: CompletionItem): string => {
 		return typeof item.label === 'string' ? item.label : String(item.label);
@@ -336,8 +338,9 @@ export function registerCompletionProvider(opts: {
 		// Add global functions (from derived views)
 		if (views && views.exportedFunctions.size > 0) {
 			for (const [, decls] of views.exportedFunctions) {
-				if (decls.length > 0) {
-					const key = decls[0].name;
+				const first = decls[0];
+				if (first) {
+					const key = first.name;
 					// Only add if not already in local scope
 					if (!functionsByName.has(key)) {
 						functionsByName.set(key, decls);
@@ -349,6 +352,7 @@ export function registerCompletionProvider(opts: {
 		// Create completion items for grouped functions
 		for (const [, funcs] of functionsByName) {
 			const primaryFn = funcs[0];
+			if (!primaryFn) continue;
 			const overloadCount = funcs.length;
 			const callSig = typeof primaryFn.signature === 'string' ? (primaryFn.signature.match(/\([^)]*\)\s*$/)?.[0] ?? '') : '';
 			
