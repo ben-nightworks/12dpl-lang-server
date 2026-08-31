@@ -113,7 +113,7 @@ function applyKnRStyle(lines: string[]): string[] {
 	for (const line of lines) {
 		if (line.trim() === '{') {
 			let prevIdx = result.length - 1;
-			while (prevIdx >= 0 && result[prevIdx].trim() === '') {
+			while (prevIdx >= 0 && result[prevIdx]?.trim() === '') {
 				prevIdx--;
 			}
 			if (prevIdx >= 0) {

@@ -447,6 +447,33 @@ Release of [v1.3.0] to the VS Code Marketplace.
 - **For Loop Variable Not Defined** : For loop variable re-used in loop header declarations are now no longer validated as errors
 
 ---
+
+## [v1.6.0] - (02/06/2026)
+
+### Overview
+- **New Release** : Updates the release version of the extension from v1.3.0
+---
+
+## [v1.6.5] - (31/08/2026)
+
+### New Features
+- **Compile Target Pinning** (#93): Added a pinned compile target workflow so compile actions can target a selected `.4dm` file while you are editing headers. Includes set/clear commands, context menu actions, and status bar integration.
+- **Unused Local Variable Detection**: Added diagnostics for local variables that are declared but never used.
+- **Dynamic Array Null Reminder** (#107): Added a reminder diagnostic for dynamic arrays to surface null-state checks and improve script robustness.
+- **Docs Website Search Relevance** (#126): Improved docs-site search with weighted token and phrase scoring for more accurate results.
+
+### Bug Fixes
+- **Dynamic Array Declaration Scope**: Fixed global declaration handling for dynamic arrays.
+- **Snippet Completion Duplicates**: Removed duplicate completion entries and kept a single maintainable snippet source.
+
+### Changed
+- **TypeScript Strictness and Dependency Hardening**: Enabled stricter TypeScript checks and hardened dependencies.
+
+### Overview
+- **Stability and Usability Release**: v1.6.5 focuses on safer validation, improved compile workflow in mixed `.4dm`/`.h` editing sessions, and cleaner completion/search behaviour.
+
+---
+
 # Template
 
 ## [vX.X.X] - (Date)

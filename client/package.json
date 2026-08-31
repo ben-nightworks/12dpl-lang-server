@@ -13,10 +13,10 @@
 		"vscode": "^1.82.0"
 	},
 	"dependencies": {
-		"vscode-languageclient": "latest"
+		"vscode-languageclient": "^9.0.1"
 	},
 	"devDependencies": {
-		"@types/node": "latest",
-		"@types/vscode": "latest"
+		"@types/node": "^26.1.1",
+		"@types/vscode": "~1.110.0"
 	}
 }

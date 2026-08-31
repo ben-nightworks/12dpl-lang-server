@@ -53,7 +53,7 @@ export class PrototypeService {
 	private rebuildCompletionItems(): void {
 		this.completionItems = [];
 
-		for (const [nameKey, overloads] of this.prototypes.entries()) {
+		for (const overloads of this.prototypes.values()) {
 			overloads.sort((a, b) => {
 				const ap = a.parameters?.length ?? 0;
 				const bp = b.parameters?.length ?? 0;
@@ -62,6 +62,7 @@ export class PrototypeService {
 			});
 
 			const primaryFunc = overloads[0];
+			if (!primaryFunc) continue;
 			const overloadCount = overloads.length;
 
 			const detailText = this.generateSignature(primaryFunc);
@@ -110,7 +111,7 @@ export class PrototypeService {
 	}
 
 	generateOverloadDocumentation(overloads: FunctionData[]): string {
-		if (overloads.length === 1) {
+		if (overloads.length === 1 && overloads[0]) {
 			return this.generateDocumentation(overloads[0]);
 		}
 

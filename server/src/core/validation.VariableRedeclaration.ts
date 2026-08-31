@@ -42,7 +42,7 @@ export function validateVariableRedeclarations(
 	let inWrapperFunction = false;
 	let inRealFunction = false;
 
-	const getCurrentScopeId = () => scopeStack[scopeStack.length - 1];
+	const getCurrentScopeId = () => scopeStack[scopeStack.length - 1] ?? 'global';
 
 	const enterScope = () => {
 		scopeDepth++;
@@ -118,6 +118,7 @@ export function validateVariableRedeclarations(
 
 		for (let i = scopeStack.length - 2; i >= 0; i--) {
 			const outerScopeId = scopeStack[i];
+			if (outerScopeId === undefined) continue;
 			const outerScopeVars = scopeVariables.get(outerScopeId);
 			if (outerScopeVars) {
 				const outerVar = outerScopeVars.get(info.name);

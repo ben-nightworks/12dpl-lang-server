@@ -48,22 +48,21 @@ This repository’s documentation is split into the following Markdown files:
 
 ---
 
-### What's New in v1.5.8
+### What's New in v1.6.5
 
-**Pass-by-Reference Temporary Value Warnings** ✨
-- Passing a literal or temporary value to a `&` (pass-by-reference) parameter now produces a warning, since the callee cannot write back to a temporary
+**Pinned Compile Target Workflow** ✨
+- You can now pin a `.4dm` file as the compile target while editing `.h` files
+- Added set/clear compile target commands, Explorer and editor context actions, and status bar support
 
-**Block-Scope Variable Leak Detection** ✨
-- Variables declared inside a block (`if`, `for`, etc.) are no longer accessible outside that block; using them after scope ends is reported as an error
+**Validation and Diagnostics Improvements** ✨
+- Added unused local variable detection
+- Added a dynamic array null-state reminder diagnostic
+- Fixed global declaration handling for dynamic arrays
 
-**Preprocessor Defines from Headers** ✨
-- `#define` macros from included header files are now collected and substituted before validation, eliminating false positives from macro-defined values in headers
-
-**Bug Fixes**
-- Macro `#define` bodies now have comments stripped before substitution, so inline or trailing comments no longer corrupt the substituted value (v1.5.8)
-- `for` loop header variables (e.g. `for(Integer i = 0; ...)`) are no longer incorrectly flagged as re-declarations (v1.5.7)
-- Further fixes to preprocessor `#define` collection and substitution from headers (v1.5.7)
-- Switch statement formatting: cases with compound bodies are now indented correctly
+**Quality and Usability Fixes**
+- Removed duplicate autocompletion items by consolidating snippet completion sources
+- Improved docs website search relevance with weighted token and phrase scoring
+- Hardened dependencies and enabled stricter TypeScript checks
 
 
 
@@ -122,6 +121,17 @@ The Output also prints the detected `cc4d` compiler version, and the Play button
 #### Compiler Flags (Checkboxes)
 
 To compile with selectable flags, use the **Gear** button (`⚙ 12dPL`) in the status bar or run **“12dPL: Compile Current File (Select Flags)”**.
+
+#### Set a Compile Target (Pin a File)
+
+When working in header files you can pin a `.4dm` file as the compile target, so the Play button and compile commands always build that file without switching back to it:
+
+1. Right-click a `.4dm` file in the Explorer or editor and select **“12dPL: Set as Compile Target”**
+2. The Play button shows the pinned file name (`▶ 12dPL: macro.4dm`) and stays available while editing `.h` files
+3. All dirty `.4dm`/`.h` files are saved before compiling, so header edits are always included
+4. Right-click a file explicitly and choosing **“12dPL: Compile Current File”** still compiles that specific file
+
+To go back to compiling the active file, run **“12dPL: Clear Compile Target”** (also in the right-click menu while a target is set). The target is remembered per workspace.
 
 ---
 

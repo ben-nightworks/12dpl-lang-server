@@ -162,14 +162,14 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 	const tryMatchFunctionSignatureAt = (i: number): boolean => {
 		let j = skipWhitespace(i);
 		const kwStart = j;
-		while (j < text.length && isIdentChar(text[j])) j++;
+		while (j < text.length && isIdentChar(text.charAt(j))) j++;
 		if (j === kwStart) return false;
 		const kw = text.slice(kwStart, j);
 		if (!typeKeywords.has(kw)) return false;
 		j = skipWhitespace(j);
 		if (!/[A-Za-z_0-9]/.test(text[j] || '')) return false;
 		j++;
-		while (j < text.length && isIdentChar(text[j])) j++;
+		while (j < text.length && isIdentChar(text.charAt(j))) j++;
 		j = skipWhitespace(j);
 		return text[j] === '(';
 	};
@@ -366,7 +366,7 @@ export function expandObjectLikeMacros(
 	for (const line of lines) {
 		// Match: #define NAME<no '(' here> <whitespace> value
 		const m = line.match(/^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)(?!\()[ \t]+(\S.*)/);
-		if (!m) continue;
+		if (!m || m[1] === undefined || m[2] === undefined) continue;
 		const name = m[1];
 		const value = stripLineComment(m[2].trim());
 		// Skip multi-line macro values (backslash continuation)
@@ -458,7 +458,7 @@ export function stripStandaloneMacroUsages(
 	const defineRe = /^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)/gm;
 	let m: RegExpExecArray | null;
 	while ((m = defineRe.exec(rawText)) !== null) {
-		defineNames.add(m[1]);
+		if (m[1] !== undefined) defineNames.add(m[1]);
 	}
 	if (extraDefineNames) {
 		for (const name of extraDefineNames) defineNames.add(name);
@@ -469,13 +469,13 @@ export function stripStandaloneMacroUsages(
 	// Walks balanced parentheses so nested calls like MACRO(foo()) are handled correctly.
 	const lines = strippedText.split('\n');
 	for (let i = 0; i < lines.length; i++) {
-		const trimmed = lines[i].trim();
+		const trimmed = (lines[i] ?? '').trim();
 		if (!trimmed) continue;
 
-		const identMatch = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)/);
-		if (!identMatch || !defineNames.has(identMatch[1])) continue;
+		const identName = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)/)?.[1];
+		if (identName === undefined || !defineNames.has(identName)) continue;
 
-		const rest = trimmed.slice(identMatch[1].length).trimStart();
+		const rest = trimmed.slice(identName.length).trimStart();
 
 		// No arguments — bare macro identifier with nothing after it
 		if (rest === '') {

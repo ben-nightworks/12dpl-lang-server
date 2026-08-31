@@ -20,7 +20,9 @@ import { validateVariableRedeclarations,
 	validateArraySize,
 	validateControlFlow,
 	validateAssignmentTypes,
-	validateLogicalConditions} from '../core/validators';
+	validateLogicalConditions,
+	validateDynamicArrayNull,
+	validateUnusedVariables} from '../core/validators';
 import type { FunctionSignatureMap, OverloadReturnType } from '../core/validators';
 import type { KnownSymbols, ParameterSymbolInfo } from '../core/types';
 
@@ -132,6 +134,20 @@ export class DiagnosticService {
 			// 3j. Logical condition validation (issue #101)
 			const logicalConditionDiagnostics = validateLogicalConditions(parseResult.tree);
 			diagnostics.push(...logicalConditionDiagnostics);
+
+			// 3k. Dynamic array Null reminder (issue #107)
+			const dynamicArrayNullDiagnostics = validateDynamicArrayNull(
+				parseResult.tree,
+				parseResult.conditionalLines
+			);
+			diagnostics.push(...dynamicArrayNullDiagnostics);
+
+			// 3l. Unused local variable detection
+			const unusedVariableDiagnostics = validateUnusedVariables(
+				parseResult.tree,
+				parseResult.conditionalLines
+			);
+			diagnostics.push(...unusedVariableDiagnostics);
 		}
 
 		return diagnostics;
@@ -194,8 +210,8 @@ export class DiagnosticService {
 		for (const [name, overloads] of overloadMap) {
 			if (overloads.length > 0) {
 				// Prefer a non-void overload if one exists
-				const nonVoid = overloads.find(o => o.returnType !== 'void');
-				result.set(name, nonVoid ? nonVoid.returnType : overloads[0].returnType);
+				const nonVoid = overloads.find(o => o.returnType !== 'void') ?? overloads[0];
+				if (nonVoid) result.set(name, nonVoid.returnType);
 			}
 		}
 		return result;

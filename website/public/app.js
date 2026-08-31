@@ -49,10 +49,12 @@
   function escapeRegExp(text) {
     return String(text || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
-  function highlight(text, query) {
+  function highlight(text, terms) {
     const safe = escapeHtml(text);
-    if (!query) return safe;
-    return safe.replace(new RegExp('(' + escapeRegExp(query) + ')', 'ig'), '<mark>$1</mark>');
+    const list = (terms || []).filter(Boolean);
+    if (list.length === 0) return safe;
+    const pattern = list.map(escapeRegExp).sort((a, b) => b.length - a.length).join('|');
+    return safe.replace(new RegExp('(' + pattern + ')', 'ig'), '<mark>$1</mark>');
   }
   function copyToClipboard(text, btn) {
     const fallback = () => {
@@ -175,47 +177,59 @@
     if (node) proseIndex = JSON.parse(node.textContent || '[]');
   } catch (_) { proseIndex = []; }
 
-  function buildSearchHaystack() {
-    const items = [];
+  function buildSearchEntries() {
+    const entries = [];
     proseIndex.forEach((entry) => {
-      items.push({
+      entries.push({
         kind: 'doc',
         title: entry.title,
         subtitle: entry.section,
         target: { section: entry.section },
-        haystack: ((entry.title || '') + ' ' + (entry.text || '')).toLowerCase(),
+        name: entry.title,
+        signature: '',
+        description: entry.text,
+        category: '',
       });
     });
     SITE.functions.forEach((fn) => {
-      items.push({
+      entries.push({
         kind: 'fn',
         title: fn.name + '()',
         subtitle: fn.signature,
         target: { section: 'all-calls', call: fn.name },
-        haystack: (fn.name + ' ' + (fn.description || '')).toLowerCase(),
+        name: fn.name,
+        signature: fn.signature,
+        description: fn.description,
+        category: fn.category,
       });
     });
     SITE.types.forEach((t) => {
-      items.push({
+      entries.push({
         kind: 'type',
         title: t.name,
         subtitle: 'Type',
         target: { section: 'types', type: t.name },
-        haystack: (t.name + ' ' + (t.description || '')).toLowerCase(),
+        name: t.name,
+        signature: '',
+        description: t.description,
+        category: t.group,
       });
     });
     SITE.snippets.forEach((s) => {
-      items.push({
+      entries.push({
         kind: 'snip',
         title: s.label,
         subtitle: 'Snippet - ' + s.prefix,
         target: { section: 'snippets', snippet: s.label },
-        haystack: (s.label + ' ' + (s.description || '') + ' ' + s.prefix).toLowerCase(),
+        name: s.label,
+        signature: s.prefix,
+        description: s.description,
+        category: '',
       });
     });
-    return items;
+    return entries;
   }
-  const SEARCH_INDEX = buildSearchHaystack();
+  const SEARCH_ENGINE = window.DocsSearch.createSearchEngine(buildSearchEntries());
 
   function renderSearchResults(query) {
     if (!searchResults) return;
@@ -225,34 +239,21 @@
       searchResults.innerHTML = '';
       return;
     }
-    const tokens = q.split(/\s+/);
-    const ranked = SEARCH_INDEX
-      .map((item) => ({
-        item,
-        score: tokens.reduce((s, tok) => s + (item.haystack.includes(tok) ? 1 : 0), 0),
-      }))
-      .filter((r) => r.score > 0)
-      .sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score;
-        // Prefer exact-prefix function/type matches.
-        const ap = a.item.title.toLowerCase().startsWith(q) ? 0 : 1;
-        const bp = b.item.title.toLowerCase().startsWith(q) ? 0 : 1;
-        return ap - bp;
-      })
-      .slice(0, 14);
+    const ranked = SEARCH_ENGINE.search(q, 14);
+    const terms = window.DocsSearch.queryTerms(q);
 
     if (ranked.length === 0) {
       searchResults.innerHTML = '<div class="search-result-item"><span>No results.</span></div>';
       searchResults.hidden = false;
       return;
     }
-    searchResults.innerHTML = ranked.map(({ item }) => {
-      const target = JSON.stringify(item.target).replace(/"/g, '&quot;');
+    searchResults.innerHTML = ranked.map(({ entry }) => {
+      const target = JSON.stringify(entry.target).replace(/"/g, '&quot;');
       return (
         '<div class="search-result-item" data-target="' + target + '">' +
-          '<span class="kind kind-' + item.kind + '">' + item.kind + '</span>' +
-          '<strong>' + highlight(item.title, q) + '</strong>' +
-          '<span class="result-sub">' + escapeHtml(item.subtitle || '') + '</span>' +
+          '<span class="kind kind-' + entry.kind + '">' + entry.kind + '</span>' +
+          '<strong>' + highlight(entry.title, terms) + '</strong>' +
+          '<span class="result-sub">' + escapeHtml(entry.subtitle || '') + '</span>' +
         '</div>'
       );
     }).join('');

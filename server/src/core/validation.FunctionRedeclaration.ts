@@ -12,9 +12,6 @@ import {
 
 import type { SymbolDeclaration } from './types';
 import {
-	safeTokenText,
-	safeTokenLine,
-	safeTokenColumn,
 	extractIdentifierFromDeclarator,
 } from './validation.Common';
 

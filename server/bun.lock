@@ -5,9 +5,9 @@
     "": {
       "name": "12dpl-lsp-server",
       "dependencies": {
-        "antlr4": "latest",
-        "vscode-languageserver": "latest",
-        "vscode-languageserver-textdocument": "latest",
+        "antlr4": "^4.13.2",
+        "vscode-languageserver": "^9.0.1",
+        "vscode-languageserver-textdocument": "^1.0.12",
       },
     },
   },

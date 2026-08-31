@@ -1,0 +1,21 @@
+{
+	"compilerOptions": {
+		"target": "es2020",
+		"lib": ["es2020"],
+		"module": "commonjs",
+		"moduleResolution": "bundler",
+		"composite": true,
+		"sourceMap": true,
+		"strict": true,
+		"noUncheckedIndexedAccess": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"allowUnreachableCode": false,
+		"allowUnusedLabels": false,
+		"outDir": "../../out/antlr",
+		"rootDir": ".",
+		"skipLibCheck": true
+	},
+	"include": ["src"]
+}

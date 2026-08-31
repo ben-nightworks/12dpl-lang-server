@@ -13,6 +13,7 @@ import proglang12dParser from '../antlr/src/proglang12dParser';
 function extractTypeKeywords(): Set<string> {
 	const atn = proglang12dParser._ATN;
 	const startState = atn.ruleToStartState[proglang12dParser.RULE_typeSpecifier];
+	if (!startState) return new Set<string>();
 	const tokenSet = atn.nextTokens(startState);
 
 	const types = new Set<string>();
