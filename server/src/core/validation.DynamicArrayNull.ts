@@ -74,7 +74,7 @@ export function validateDynamicArrayNull(
 	const fileWideNulled = new Set<string>();
 	const fileWideUsed = new Set<string>();
 
-	const currentRecord = () => recordStack[recordStack.length - 1];
+	const currentRecord = (): ScopeRecord => recordStack[recordStack.length - 1] ?? globalRecord;
 
 	const isWrapperFunction = (ctx: any): boolean => {
 		try {

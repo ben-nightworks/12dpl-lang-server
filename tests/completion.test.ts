@@ -5,7 +5,7 @@ import { parse } from '../server/src/core/parsePipeline';
 import { collectSymbolTable, deriveViews } from '../server/src/core/symbolCollector';
 import { PrototypeService } from '../server/src/services/prototypeService';
 import type { SymbolDeclaration, DerivedSymbolViews } from '../server/src/core/types';
-import { getDirectiveReplacementRange } from '../server/src/providers/completionProvider';
+import { buildKeywordCompletionItems, getDirectiveReplacementRange } from '../server/src/providers/completionProvider';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -53,6 +53,28 @@ function getVisibleSymbolsAt(
 // ─── Tests ──────────────────────────────────────────────────────────────────
 
 describe('Completion items', () => {
+	test('server keyword completions exclude snippet-backed control-flow entries', () => {
+		const items = buildKeywordCompletionItems({
+			includeFilterText: 'include',
+			defineFilterText: 'define'
+		});
+		const labels = items.map(item => String(item.label));
+
+		expect(labels).toContain('#include');
+		expect(labels).toContain('#define');
+		expect(labels).toContain('return');
+		expect(labels).toContain('break');
+
+		expect(labels).not.toContain('if');
+		expect(labels).not.toContain('else');
+		expect(labels).not.toContain('while');
+		expect(labels).not.toContain('for');
+		expect(labels).not.toContain('do');
+		expect(labels).not.toContain('switch');
+		expect(labels).not.toContain('case');
+		expect(labels).not.toContain('default');
+	});
+
 	test('global variables appear in completions', () => {
 		const src = `
 {
