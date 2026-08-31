@@ -1,11 +1,13 @@
 // Fixture for dynamic array Null reminder validation (issue #107).
 // Dynamic arrays should be Nulled before going out of scope.
 
+{
 // Global dynamic array that is Nulled inside a function — no diagnostic.
 Dynamic_Element global_elements;
 
 // INFO expected: used but never Nulled anywhere in the file.
 Dynamic_Text global_names;
+}
 
 void collect(Model model) {
     // INFO expected: 'de' is used but never Nulled in this function.
