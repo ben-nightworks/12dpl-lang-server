@@ -48,22 +48,21 @@ This repository’s documentation is split into the following Markdown files:
 
 ---
 
-### What's New in v1.6.0
+### What's New in v1.6.5
 
-**Pass-by-Reference Temporary Value Warnings** ✨
-- Passing a literal or temporary value to a `&` (pass-by-reference) parameter now produces a warning, since the callee cannot write back to a temporary
+**Pinned Compile Target Workflow** ✨
+- You can now pin a `.4dm` file as the compile target while editing `.h` files
+- Added set/clear compile target commands, Explorer and editor context actions, and status bar support
 
-**Block-Scope Variable Leak Detection** ✨
-- Variables declared inside a block (`if`, `for`, etc.) are no longer accessible outside that block; using them after scope ends is reported as an error
+**Validation and Diagnostics Improvements** ✨
+- Added unused local variable detection
+- Added a dynamic array null-state reminder diagnostic
+- Fixed global declaration handling for dynamic arrays
 
-**Preprocessor Defines from Headers** ✨
-- `#define` macros from included header files are now collected and substituted before validation, eliminating false positives from macro-defined values in headers
-
-**Bug Fixes**
-- Macro `#define` bodies now have comments stripped before substitution, so inline or trailing comments no longer corrupt the substituted value (v1.5.8)
-- `for` loop header variables (e.g. `for(Integer i = 0; ...)`) are no longer incorrectly flagged as re-declarations (v1.5.7)
-- Further fixes to preprocessor `#define` collection and substitution from headers (v1.5.7)
-- Switch statement formatting: cases with compound bodies are now indented correctly
+**Quality and Usability Fixes**
+- Removed duplicate autocompletion items by consolidating snippet completion sources
+- Improved docs website search relevance with weighted token and phrase scoring
+- Hardened dependencies and enabled stricter TypeScript checks
 
 
 
