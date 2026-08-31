@@ -267,6 +267,62 @@ function resolvedSymbolToCompletionItem(sym: ResolvedSymbol): CompletionItem {
 	return item;
 }
 
+export function buildKeywordCompletionItems(opts: {
+	includeTextEdit: TextEdit | undefined;
+	defineTextEdit: TextEdit | undefined;
+	includeFilterText: string;
+	defineFilterText: string;
+}): CompletionItem[] {
+	const { includeTextEdit, defineTextEdit, includeFilterText, defineFilterText } = opts;
+	return [
+		{
+			label: '#include',
+			kind: CompletionItemKind.Keyword,
+			detail: 'Preprocessor include directive',
+			insertTextFormat: InsertTextFormat.Snippet,
+			insertText: '#include "${1:header.h}"$0',
+			...(includeTextEdit ? { textEdit: includeTextEdit } : {}),
+			filterText: includeFilterText,
+			data: { source: 'keyword', kind: 'directive', name: '#include' }
+		},
+		{
+			label: 'include',
+			kind: CompletionItemKind.Keyword,
+			detail: 'Preprocessor include directive',
+			insertTextFormat: InsertTextFormat.Snippet,
+			insertText: '#include "${1:header.h}"$0',
+			...(includeTextEdit ? { textEdit: includeTextEdit } : {}),
+			filterText: includeFilterText,
+			data: { source: 'keyword', kind: 'directive', name: '#include' }
+		},
+		{
+			label: '#define',
+			kind: CompletionItemKind.Keyword,
+			detail: 'Preprocessor macro definition',
+			insertTextFormat: InsertTextFormat.Snippet,
+			insertText: '#define ${1:NAME} ${2:value}$0',
+			...(defineTextEdit ? { textEdit: defineTextEdit } : {}),
+			filterText: defineFilterText,
+			data: { source: 'keyword', kind: 'directive', name: '#define' }
+		},
+		{
+			label: 'define',
+			kind: CompletionItemKind.Keyword,
+			detail: 'Preprocessor macro definition',
+			insertTextFormat: InsertTextFormat.Snippet,
+			insertText: '#define ${1:NAME} ${2:value}$0',
+			...(defineTextEdit ? { textEdit: defineTextEdit } : {}),
+			filterText: defineFilterText,
+			data: { source: 'keyword', kind: 'directive', name: '#define' }
+		},
+		{ label: 'return', kind: CompletionItemKind.Keyword, detail: 'Return statement', data: 5 },
+		{ label: 'label', kind: CompletionItemKind.Keyword, detail: 'Label', data: 7 },
+		{ label: 'goto', kind: CompletionItemKind.Keyword, detail: 'Goto statement', data: 8 },
+		{ label: 'continue', kind: CompletionItemKind.Keyword, detail: 'Continue statement', data: 9 },
+		{ label: 'break', kind: CompletionItemKind.Keyword, detail: 'Break statement', data: 10 }
+	];
+}
+
 export function registerCompletionProvider(opts: {
 	connection: Connection;
 	documents: TextDocuments<TextDocument>;
@@ -486,62 +542,13 @@ const detailText = primaryFn.signature ?? '';
 			}
 		}
 
-		// Combine with keyword completions
-		const keywordItems: CompletionItem[] = [
-			{
-				label: '#include',
-				kind: CompletionItemKind.Keyword,
-				detail: 'Preprocessor include directive',
-				insertTextFormat: InsertTextFormat.Snippet,
-				insertText: '#include "${1:header.h}"$0',
-				...(includeTextEdit ? { textEdit: includeTextEdit } : {}),
-				filterText: includeFilterText,
-				data: { source: 'keyword', kind: 'directive', name: '#include' }
-			},
-			{
-				label: 'include',
-				kind: CompletionItemKind.Keyword,
-				detail: 'Preprocessor include directive',
-				insertTextFormat: InsertTextFormat.Snippet,
-				insertText: '#include "${1:header.h}"$0',
-				...(includeTextEdit ? { textEdit: includeTextEdit } : {}),
-				filterText: includeFilterText,
-				data: { source: 'keyword', kind: 'directive', name: '#include' }
-			},
-			{
-				label: '#define',
-				kind: CompletionItemKind.Keyword,
-				detail: 'Preprocessor macro definition',
-				insertTextFormat: InsertTextFormat.Snippet,
-				insertText: '#define ${1:NAME} ${2:value}$0',
-				...(defineTextEdit ? { textEdit: defineTextEdit } : {}),
-				filterText: defineFilterText,
-				data: { source: 'keyword', kind: 'directive', name: '#define' }
-			},
-			{
-				label: 'define',
-				kind: CompletionItemKind.Keyword,
-				detail: 'Preprocessor macro definition',
-				insertTextFormat: InsertTextFormat.Snippet,
-				insertText: '#define ${1:NAME} ${2:value}$0',
-				...(defineTextEdit ? { textEdit: defineTextEdit } : {}),
-				filterText: defineFilterText,
-				data: { source: 'keyword', kind: 'directive', name: '#define' }
-			},
-			{ label: 'if', kind: CompletionItemKind.Keyword, detail: 'Conditional statement', data: 1 },
-			{ label: 'else', kind: CompletionItemKind.Keyword, detail: 'Else clause', data: 2 },
-			{ label: 'while', kind: CompletionItemKind.Keyword, detail: 'While loop', data: 3 },
-			{ label: 'for', kind: CompletionItemKind.Keyword, detail: 'For loop', data: 4 },
-			{ label: 'return', kind: CompletionItemKind.Keyword, detail: 'Return statement', data: 5 },
-			{ label: 'do', kind: CompletionItemKind.Keyword, detail: 'Do loop', data: 6 },
-			{ label: 'label', kind: CompletionItemKind.Keyword, detail: 'Label', data: 7 },
-			{ label: 'goto', kind: CompletionItemKind.Keyword, detail: 'Goto statement', data: 8 },
-			{ label: 'continue', kind: CompletionItemKind.Keyword, detail: 'Continue statement', data: 9 },
-			{ label: 'break', kind: CompletionItemKind.Keyword, detail: 'Break statement', data: 10 },
-			{ label: 'switch', kind: CompletionItemKind.Keyword, detail: 'Switch statement', data: 11 },
-			{ label: 'case', kind: CompletionItemKind.Keyword, detail: 'Case statement', data: 12 },
-			{ label: 'default', kind: CompletionItemKind.Keyword, detail: 'Default statement', data: 13 },
-		];
+		// Keep server-side keyword completions to items not already covered by editor snippets.
+		const keywordItems = buildKeywordCompletionItems({
+			includeTextEdit,
+			defineTextEdit,
+			includeFilterText,
+			defineFilterText
+		});
 
 		// Add type completions
 		const typeItems: CompletionItem[] = Object.keys(typeDocumentation).map((type) => ({
@@ -708,30 +715,6 @@ const detailText = primaryFn.signature ?? '';
 				value: typeDocumentation[labelText]
 			};
 			return item;
-		}
-
-		// Fallback for keywords
-		const keywordDocs: Record<string, string> = {
-			'#include': '**Include Directive**\n\nInclude declarations from another file.\n\n```12dpl\n#include "set_ups.h"\n```',
-			include: '**Include Directive**\n\nInclude declarations from another file.\n\n```12dpl\n#include "set_ups.h"\n```',
-			'#define': '**Define Directive**\n\nDefine a preprocessor macro.\n\n```12dpl\n#define NAME value\n```',
-			define: '**Define Directive**\n\nDefine a preprocessor macro.\n\n```12dpl\n#define NAME value\n```',
-			if: '**Conditional Statement**\n\nExecute code block if condition is true.\n\n```12dpl\nif (condition) { ... }\n```',
-			else: '**Else Clause**\n\nExecute code block if if condition is false.\n\n```12dpl\nelse { ... }\n```',
-			while: '**While Loop**\n\nRepeatedly execute code while condition is true.\n\n```12dpl\nwhile (condition) { ... }\n```',
-			for: '**For Loop**\n\nLoop with init, condition, and increment.\n\n```12dpl\nfor (init; condition; increment) { ... }\n```',
-			return: '**Return Statement**\n\nReturn a value from function.\n\n```12dpl\nreturn value;\n```',
-			void: '**Void Type**\n\nNo return value',
-			int: '**Integer Type**\n\nWhole number',
-			double: '**Double Type**\n\nFloating-point number'
-		};
-
-		const keywordDoc = keywordDocs[getSymbolName(item).toLowerCase()];
-		if (keywordDoc) {
-			item.documentation = {
-				kind: 'markdown',
-				value: keywordDoc
-			};
 		}
 
 		return item;
