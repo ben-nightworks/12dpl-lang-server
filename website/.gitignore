@@ -1,5 +1,6 @@
 # Re-include website source JS (root .gitignore excludes *.js).
 !public/app.js
+!public/search.js
 !public/prism-12dpl.js
 !public/vendor/
 !public/vendor/**/*.js
