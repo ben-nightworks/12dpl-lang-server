@@ -41,6 +41,16 @@
 				"command": "12dpl.compileWithFlags",
 				"title": "12dPL: Compile Current File (Select Flags)",
 				"icon": "$(gear)"
+			},
+			{
+				"command": "12dpl.setCompileTarget",
+				"title": "12dPL: Set as Compile Target",
+				"icon": "$(pin)"
+			},
+			{
+				"command": "12dpl.clearCompileTarget",
+				"title": "12dPL: Clear Compile Target",
+				"icon": "$(pinned)"
 			}
 		],
 		"menus": {
@@ -52,27 +62,43 @@
 				{
 					"command": "12dpl.compileWithFlags",
 					"when": "resourceExtname == .4dm"
+				},
+				{
+					"command": "12dpl.setCompileTarget",
+					"when": "resourceExtname == .4dm"
+				},
+				{
+					"command": "12dpl.clearCompileTarget",
+					"when": "12dpl.hasCompileTarget && (resourceExtname == .4dm || resourceExtname == .h)"
 				}
 			],
 			"editor/context": [
 				{
 					"command": "12dpl.compile",
-					"when": "resourceExtname == .4dm"
+					"when": "resourceExtname == .4dm || (12dpl.hasCompileTarget && resourceExtname == .h)"
 				},
 				{
 					"command": "12dpl.compileWithFlags",
+					"when": "resourceExtname == .4dm || (12dpl.hasCompileTarget && resourceExtname == .h)"
+				},
+				{
+					"command": "12dpl.setCompileTarget",
 					"when": "resourceExtname == .4dm"
+				},
+				{
+					"command": "12dpl.clearCompileTarget",
+					"when": "12dpl.hasCompileTarget && (resourceExtname == .4dm || resourceExtname == .h)"
 				}
 			],
 			"editor/title": [
 				{
 					"command": "12dpl.compile",
-					"when": "resourceExtname == .4dm",
+					"when": "resourceExtname == .4dm || (12dpl.hasCompileTarget && resourceExtname == .h)",
 					"group": "navigation"
 				},
 				{
 					"command": "12dpl.compileWithFlags",
-					"when": "resourceExtname == .4dm",
+					"when": "resourceExtname == .4dm || (12dpl.hasCompileTarget && resourceExtname == .h)",
 					"group": "navigation"
 				}
 			]
