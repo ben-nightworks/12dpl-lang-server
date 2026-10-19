@@ -71,22 +71,6 @@
     "description": "12dPL function Acos"
   },
   {
-    "name": "ADAC_get_xsd_path",
-    "id": 2952,
-    "returnType": "Integer",
-    "parameters": [
-      {
-        "name": "version",
-        "type": "Text"
-      },
-      {
-        "name": "path",
-        "type": "Text"
-      }
-    ],
-    "description": "12dPL function ADAC_get_xsd_path"
-  },
-  {
     "name": "ADAC_Get_XSD_Path",
     "id": 2952,
     "returnType": "Integer",
@@ -101,6 +85,22 @@
       }
     ],
     "description": "12dPL function ADAC_Get_XSD_Path"
+  },
+  {
+    "name": "ADAC_get_xsd_path",
+    "id": 2952,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "version",
+        "type": "Text"
+      },
+      {
+        "name": "path",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function ADAC_get_xsd_path"
   },
   {
     "name": "Add_condition",
@@ -625,6 +625,198 @@
       }
     ],
     "description": "12dPL function Add_result_column"
+  },
+  {
+    "name": "Add_run_macro_action",
+    "id": 8082,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "line",
+        "type": "Log_Line"
+      },
+      {
+        "name": "prompt",
+        "type": "Text"
+      },
+      {
+        "name": "tip",
+        "type": "Text"
+      },
+      {
+        "name": "macro_name",
+        "type": "Text"
+      },
+      {
+        "name": "command_line",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Add_run_macro_action"
+  },
+  {
+    "name": "Add_run_macro_action",
+    "id": 8083,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "line",
+        "type": "Log_Line"
+      },
+      {
+        "name": "prompt",
+        "type": "Text"
+      },
+      {
+        "name": "tip",
+        "type": "Text"
+      },
+      {
+        "name": "macro_name",
+        "type": "Text"
+      },
+      {
+        "name": "command_line",
+        "type": "Text"
+      },
+      {
+        "name": "run_mode",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Add_run_macro_action"
+  },
+  {
+    "name": "Add_run_macro_action",
+    "id": 8084,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "line",
+        "type": "Log_Line"
+      },
+      {
+        "name": "prompt",
+        "type": "Text"
+      },
+      {
+        "name": "tip",
+        "type": "Text"
+      },
+      {
+        "name": "macro_name",
+        "type": "Text"
+      },
+      {
+        "name": "command_line",
+        "type": "Text"
+      },
+      {
+        "name": "run_mode",
+        "type": "Integer"
+      },
+      {
+        "name": "start_attributes",
+        "type": "Attributes"
+      }
+    ],
+    "description": "12dPL function Add_run_macro_action"
+  },
+  {
+    "name": "Add_run_signed_macro_action",
+    "id": 8164,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "line",
+        "type": "Log_Line"
+      },
+      {
+        "name": "prompt",
+        "type": "Text"
+      },
+      {
+        "name": "tip",
+        "type": "Text"
+      },
+      {
+        "name": "macro_name",
+        "type": "Text"
+      },
+      {
+        "name": "command_line",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Add_run_signed_macro_action"
+  },
+  {
+    "name": "Add_run_signed_macro_action",
+    "id": 8165,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "line",
+        "type": "Log_Line"
+      },
+      {
+        "name": "prompt",
+        "type": "Text"
+      },
+      {
+        "name": "tip",
+        "type": "Text"
+      },
+      {
+        "name": "macro_name",
+        "type": "Text"
+      },
+      {
+        "name": "command_line",
+        "type": "Text"
+      },
+      {
+        "name": "run_mode",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Add_run_signed_macro_action"
+  },
+  {
+    "name": "Add_run_signed_macro_action",
+    "id": 8166,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "line",
+        "type": "Log_Line"
+      },
+      {
+        "name": "prompt",
+        "type": "Text"
+      },
+      {
+        "name": "tip",
+        "type": "Text"
+      },
+      {
+        "name": "macro_name",
+        "type": "Text"
+      },
+      {
+        "name": "command_line",
+        "type": "Text"
+      },
+      {
+        "name": "run_mode",
+        "type": "Integer"
+      },
+      {
+        "name": "start_attributes",
+        "type": "Attributes"
+      }
+    ],
+    "description": "12dPL function Add_run_signed_macro_action"
   },
   {
     "name": "Add_table",
@@ -2119,6 +2311,18 @@
     "description": "12dPL function Attribute_exists"
   },
   {
+    "name": "Auto_size_columns",
+    "id": 8126,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "grid",
+        "type": "GridCtrl_Box"
+      }
+    ],
+    "description": "12dPL function Auto_size_columns"
+  },
+  {
     "name": "Backup_version_file",
     "id": 2139,
     "returnType": "Integer",
@@ -2257,6 +2461,18 @@
       }
     ],
     "description": "12dPL function Calc_extent"
+  },
+  {
+    "name": "Calc_full_extent",
+    "id": 8147,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "model",
+        "type": "Model"
+      }
+    ],
+    "description": "12dPL function Calc_full_extent"
   },
   {
     "name": "Calc_super_alignment_equalities",
@@ -3391,6 +3607,30 @@
     "description": "12dPL function Close"
   },
   {
+    "name": "Close_all_menus",
+    "id": 8086,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "mode",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Close_all_menus"
+  },
+  {
+    "name": "Close_all_panels",
+    "id": 8085,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "mode",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Close_all_panels"
+  },
+  {
     "name": "Colour_exists",
     "id": 65,
     "returnType": "Integer",
@@ -3525,6 +3765,38 @@
       },
       {
         "name": "report_overwrite",
+        "type": "Integer"
+      },
+      {
+        "name": "error_msg",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Compare_files"
+  },
+  {
+    "name": "Compare_files",
+    "id": 8118,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "file1",
+        "type": "Text"
+      },
+      {
+        "name": "file2",
+        "type": "Text"
+      },
+      {
+        "name": "report",
+        "type": "Text"
+      },
+      {
+        "name": "report_overwrite",
+        "type": "Integer"
+      },
+      {
+        "name": "ignore_comment",
         "type": "Integer"
       },
       {
@@ -51326,6 +51598,22 @@
     "description": "12dPL function Convert_colour"
   },
   {
+    "name": "Convert_colour2",
+    "id": 8129,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "value",
+        "type": "Integer"
+      },
+      {
+        "name": "name",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Convert_colour2"
+  },
+  {
     "name": "Convert_escape_characters",
     "id": 2810,
     "returnType": "Text",
@@ -51766,17 +52054,65 @@
     "description": "12dPL function Convert_time"
   },
   {
+    "name": "Convert_time",
+    "id": 8110,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "source_time",
+        "type": "Integer64"
+      },
+      {
+        "name": "target_time",
+        "type": "Time"
+      }
+    ],
+    "description": "12dPL function Convert_time"
+  },
+  {
+    "name": "Convert_time",
+    "id": 8111,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "source_time",
+        "type": "Time"
+      },
+      {
+        "name": "target_time",
+        "type": "Integer64"
+      }
+    ],
+    "description": "12dPL function Convert_time"
+  },
+  {
     "name": "Convert_time_to_gmt",
     "id": 8040,
     "returnType": "Integer",
     "parameters": [
       {
-        "name": "time_local",
+        "name": "source_time",
         "type": "Time"
       },
       {
-        "name": "time_gmt",
+        "name": "target_time",
         "type": "Time"
+      }
+    ],
+    "description": "12dPL function Convert_time_to_gmt"
+  },
+  {
+    "name": "Convert_time_to_gmt",
+    "id": 8109,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "source_time",
+        "type": "Integer64"
+      },
+      {
+        "name": "target_time",
+        "type": "Integer64"
       }
     ],
     "description": "12dPL function Convert_time_to_gmt"
@@ -51787,12 +52123,28 @@
     "returnType": "Integer",
     "parameters": [
       {
-        "name": "time_gmt",
+        "name": "source_time",
         "type": "Time"
       },
       {
-        "name": "time_local",
+        "name": "target_time",
         "type": "Time"
+      }
+    ],
+    "description": "12dPL function Convert_time_to_local"
+  },
+  {
+    "name": "Convert_time_to_local",
+    "id": 8108,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "source_time",
+        "type": "Integer64"
+      },
+      {
+        "name": "target_time",
+        "type": "Integer64"
       }
     ],
     "description": "12dPL function Convert_time_to_local"
@@ -52641,6 +52993,114 @@
     "description": "12dPL function Create_arc_3"
   },
   {
+    "name": "Create_arc_geometry",
+    "id": 8153,
+    "returnType": "Arc",
+    "parameters": [
+      {
+        "name": "pc",
+        "type": "Point"
+      },
+      {
+        "name": "rc",
+        "type": "Real"
+      },
+      {
+        "name": "p1",
+        "type": "Point"
+      },
+      {
+        "name": "p2",
+        "type": "Point"
+      }
+    ],
+    "description": "12dPL function Create_arc_geometry"
+  },
+  {
+    "name": "Create_arc_geometry",
+    "id": 8154,
+    "returnType": "Arc",
+    "parameters": [
+      {
+        "name": "xc",
+        "type": "Real"
+      },
+      {
+        "name": "yc",
+        "type": "Real"
+      },
+      {
+        "name": "rc",
+        "type": "Real"
+      },
+      {
+        "name": "x1",
+        "type": "Real"
+      },
+      {
+        "name": "y1",
+        "type": "Real"
+      },
+      {
+        "name": "x2",
+        "type": "Real"
+      },
+      {
+        "name": "y2",
+        "type": "Real"
+      }
+    ],
+    "description": "12dPL function Create_arc_geometry"
+  },
+  {
+    "name": "Create_arc_geometry",
+    "id": 8155,
+    "returnType": "Arc",
+    "parameters": [
+      {
+        "name": "xc",
+        "type": "Real"
+      },
+      {
+        "name": "yc",
+        "type": "Real"
+      },
+      {
+        "name": "zc",
+        "type": "Real"
+      },
+      {
+        "name": "rc",
+        "type": "Real"
+      },
+      {
+        "name": "x1",
+        "type": "Real"
+      },
+      {
+        "name": "y1",
+        "type": "Real"
+      },
+      {
+        "name": "z1",
+        "type": "Real"
+      },
+      {
+        "name": "x2",
+        "type": "Real"
+      },
+      {
+        "name": "y2",
+        "type": "Real"
+      },
+      {
+        "name": "z2",
+        "type": "Real"
+      }
+    ],
+    "description": "12dPL function Create_arc_geometry"
+  },
+  {
     "name": "Create_attributes_box",
     "id": 2210,
     "returnType": "Attributes_Box",
@@ -53052,6 +53512,70 @@
     "description": "12dPL function Create_column_match_condition"
   },
   {
+    "name": "Create_conhost_process",
+    "id": 8094,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "program_name",
+        "type": "Text"
+      },
+      {
+        "name": "command_line",
+        "type": "Text"
+      },
+      {
+        "name": "start_directory",
+        "type": "Text"
+      },
+      {
+        "name": "flags",
+        "type": "Integer"
+      },
+      {
+        "name": "wait",
+        "type": "Integer"
+      },
+      {
+        "name": "inherit",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Create_conhost_process"
+  },
+  {
+    "name": "Create_conhost_process",
+    "id": 8095,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "program_name",
+        "type": "Text"
+      },
+      {
+        "name": "command_line",
+        "type": "Text"
+      },
+      {
+        "name": "start_directory",
+        "type": "Text"
+      },
+      {
+        "name": "flags",
+        "type": "Integer"
+      },
+      {
+        "name": "inherit",
+        "type": "Integer"
+      },
+      {
+        "name": "handle",
+        "type": "Process_Handle"
+      }
+    ],
+    "description": "12dPL function Create_conhost_process"
+  },
+  {
     "name": "Create_date_time_box",
     "id": 1883,
     "returnType": "Date_Time_Box",
@@ -53158,6 +53682,66 @@
       },
       {
         "name": "npits",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Create_drainage"
+  },
+  {
+    "name": "Create_drainage",
+    "id": 8064,
+    "returnType": "Element",
+    "parameters": [
+      {
+        "name": "x",
+        "type": "Real"
+      },
+      {
+        "name": "y",
+        "type": "Real"
+      },
+      {
+        "name": "z",
+        "type": "Real"
+      },
+      {
+        "name": "r",
+        "type": "Real"
+      },
+      {
+        "name": "b",
+        "type": "Integer"
+      },
+      {
+        "name": "num_verts",
+        "type": "Integer"
+      },
+      {
+        "name": "num_pits",
+        "type": "Integer"
+      },
+      {
+        "name": "purpose",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Create_drainage"
+  },
+  {
+    "name": "Create_drainage",
+    "id": 8065,
+    "returnType": "Element",
+    "parameters": [
+      {
+        "name": "num_verts",
+        "type": "Integer"
+      },
+      {
+        "name": "num_pits",
+        "type": "Integer"
+      },
+      {
+        "name": "purpose",
         "type": "Integer"
       }
     ],
@@ -53937,6 +54521,78 @@
     "description": "12dPL function Create_kerb_return_function"
   },
   {
+    "name": "Create_line_geometry",
+    "id": 8150,
+    "returnType": "Line",
+    "parameters": [
+      {
+        "name": "p1",
+        "type": "Point"
+      },
+      {
+        "name": "p2",
+        "type": "Point"
+      }
+    ],
+    "description": "12dPL function Create_line_geometry"
+  },
+  {
+    "name": "Create_line_geometry",
+    "id": 8151,
+    "returnType": "Line",
+    "parameters": [
+      {
+        "name": "x1",
+        "type": "Real"
+      },
+      {
+        "name": "y1",
+        "type": "Real"
+      },
+      {
+        "name": "x2",
+        "type": "Real"
+      },
+      {
+        "name": "y2",
+        "type": "Real"
+      }
+    ],
+    "description": "12dPL function Create_line_geometry"
+  },
+  {
+    "name": "Create_line_geometry",
+    "id": 8152,
+    "returnType": "Line",
+    "parameters": [
+      {
+        "name": "x1",
+        "type": "Real"
+      },
+      {
+        "name": "y1",
+        "type": "Real"
+      },
+      {
+        "name": "z1",
+        "type": "Real"
+      },
+      {
+        "name": "x2",
+        "type": "Real"
+      },
+      {
+        "name": "y2",
+        "type": "Real"
+      },
+      {
+        "name": "z2",
+        "type": "Real"
+      }
+    ],
+    "description": "12dPL function Create_line_geometry"
+  },
+  {
     "name": "Create_linestyle_box",
     "id": 922,
     "returnType": "Linestyle_Box",
@@ -54667,6 +55323,42 @@
     "description": "12dPL function Create_plotter_box"
   },
   {
+    "name": "Create_point_geometry",
+    "id": 8148,
+    "returnType": "Point",
+    "parameters": [
+      {
+        "name": "x",
+        "type": "Real"
+      },
+      {
+        "name": "y",
+        "type": "Real"
+      }
+    ],
+    "description": "12dPL function Create_point_geometry"
+  },
+  {
+    "name": "Create_point_geometry",
+    "id": 8149,
+    "returnType": "Point",
+    "parameters": [
+      {
+        "name": "x",
+        "type": "Real"
+      },
+      {
+        "name": "y",
+        "type": "Real"
+      },
+      {
+        "name": "z",
+        "type": "Real"
+      }
+    ],
+    "description": "12dPL function Create_point_geometry"
+  },
+  {
     "name": "Create_polygon_box",
     "id": 2246,
     "returnType": "Polygon_Box",
@@ -55062,6 +55754,186 @@
     "description": "12dPL function Create_sheet_size_box"
   },
   {
+    "name": "Create_signed_macro",
+    "id": 8156,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "macro_name",
+        "type": "Text"
+      },
+      {
+        "name": "run_now",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Create_signed_macro"
+  },
+  {
+    "name": "Create_signed_macro",
+    "id": 8160,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "macro_name",
+        "type": "Text"
+      },
+      {
+        "name": "macro_attributes",
+        "type": "Attributes"
+      },
+      {
+        "name": "run_now",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Create_signed_macro"
+  },
+  {
+    "name": "Create_signed_macro",
+    "id": 8161,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "macro_name",
+        "type": "Text"
+      },
+      {
+        "name": "run_now",
+        "type": "Integer"
+      },
+      {
+        "name": "handle",
+        "type": "Macro_Handle"
+      }
+    ],
+    "description": "12dPL function Create_signed_macro"
+  },
+  {
+    "name": "Create_signed_macro_as_child",
+    "id": 8157,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "macro_name",
+        "type": "Text"
+      },
+      {
+        "name": "run_now",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Create_signed_macro_as_child"
+  },
+  {
+    "name": "Create_signed_macro_as_child",
+    "id": 8158,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "macro_name",
+        "type": "Text"
+      },
+      {
+        "name": "command_line",
+        "type": "Text"
+      },
+      {
+        "name": "macro_attributes",
+        "type": "Attributes"
+      },
+      {
+        "name": "run_flags",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Create_signed_macro_as_child"
+  },
+  {
+    "name": "Create_signed_macro_as_child",
+    "id": 8159,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "macro_name",
+        "type": "Text"
+      },
+      {
+        "name": "command_line",
+        "type": "Text"
+      },
+      {
+        "name": "macro_attributes",
+        "type": "Attributes"
+      },
+      {
+        "name": "macro_attributes_at_exit",
+        "type": "Attributes"
+      },
+      {
+        "name": "run_flags",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Create_signed_macro_as_child"
+  },
+  {
+    "name": "Create_signed_macro_log_line",
+    "id": 8162,
+    "returnType": "Log_Line",
+    "parameters": [
+      {
+        "name": "message",
+        "type": "Text"
+      },
+      {
+        "name": "log_level",
+        "type": "Integer"
+      },
+      {
+        "name": "macro",
+        "type": "Text"
+      },
+      {
+        "name": "select_cmd_line",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Create_signed_macro_log_line"
+  },
+  {
+    "name": "Create_signed_macro_log_line",
+    "id": 8163,
+    "returnType": "Log_Line",
+    "parameters": [
+      {
+        "name": "message",
+        "type": "Text"
+      },
+      {
+        "name": "log_level",
+        "type": "Integer"
+      },
+      {
+        "name": "macro",
+        "type": "Text"
+      },
+      {
+        "name": "select_cmd_line",
+        "type": "Text"
+      },
+      {
+        "name": "menu_names",
+        "type": "Dynamic_Text"
+      },
+      {
+        "name": "menu_command_lines",
+        "type": "Dynamic_Text"
+      }
+    ],
+    "description": "12dPL function Create_signed_macro_log_line"
+  },
+  {
     "name": "Create_slider_box",
     "id": 2706,
     "returnType": "Slider_Box",
@@ -55306,25 +56178,6 @@
     "description": "12dPL function Create_super"
   },
   {
-    "name": "Create_super_alignment",
-    "id": 2120,
-    "returnType": "Element",
-    "parameters": [],
-    "description": "12dPL function Create_super_alignment"
-  },
-  {
-    "name": "Create_super_alignment",
-    "id": 2121,
-    "returnType": "Element",
-    "parameters": [
-      {
-        "name": "seed",
-        "type": "Element"
-      }
-    ],
-    "description": "12dPL function Create_super_alignment"
-  },
-  {
     "name": "Create_super2",
     "id": 8016,
     "returnType": "Element",
@@ -55403,6 +56256,25 @@
       }
     ],
     "description": "12dPL function Create_super2"
+  },
+  {
+    "name": "Create_super_alignment",
+    "id": 2120,
+    "returnType": "Element",
+    "parameters": [],
+    "description": "12dPL function Create_super_alignment"
+  },
+  {
+    "name": "Create_super_alignment",
+    "id": 2121,
+    "returnType": "Element",
+    "parameters": [
+      {
+        "name": "seed",
+        "type": "Element"
+      }
+    ],
+    "description": "12dPL function Create_super_alignment"
   },
   {
     "name": "Create_symbol_box",
@@ -56079,6 +56951,50 @@
       {
         "name": "holes_depth",
         "type": "Real"
+      },
+      {
+        "name": "error_message",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Create_trimesh_from_polygon"
+  },
+  {
+    "name": "Create_trimesh_from_polygon",
+    "id": 8078,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "polygon",
+        "type": "Element"
+      },
+      {
+        "name": "trimesh_offset",
+        "type": "Real"
+      },
+      {
+        "name": "trimesh_depth",
+        "type": "Real"
+      },
+      {
+        "name": "do_holes",
+        "type": "Integer"
+      },
+      {
+        "name": "holes_offset",
+        "type": "Real"
+      },
+      {
+        "name": "holes_depth",
+        "type": "Real"
+      },
+      {
+        "name": "trimeshes",
+        "type": "Dynamic_Element"
+      },
+      {
+        "name": "hole_trimeshes",
+        "type": "Dynamic_Element"
       },
       {
         "name": "error_message",
@@ -62208,6 +63124,18 @@
     "description": "12dPL function Explode_vertex_text_border"
   },
   {
+    "name": "Export_project_settings",
+    "id": 8077,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "filename",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Export_project_settings"
+  },
+  {
     "name": "Extend_string",
     "id": 664,
     "returnType": "Integer",
@@ -62334,6 +63262,38 @@
       },
       {
         "name": "whole_word",
+        "type": "Integer"
+      },
+      {
+        "name": "found",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function File_contains"
+  },
+  {
+    "name": "File_contains",
+    "id": 8119,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "file",
+        "type": "Text"
+      },
+      {
+        "name": "search_text",
+        "type": "Text"
+      },
+      {
+        "name": "case_sensitive",
+        "type": "Integer"
+      },
+      {
+        "name": "whole_word",
+        "type": "Integer"
+      },
+      {
+        "name": "ignore_comment",
         "type": "Integer"
       },
       {
@@ -62988,6 +63948,26 @@
     "description": "12dPL function Find_models"
   },
   {
+    "name": "Find_models",
+    "id": 8130,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "name_match",
+        "type": "Text"
+      },
+      {
+        "name": "case_mode",
+        "type": "Integer"
+      },
+      {
+        "name": "model_names",
+        "type": "Dynamic_Text"
+      }
+    ],
+    "description": "12dPL function Find_models"
+  },
+  {
     "name": "Find_sdr_string",
     "id": 1896,
     "returnType": "Integer",
@@ -63112,6 +64092,26 @@
     "description": "12dPL function Find_tins"
   },
   {
+    "name": "Find_tins",
+    "id": 8131,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "name_match",
+        "type": "Text"
+      },
+      {
+        "name": "case_mode",
+        "type": "Integer"
+      },
+      {
+        "name": "tin_names",
+        "type": "Dynamic_Text"
+      }
+    ],
+    "description": "12dPL function Find_tins"
+  },
+  {
     "name": "Find_views",
     "id": 3948,
     "returnType": "Integer",
@@ -63119,6 +64119,26 @@
       {
         "name": "name_match",
         "type": "Text"
+      },
+      {
+        "name": "view_names",
+        "type": "Dynamic_Text"
+      }
+    ],
+    "description": "12dPL function Find_views"
+  },
+  {
+    "name": "Find_views",
+    "id": 8132,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "name_match",
+        "type": "Text"
+      },
+      {
+        "name": "case_mode",
+        "type": "Integer"
       },
       {
         "name": "view_names",
@@ -63202,6 +64222,13 @@
       }
     ],
     "description": "12dPL function Fitarc"
+  },
+  {
+    "name": "Flash_console",
+    "id": 8146,
+    "returnType": "void",
+    "parameters": [],
+    "description": "12dPL function Flash_console"
   },
   {
     "name": "Flip_triangles",
@@ -63770,7 +64797,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -63786,7 +64813,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -63914,7 +64941,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "name",
@@ -63934,7 +64961,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "name",
@@ -66608,6 +67635,22 @@
     "description": "12dPL function Get_auto_cut_paste"
   },
   {
+    "name": "Get_auto_format_grid",
+    "id": 8128,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "grid",
+        "type": "GridCtrl_Box"
+      },
+      {
+        "name": "tf",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Get_auto_format_grid"
+  },
+  {
     "name": "Get_billboard_size",
     "id": 1932,
     "returnType": "Integer",
@@ -66876,6 +67919,26 @@
     "description": "12dPL function Get_char"
   },
   {
+    "name": "Get_child",
+    "id": 8135,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "group",
+        "type": "Log_Line"
+      },
+      {
+        "name": "child_number",
+        "type": "Integer"
+      },
+      {
+        "name": "child",
+        "type": "Log_Line"
+      }
+    ],
+    "description": "12dPL function Get_child"
+  },
+  {
     "name": "Get_child_node",
     "id": 2424,
     "returnType": "Integer",
@@ -66916,6 +67979,46 @@
     "description": "12dPL function Get_child_node"
   },
   {
+    "name": "Get_choices_list",
+    "id": 8113,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "box",
+        "type": "Integer_Box"
+      },
+      {
+        "name": "no_choices",
+        "type": "Integer"
+      },
+      {
+        "name": "choices",
+        "type": "Dynamic_Text"
+      }
+    ],
+    "description": "12dPL function Get_choices_list"
+  },
+  {
+    "name": "Get_choices_list",
+    "id": 8116,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "box",
+        "type": "Real_Box"
+      },
+      {
+        "name": "no_choices",
+        "type": "Integer"
+      },
+      {
+        "name": "choices",
+        "type": "Dynamic_Text"
+      }
+    ],
+    "description": "12dPL function Get_choices_list"
+  },
+  {
     "name": "Get_circle_data",
     "id": 310,
     "returnType": "Integer",
@@ -66954,6 +68057,22 @@
       }
     ],
     "description": "12dPL function Get_clipboard_text"
+  },
+  {
+    "name": "Get_collapsed",
+    "id": 8137,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "widget",
+        "type": "Widget"
+      },
+      {
+        "name": "state",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Get_collapsed"
   },
   {
     "name": "Get_colour",
@@ -67006,6 +68125,26 @@
       }
     ],
     "description": "12dPL function Get_colour_value"
+  },
+  {
+    "name": "Get_column_width",
+    "id": 8060,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "grid",
+        "type": "GridCtrl_Box"
+      },
+      {
+        "name": "col",
+        "type": "Integer"
+      },
+      {
+        "name": "width",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Get_column_width"
   },
   {
     "name": "Get_command_argument",
@@ -73567,6 +74706,26 @@
     "description": "12dPL function Get_element"
   },
   {
+    "name": "Get_element",
+    "id": 8168,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "model_id",
+        "type": "Integer64"
+      },
+      {
+        "name": "element_id",
+        "type": "Integer64"
+      },
+      {
+        "name": "elt",
+        "type": "Element"
+      }
+    ],
+    "description": "12dPL function Get_element"
+  },
+  {
     "name": "Get_elements",
     "id": 132,
     "returnType": "Integer",
@@ -74495,6 +75654,38 @@
     "description": "12dPL function Get_field_type"
   },
   {
+    "name": "Get_file_accessed_time_gmt",
+    "id": 8104,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "file_name",
+        "type": "Text"
+      },
+      {
+        "name": "time",
+        "type": "Integer64"
+      }
+    ],
+    "description": "12dPL function Get_file_accessed_time_gmt"
+  },
+  {
+    "name": "Get_file_accessed_time_gmt",
+    "id": 8107,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "file_name",
+        "type": "Text"
+      },
+      {
+        "name": "time",
+        "type": "Time"
+      }
+    ],
+    "description": "12dPL function Get_file_accessed_time_gmt"
+  },
+  {
     "name": "Get_file_accessed_time_utc",
     "id": 3877,
     "returnType": "Integer",
@@ -74509,6 +75700,38 @@
       }
     ],
     "description": "12dPL function Get_file_accessed_time_utc"
+  },
+  {
+    "name": "Get_file_created_time_gmt",
+    "id": 8102,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "file_name",
+        "type": "Text"
+      },
+      {
+        "name": "time",
+        "type": "Integer64"
+      }
+    ],
+    "description": "12dPL function Get_file_created_time_gmt"
+  },
+  {
+    "name": "Get_file_created_time_gmt",
+    "id": 8105,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "file_name",
+        "type": "Text"
+      },
+      {
+        "name": "time",
+        "type": "Time"
+      }
+    ],
+    "description": "12dPL function Get_file_created_time_gmt"
   },
   {
     "name": "Get_file_created_time_utc",
@@ -74541,6 +75764,38 @@
       }
     ],
     "description": "12dPL function Get_file_encoding"
+  },
+  {
+    "name": "Get_file_modified_time_gmt",
+    "id": 8103,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "file_name",
+        "type": "Text"
+      },
+      {
+        "name": "time",
+        "type": "Integer64"
+      }
+    ],
+    "description": "12dPL function Get_file_modified_time_gmt"
+  },
+  {
+    "name": "Get_file_modified_time_gmt",
+    "id": 8106,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "file_name",
+        "type": "Text"
+      },
+      {
+        "name": "time",
+        "type": "Time"
+      }
+    ],
+    "description": "12dPL function Get_file_modified_time_gmt"
   },
   {
     "name": "Get_file_modified_time_utc",
@@ -74697,7 +75952,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -74717,7 +75972,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -74737,7 +75992,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -74757,7 +76012,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -74857,7 +76112,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_no",
@@ -74877,7 +76132,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_no",
@@ -74897,7 +76152,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_no",
@@ -74917,7 +76172,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_no",
@@ -75017,7 +76272,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_no",
@@ -75037,7 +76292,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_no",
@@ -75097,7 +76352,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -75117,7 +76372,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -75126,6 +76381,26 @@
       {
         "name": "att",
         "type": "Integer64"
+      }
+    ],
+    "description": "12dPL function Get_function_attribute"
+  },
+  {
+    "name": "Get_function_attribute",
+    "id": 3266,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "fcn",
+        "type": "Macro_Function"
+      },
+      {
+        "name": "att_name",
+        "type": "Text"
+      },
+      {
+        "name": "att",
+        "type": "Guid"
       }
     ],
     "description": "12dPL function Get_function_attribute"
@@ -75152,32 +76427,12 @@
   },
   {
     "name": "Get_function_attribute",
-    "id": 3266,
-    "returnType": "Integer",
-    "parameters": [
-      {
-        "name": "fcn",
-        "type": "Macro_Function"
-      },
-      {
-        "name": "att_name",
-        "type": "Text"
-      },
-      {
-        "name": "att",
-        "type": "Guid"
-      }
-    ],
-    "description": "12dPL function Get_function_attribute"
-  },
-  {
-    "name": "Get_function_attribute",
     "id": 3267,
     "returnType": "Integer",
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_no",
@@ -75197,7 +76452,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_no",
@@ -75417,7 +76672,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -75437,7 +76692,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -75457,7 +76712,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -75477,7 +76732,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -75497,7 +76752,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -75517,7 +76772,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -75537,7 +76792,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -75557,7 +76812,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -75577,7 +76832,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -75597,7 +76852,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -75657,7 +76912,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -75677,31 +76932,11 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
         "type": "Text"
-      },
-      {
-        "name": "att_len",
-        "type": "Integer"
-      }
-    ],
-    "description": "12dPL function Get_function_attribute_length"
-  },
-  {
-    "name": "Get_function_attribute_length",
-    "id": 1127,
-    "returnType": "Integer",
-    "parameters": [
-      {
-        "name": "fcn",
-        "type": "Function"
-      },
-      {
-        "name": "att_no",
-        "type": "Integer"
       },
       {
         "name": "att_len",
@@ -75731,24 +76966,24 @@
     "description": "12dPL function Get_function_attribute_length"
   },
   {
-    "name": "Get_function_attribute_name",
-    "id": 1123,
+    "name": "Get_function_attribute_length",
+    "id": 1127,
     "returnType": "Integer",
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_no",
         "type": "Integer"
       },
       {
-        "name": "name",
-        "type": "Text"
+        "name": "att_len",
+        "type": "Integer"
       }
     ],
-    "description": "12dPL function Get_function_attribute_name"
+    "description": "12dPL function Get_function_attribute_length"
   },
   {
     "name": "Get_function_attribute_name",
@@ -75769,6 +77004,46 @@
       }
     ],
     "description": "12dPL function Get_function_attribute_name"
+  },
+  {
+    "name": "Get_function_attribute_name",
+    "id": 1123,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "fcn",
+        "type": "Macro_Function"
+      },
+      {
+        "name": "att_no",
+        "type": "Integer"
+      },
+      {
+        "name": "name",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Get_function_attribute_name"
+  },
+  {
+    "name": "Get_function_attribute_type",
+    "id": 1124,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "fcn",
+        "type": "Macro_Function"
+      },
+      {
+        "name": "att_name",
+        "type": "Text"
+      },
+      {
+        "name": "att_type",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Get_function_attribute_type"
   },
   {
     "name": "Get_function_attribute_type",
@@ -75792,52 +77067,32 @@
   },
   {
     "name": "Get_function_attribute_type",
-    "id": 1124,
-    "returnType": "Integer",
-    "parameters": [
-      {
-        "name": "fcn",
-        "type": "Macro_Function"
-      },
-      {
-        "name": "att_name",
-        "type": "Text"
-      },
-      {
-        "name": "att_type",
-        "type": "Integer"
-      }
-    ],
-    "description": "12dPL function Get_function_attribute_type"
-  },
-  {
-    "name": "Get_function_attribute_type",
-    "id": 1125,
-    "returnType": "Integer",
-    "parameters": [
-      {
-        "name": "fcn",
-        "type": "Macro_Function"
-      },
-      {
-        "name": "att_name",
-        "type": "Integer"
-      },
-      {
-        "name": "att_type",
-        "type": "Integer"
-      }
-    ],
-    "description": "12dPL function Get_function_attribute_type"
-  },
-  {
-    "name": "Get_function_attribute_type",
     "id": 1125,
     "returnType": "Integer",
     "parameters": [
       {
         "name": "fcn",
         "type": "Function"
+      },
+      {
+        "name": "att_name",
+        "type": "Integer"
+      },
+      {
+        "name": "att_type",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Get_function_attribute_type"
+  },
+  {
+    "name": "Get_function_attribute_type",
+    "id": 1125,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "fcn",
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -76133,6 +77388,22 @@
       }
     ],
     "description": "12dPL function Get_geodetic_projection_datum_names"
+  },
+  {
+    "name": "Get_gmt",
+    "id": 8099,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "box",
+        "type": "Date_Time_Box"
+      },
+      {
+        "name": "tf",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Get_gmt"
   },
   {
     "name": "Get_graph_data",
@@ -76802,6 +78073,38 @@
     "description": "12dPL function Get_id"
   },
   {
+    "name": "Get_id",
+    "id": 8169,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "model",
+        "type": "Model"
+      },
+      {
+        "name": "id",
+        "type": "Integer64"
+      }
+    ],
+    "description": "12dPL function Get_id"
+  },
+  {
+    "name": "Get_id",
+    "id": 8170,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "element",
+        "type": "Element"
+      },
+      {
+        "name": "id",
+        "type": "Integer64"
+      }
+    ],
+    "description": "12dPL function Get_id"
+  },
+  {
     "name": "Get_id64",
     "id": 5423,
     "returnType": "Integer64",
@@ -77444,6 +78747,22 @@
     "description": "12dPL function Get_level"
   },
   {
+    "name": "Get_level",
+    "id": 8133,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "line",
+        "type": "Log_Line"
+      },
+      {
+        "name": "level",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Get_level"
+  },
+  {
     "name": "Get_libraries",
     "id": 2862,
     "returnType": "Integer",
@@ -77472,6 +78791,78 @@
     "description": "12dPL function Get_license_client"
   },
   {
+    "name": "Get_license_dongle",
+    "id": 8120,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "dongle",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Get_license_dongle"
+  },
+  {
+    "name": "Get_license_final_date",
+    "id": 8124,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "t",
+        "type": "Time"
+      }
+    ],
+    "description": "12dPL function Get_license_final_date"
+  },
+  {
+    "name": "Get_license_points_limit",
+    "id": 8121,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "limit",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Get_license_points_limit"
+  },
+  {
+    "name": "Get_license_remaining_days",
+    "id": 8122,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "days",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Get_license_remaining_days"
+  },
+  {
+    "name": "Get_license_start_date",
+    "id": 8123,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "t",
+        "type": "Time"
+      }
+    ],
+    "description": "12dPL function Get_license_start_date"
+  },
+  {
+    "name": "Get_license_support_date",
+    "id": 8125,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "t",
+        "type": "Time"
+      }
+    ],
+    "description": "12dPL function Get_license_support_date"
+  },
+  {
     "name": "Get_line",
     "id": 275,
     "returnType": "Integer",
@@ -77486,6 +78877,26 @@
       }
     ],
     "description": "12dPL function Get_line"
+  },
+  {
+    "name": "Get_linestyle_type_group",
+    "id": 8141,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "linestyle_name",
+        "type": "Text"
+      },
+      {
+        "name": "type",
+        "type": "Integer"
+      },
+      {
+        "name": "group",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Get_linestyle_type_group"
   },
   {
     "name": "Get_local_angle",
@@ -78792,6 +80203,22 @@
       {
         "name": "model_id",
         "type": "Uid"
+      },
+      {
+        "name": "model",
+        "type": "Model"
+      }
+    ],
+    "description": "12dPL function Get_model"
+  },
+  {
+    "name": "Get_model",
+    "id": 8167,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "model_id",
+        "type": "Integer64"
       },
       {
         "name": "model",
@@ -80173,6 +81600,22 @@
       }
     ],
     "description": "12dPL function Get_number_of_attributes"
+  },
+  {
+    "name": "Get_number_of_children",
+    "id": 8134,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "group",
+        "type": "Log_Line"
+      },
+      {
+        "name": "number",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Get_number_of_children"
   },
   {
     "name": "Get_number_of_command_arguments",
@@ -84997,161 +86440,6 @@
     "description": "12dPL function Get_size"
   },
   {
-    "name": "Create_super_align",
-    "id": 2120,
-    "returnType": "Element",
-    "parameters": [],
-    "description": "Create an Element of type Super_Alignment. The function return value gives the actual Element created. If the Super Alignment string could not be created, then the returned Element will be null."
-  },
-  {
-    "name": "Create_super_align",
-    "id": 2121,
-    "returnType": "Element",
-    "parameters": [
-      {
-        "name": "seed",
-        "type": "Element"
-      }
-    ],
-    "description": "Create an Element of type Super_Alignment, and set the colour, name, style etc. of the new string to be the same as those from the Element seed. If the Super Alignment string could not be created, then the returned Element will be null."
-  },
-  {
-    "name": "Create_process",
-    "id": 2635,
-    "returnType": "Integer",
-    "parameters": [
-      {
-        "name": "program_name",
-        "type": "Text"
-      },
-      {
-        "name": "command_line",
-        "type": "Text"
-      },
-      {
-        "name": "start_directory",
-        "type": "Text"
-      },
-      {
-        "name": "flags",
-        "type": "Integer"
-      },
-      {
-        "name": "inherit",
-        "type": "Integer"
-      },
-      {
-        "name": "&handle",
-        "type": "Process_Handle"
-      }
-    ],
-    "description": "This function calls the Microsoft CreateProcess function as defined in http://msdn.microsoft.com/en-us/library/ms682425%28v=vs.85%29.aspx. The 12d function gives access to the Microsoft CreateProcess arguments that are in bold (and also not have a // in front of them): BOOL WINAPI CreateProcess( __in_opt LPCTSTR lpApplicationName, __inout_opt LPTSTR lpCommandLine, // __in_opt LPSECURITY_ATTRIBUTES lpProcessAttributes, // __in_opt LPSECURITY_ATTRIBUTES lpThreadAttributes, __in BOOL bInheritHandles, __in DWORD dwCreationFlags, // __in_opt LPVOID lpEnvironment, __in_opt LPCTSTR lpCurrentDirectory, // __in LPSTARTUPINFO lpStartupInfo, // __out LPPROCESS_INFORMATION lpProcessInformation ); where program_name is passed as lpApplicationName, command_line is passed as dwCreationFlags lpCommandLine, start_directory is passed as lpCurrentDirectory, flags is passed as dwCreationFlags and inherit is passed as bInheritHandles. The handle to the created process is returned in Unknown handle. The macro can check if the process is still running by calling Process_exists. A function return value of zero indicates the function was successful. Note: The difference between this function and Create_process(Text program_name,Text command_line,Text start_directory,Integer flags,Integer wait,Integer inherit) is that a handle to the process is created and returned as handle and this can be checked to see if the process is still running. So there is no wait flag but there is more flexibility since the macro can check with Process_exists and decide when, and when not to wait. Note: Create_process can not be called from 12d Model Practise version."
-  },
-  {
-    "name": "Get_end_length",
-    "id": 2843,
-    "returnType": "Real",
-    "parameters": [
-      {
-        "name": "curve",
-        "type": "Curve"
-      }
-    ],
-    "description": "Get the end length of Curve curve and return it as the function return value."
-  },
-  {
-    "name": "View_remove_plot_data_textstyle",
-    "id": 3083,
-    "returnType": "Integer",
-    "parameters": [
-      {
-        "name": "view",
-        "type": "View"
-      },
-      {
-        "name": "model_name",
-        "type": "Text"
-      },
-      {
-        "name": "prefix",
-        "type": "Text"
-      },
-      {
-        "name": "&internal_return",
-        "type": "Integer"
-      }
-    ],
-    "description": "Intended for 12D developers use only"
-  },
-  {
-    "name": "Get_name",
-    "id": 431,
-    "returnType": "Integer",
-    "parameters": [
-      {
-        "name": "tin",
-        "type": "Tin"
-      },
-      {
-        "name": "&tin_name",
-        "type": "Text"
-      }
-    ],
-    "description": "Get the name of the Tin tin. The tin name is returned in the Text tin_name. A function return value of zero indicates success. If tin is null, the function return value is non-zero. Tin_models(Tin tin, Dynamic_Text &models_used) Name Integer Tin_models(Tin tin, Dynamic_Text &models_used) Description Get the names of all the models that were used to create the Tin tin. The model names are returned in the Dynamic_Text models_used. A function return value of zero indicates that the view names were returned successfully."
-  },
-  {
-    "name": "Get_size",
-    "id": 1352,
-    "returnType": "Integer",
-    "parameters": [
-      {
-        "name": "&actual_width",
-        "type": "Integer"
-      },
-      {
-        "name": "&actual_height",
-        "type": "Integer"
-      }
-    ],
-    "description": "Get the width and height in pixels of the Draw_Box drawing area on the panel and return the values in actual_width and actual_height. See 5.61.10.11 Draw_Box for the calculations of width and height. A function return value of zero indicates the width and height were successfully returned."
-  },
-  {
-    "name": "Create_button",
-    "id": 7672,
-    "returnType": "Button",
-    "parameters": [
-      {
-        "name": "title_text",
-        "type": "Text"
-      },
-      {
-        "name": "reply",
-        "type": "Text"
-      },
-      {
-        "name": "bitmap_name",
-        "type": "Text"
-      }
-    ],
-    "description": "Create a Widget of type Button. The Button is created with image using file named bitmap_name and title_text a the text on the Button. The Text reply is the command that is sent by the Button back to the macro via Wait_on_widgets when the Button is clicked on. See Wait_on_widgets(Integer &id,Text &cmd,Text &msg). The function return value is the created Button. Panels and Widgets Page 1155 12d Model Macro Manual"
-  },
-  {
-    "name": "Set_anchor",
-    "id": 2822,
-    "returnType": "Integer",
-    "parameters": [
-      {
-        "name": "curve",
-        "type": "Curve"
-      },
-      {
-        "name": "point",
-        "type": "Point"
-      }
-    ],
-    "description": "For the end of the Curve curve where the radius is infinity, set the co-ordinates of that position to point. For a leading transition, the anchor point is the start of curve. For a trailing transition, the anchor point is the end of curve. Page 238 Curve Chapter 5 12dPL Library Calls A function return value of zero indicates that the function call was successful."
-  },
-  {
     "name": "Get_size",
     "id": 1644,
     "returnType": "Integer",
@@ -88185,7 +89473,7 @@
     "returnType": "Integer",
     "parameters": [
       {
-        "name": "element",
+        "name": "",
         "type": "Element"
       },
       {
@@ -91632,6 +92920,26 @@
     "description": "12dPL function Get_symbol_controlbar"
   },
   {
+    "name": "Get_symbol_type_group",
+    "id": 8140,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "symbol_name",
+        "type": "Text"
+      },
+      {
+        "name": "type",
+        "type": "Integer"
+      },
+      {
+        "name": "group",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Get_symbol_type_group"
+  },
+  {
     "name": "Get_tab",
     "id": 1514,
     "returnType": "Integer",
@@ -92189,7 +93497,7 @@
   },
   {
     "name": "Get_text_xy",
-    "id": 100454,
+    "id": 454,
     "returnType": "Integer",
     "parameters": [
       {
@@ -92416,6 +93724,22 @@
     "description": "12dPL function Get_time_created"
   },
   {
+    "name": "Get_time_created",
+    "id": 8088,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "line",
+        "type": "Log_Line"
+      },
+      {
+        "name": "time",
+        "type": "Time"
+      }
+    ],
+    "description": "12dPL function Get_time_created"
+  },
+  {
     "name": "Get_time_result_column",
     "id": 2519,
     "returnType": "Integer",
@@ -92454,6 +93778,22 @@
       }
     ],
     "description": "12dPL function Get_time_result_column"
+  },
+  {
+    "name": "Get_time_taken",
+    "id": 8090,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "line",
+        "type": "Log_Line"
+      },
+      {
+        "name": "taken",
+        "type": "Integer64"
+      }
+    ],
+    "description": "12dPL function Get_time_taken"
   },
   {
     "name": "Get_time_updated",
@@ -92527,6 +93867,22 @@
       {
         "name": "elt",
         "type": "Model"
+      },
+      {
+        "name": "time",
+        "type": "Time"
+      }
+    ],
+    "description": "12dPL function Get_time_updated"
+  },
+  {
+    "name": "Get_time_updated",
+    "id": 8089,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "line",
+        "type": "Log_Line"
       },
       {
         "name": "time",
@@ -94296,10 +95652,70 @@
     "description": "12dPL function Get_water_defaults_fs_tin"
   },
   {
+    "name": "Get_water_defaults_fs_tin",
+    "id": 8066,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "purpose",
+        "type": "Integer"
+      },
+      {
+        "name": "tin_name",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Get_water_defaults_fs_tin"
+  },
+  {
     "name": "Get_water_defaults_house_connection",
     "id": 7943,
     "returnType": "Integer",
     "parameters": [
+      {
+        "name": "view",
+        "type": "Text"
+      },
+      {
+        "name": "diameter",
+        "type": "Real"
+      },
+      {
+        "name": "grade",
+        "type": "Real"
+      },
+      {
+        "name": "cover",
+        "type": "Real"
+      },
+      {
+        "name": "length",
+        "type": "Real"
+      },
+      {
+        "name": "colour",
+        "type": "Integer"
+      },
+      {
+        "name": "name",
+        "type": "Text"
+      },
+      {
+        "name": "connection_type",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Get_water_defaults_house_connection"
+  },
+  {
+    "name": "Get_water_defaults_house_connection",
+    "id": 8070,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "purpose",
+        "type": "Integer"
+      },
       {
         "name": "view",
         "type": "Text"
@@ -94360,6 +95776,34 @@
     "description": "12dPL function Get_water_defaults_manhole"
   },
   {
+    "name": "Get_water_defaults_manhole",
+    "id": 8067,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "purpose",
+        "type": "Integer"
+      },
+      {
+        "name": "diameter",
+        "type": "Real"
+      },
+      {
+        "name": "drop",
+        "type": "Real"
+      },
+      {
+        "name": "name",
+        "type": "Text"
+      },
+      {
+        "name": "type",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Get_water_defaults_manhole"
+  },
+  {
     "name": "Get_water_defaults_pipe",
     "id": 7941,
     "returnType": "Integer",
@@ -94384,10 +95828,70 @@
     "description": "12dPL function Get_water_defaults_pipe"
   },
   {
+    "name": "Get_water_defaults_pipe",
+    "id": 8068,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "purpose",
+        "type": "Integer"
+      },
+      {
+        "name": "diameter",
+        "type": "Real"
+      },
+      {
+        "name": "minimum_grade",
+        "type": "Real"
+      },
+      {
+        "name": "minimum_cover",
+        "type": "Real"
+      },
+      {
+        "name": "type",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Get_water_defaults_pipe"
+  },
+  {
     "name": "Get_water_defaults_property_control",
     "id": 7942,
     "returnType": "Integer",
     "parameters": [
+      {
+        "name": "diameter",
+        "type": "Real"
+      },
+      {
+        "name": "grade",
+        "type": "Real"
+      },
+      {
+        "name": "cover",
+        "type": "Real"
+      },
+      {
+        "name": "colour",
+        "type": "Integer"
+      },
+      {
+        "name": "name",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Get_water_defaults_property_control"
+  },
+  {
+    "name": "Get_water_defaults_property_control",
+    "id": 8069,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "purpose",
+        "type": "Integer"
+      },
       {
         "name": "diameter",
         "type": "Real"
@@ -94584,6 +96088,22 @@
     "description": "12dPL function Get_XML_declaration"
   },
   {
+    "name": "Get_xsd",
+    "id": 8100,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "box",
+        "type": "Date_Time_Box"
+      },
+      {
+        "name": "tf",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Get_xsd"
+  },
+  {
     "name": "Get_y",
     "id": 242,
     "returnType": "Real",
@@ -94608,6 +96128,22 @@
     "description": "12dPL function Get_z"
   },
   {
+    "name": "Get_zulu",
+    "id": 8101,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "box",
+        "type": "Date_Time_Box"
+      },
+      {
+        "name": "tf",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Get_zulu"
+  },
+  {
     "name": "Getenv",
     "id": 1087,
     "returnType": "Text",
@@ -94618,30 +96154,6 @@
       }
     ],
     "description": "12dPL function Getenv"
-  },
-  {
-    "name": "GIS_connect_to_server",
-    "id": 2873,
-    "returnType": "Integer",
-    "parameters": [
-      {
-        "name": "server_name",
-        "type": "Text"
-      },
-      {
-        "name": "output_schema_file",
-        "type": "Text"
-      },
-      {
-        "name": "output_capabilities_file",
-        "type": "Text"
-      },
-      {
-        "name": "err",
-        "type": "Text"
-      }
-    ],
-    "description": "12dPL function GIS_connect_to_server"
   },
   {
     "name": "GIS_Connect_to_server",
@@ -94666,6 +96178,30 @@
       }
     ],
     "description": "12dPL function GIS_Connect_to_server"
+  },
+  {
+    "name": "GIS_connect_to_server",
+    "id": 2873,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "server_name",
+        "type": "Text"
+      },
+      {
+        "name": "output_schema_file",
+        "type": "Text"
+      },
+      {
+        "name": "output_capabilities_file",
+        "type": "Text"
+      },
+      {
+        "name": "err",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function GIS_connect_to_server"
   },
   {
     "name": "GIS_download_feature",
@@ -94756,26 +96292,6 @@
     "description": "12dPL function GIS_Download_feature"
   },
   {
-    "name": "GIS_set_credentials",
-    "id": 2875,
-    "returnType": "Integer",
-    "parameters": [
-      {
-        "name": "server_name",
-        "type": "Text"
-      },
-      {
-        "name": "user",
-        "type": "Text"
-      },
-      {
-        "name": "password",
-        "type": "Text"
-      }
-    ],
-    "description": "12dPL function GIS_set_credentials"
-  },
-  {
     "name": "GIS_Set_credentials",
     "id": 2875,
     "returnType": "Integer",
@@ -94796,11 +96312,24 @@
     "description": "12dPL function GIS_Set_credentials"
   },
   {
-    "name": "GIS_upload_feature",
-    "id": 2880,
+    "name": "GIS_set_credentials",
+    "id": 2875,
     "returnType": "Integer",
-    "parameters": [],
-    "description": "12dPL function GIS_upload_feature"
+    "parameters": [
+      {
+        "name": "server_name",
+        "type": "Text"
+      },
+      {
+        "name": "user",
+        "type": "Text"
+      },
+      {
+        "name": "password",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function GIS_set_credentials"
   },
   {
     "name": "GIS_Upload_feature",
@@ -94808,6 +96337,13 @@
     "returnType": "Integer",
     "parameters": [],
     "description": "12dPL function GIS_Upload_feature"
+  },
+  {
+    "name": "GIS_upload_feature",
+    "id": 2880,
+    "returnType": "Integer",
+    "parameters": [],
+    "description": "12dPL function GIS_upload_feature"
   },
   {
     "name": "Grid_cell_to_grid",
@@ -96247,6 +97783,18 @@
     "description": "12dPL function Hp_degrees_to_radians"
   },
   {
+    "name": "Import_project_settings",
+    "id": 8076,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "filename",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Import_project_settings"
+  },
+  {
     "name": "Inquire_style_exists",
     "id": 3932,
     "returnType": "Integer",
@@ -97165,7 +98713,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -97189,7 +98737,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -99137,6 +100685,13 @@
       }
     ],
     "description": "12dPL function Is_super_alignment_solved"
+  },
+  {
+    "name": "Is_testsuite_active",
+    "id": 8112,
+    "returnType": "Integer",
+    "parameters": [],
+    "description": "12dPL function Is_testsuite_active"
   },
   {
     "name": "Is_text_node",
@@ -101924,6 +103479,66 @@
     "description": "12dPL function Plotter_prompt"
   },
   {
+    "name": "Point_cloud_drape_against_string",
+    "id": 8138,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "cloud_strings",
+        "type": "Dynamic_Element"
+      },
+      {
+        "name": "string",
+        "type": "Element"
+      },
+      {
+        "name": "width",
+        "type": "Real"
+      },
+      {
+        "name": "height",
+        "type": "Real"
+      },
+      {
+        "name": "results",
+        "type": "Dynamic_Element"
+      }
+    ],
+    "description": "12dPL function Point_cloud_drape_against_string"
+  },
+  {
+    "name": "Point_cloud_drape_against_strings",
+    "id": 8139,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "cloud_strings",
+        "type": "Dynamic_Element"
+      },
+      {
+        "name": "strings",
+        "type": "Dynamic_Element"
+      },
+      {
+        "name": "width",
+        "type": "Real"
+      },
+      {
+        "name": "height",
+        "type": "Real"
+      },
+      {
+        "name": "output_model_stem",
+        "type": "Text"
+      },
+      {
+        "name": "results",
+        "type": "Dynamic_Element"
+      }
+    ],
+    "description": "12dPL function Point_cloud_drape_against_strings"
+  },
+  {
     "name": "Polygons_clip",
     "id": 1440,
     "returnType": "Integer",
@@ -102597,6 +104212,54 @@
       {
         "name": "handle",
         "type": "Process_Handle"
+      }
+    ],
+    "description": "12dPL function Process_exists"
+  },
+  {
+    "name": "Process_exists",
+    "id": 8091,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "pid",
+        "type": "Integer"
+      },
+      {
+        "name": "method",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Process_exists"
+  },
+  {
+    "name": "Process_exists",
+    "id": 8092,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "pid",
+        "type": "Integer64"
+      },
+      {
+        "name": "method",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Process_exists"
+  },
+  {
+    "name": "Process_exists",
+    "id": 8093,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "name",
+        "type": "Text"
+      },
+      {
+        "name": "method",
+        "type": "Integer"
       }
     ],
     "description": "12dPL function Process_exists"
@@ -103454,6 +105117,22 @@
     "description": "12dPL function Read_templates"
   },
   {
+    "name": "Read_XML",
+    "id": 8080,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "log_box",
+        "type": "Log_Box"
+      },
+      {
+        "name": "file_name",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Read_XML"
+  },
+  {
     "name": "Read_XML_document",
     "id": 2419,
     "returnType": "Integer",
@@ -103560,6 +105239,18 @@
       {
         "name": "vd",
         "type": "View_Draw"
+      }
+    ],
+    "description": "12dPL function Redraw"
+  },
+  {
+    "name": "Redraw",
+    "id": 8059,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "grid",
+        "type": "GridCtrl_Box"
       }
     ],
     "description": "12dPL function Redraw"
@@ -103891,6 +105582,18 @@
       }
     ],
     "description": "12dPL function Reset_null_triangles"
+  },
+  {
+    "name": "Reset_validation_state",
+    "id": 8117,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "widget",
+        "type": "Widget"
+      }
+    ],
+    "description": "12dPL function Reset_validation_state"
   },
   {
     "name": "Resolve_parameter",
@@ -107164,6 +108867,38 @@
     "description": "12dPL function Set_auto_cut_paste"
   },
   {
+    "name": "Set_auto_format_grid",
+    "id": 8127,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "grid",
+        "type": "GridCtrl_Box"
+      },
+      {
+        "name": "tf",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Set_auto_format_grid"
+  },
+  {
+    "name": "Set_bad_chars",
+    "id": 8062,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "box",
+        "type": "Input_Box"
+      },
+      {
+        "name": "bad_chars",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Set_bad_chars"
+  },
+  {
     "name": "Set_bk_colour",
     "id": 1347,
     "returnType": "Integer",
@@ -107628,6 +109363,38 @@
     "description": "12dPL function Set_char"
   },
   {
+    "name": "Set_choices_list",
+    "id": 8114,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "box",
+        "type": "Integer_Box"
+      },
+      {
+        "name": "choices",
+        "type": "Dynamic_Text"
+      }
+    ],
+    "description": "12dPL function Set_choices_list"
+  },
+  {
+    "name": "Set_choices_list",
+    "id": 8115,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "box",
+        "type": "Real_Box"
+      },
+      {
+        "name": "choices",
+        "type": "Dynamic_Text"
+      }
+    ],
+    "description": "12dPL function Set_choices_list"
+  },
+  {
     "name": "Set_circle_data",
     "id": 311,
     "returnType": "Integer",
@@ -107656,6 +109423,30 @@
     "description": "12dPL function Set_circle_data"
   },
   {
+    "name": "Set_client_size",
+    "id": 8142,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "panel",
+        "type": "Panel"
+      },
+      {
+        "name": "width",
+        "type": "Integer"
+      },
+      {
+        "name": "height",
+        "type": "Integer"
+      },
+      {
+        "name": "redraw",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Set_client_size"
+  },
+  {
     "name": "Set_clipboard_text",
     "id": 1521,
     "returnType": "Integer",
@@ -107666,6 +109457,22 @@
       }
     ],
     "description": "12dPL function Set_clipboard_text"
+  },
+  {
+    "name": "Set_collapsed",
+    "id": 8136,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "widget",
+        "type": "Widget"
+      },
+      {
+        "name": "state",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Set_collapsed"
   },
   {
     "name": "Set_colour",
@@ -109289,31 +111096,31 @@
         "type": "Element"
       },
       {
-        "name": "x[]",
+        "name": "x",
         "type": "Real"
       },
       {
-        "name": "y[]",
+        "name": "y",
         "type": "Real"
       },
       {
-        "name": "z[]",
+        "name": "z",
         "type": "Real"
       },
       {
-        "name": "r[]",
+        "name": "r",
         "type": "Real"
       },
       {
-        "name": "b[]",
+        "name": "f",
         "type": "Integer"
       },
       {
-        "name": "num_verts",
+        "name": "num_pts",
         "type": "Integer"
       },
       {
-        "name": "start_vert",
+        "name": "offset",
         "type": "Integer"
       }
     ],
@@ -112425,7 +114232,7 @@
   },
   {
     "name": "Set_face_data",
-    "id": 10080,
+    "id": 80,
     "returnType": "Integer",
     "parameters": [
       {
@@ -112433,15 +114240,15 @@
         "type": "Element"
       },
       {
-        "name": "x[]",
+        "name": "x",
         "type": "Real"
       },
       {
-        "name": "y[]",
+        "name": "y",
         "type": "Real"
       },
       {
-        "name": "z[]",
+        "name": "z",
         "type": "Real"
       },
       {
@@ -112453,7 +114260,7 @@
   },
   {
     "name": "Set_face_data",
-    "id": 10081,
+    "id": 81,
     "returnType": "Integer",
     "parameters": [
       {
@@ -112461,15 +114268,15 @@
         "type": "Element"
       },
       {
-        "name": "x[]",
+        "name": "x",
         "type": "Real"
       },
       {
-        "name": "y[]",
+        "name": "y",
         "type": "Real"
       },
       {
-        "name": "z[]",
+        "name": "z",
         "type": "Real"
       },
       {
@@ -112477,7 +114284,7 @@
         "type": "Integer"
       },
       {
-        "name": "start_point",
+        "name": "offset",
         "type": "Integer"
       }
     ],
@@ -112770,7 +114577,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -112790,7 +114597,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -112799,26 +114606,6 @@
       {
         "name": "att",
         "type": "Text"
-      }
-    ],
-    "description": "12dPL function Set_function_attribute"
-  },
-  {
-    "name": "Set_function_attribute",
-    "id": 1129,
-    "returnType": "Integer",
-    "parameters": [
-      {
-        "name": "fcn",
-        "type": "Function"
-      },
-      {
-        "name": "att_name",
-        "type": "Text"
-      },
-      {
-        "name": "att",
-        "type": "Integer"
       }
     ],
     "description": "12dPL function Set_function_attribute"
@@ -112845,12 +114632,12 @@
   },
   {
     "name": "Set_function_attribute",
-    "id": 1130,
+    "id": 1129,
     "returnType": "Integer",
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -112858,7 +114645,7 @@
       },
       {
         "name": "att",
-        "type": "Real"
+        "type": "Integer"
       }
     ],
     "description": "12dPL function Set_function_attribute"
@@ -112879,6 +114666,46 @@
       {
         "name": "att",
         "type": "Real"
+      }
+    ],
+    "description": "12dPL function Set_function_attribute"
+  },
+  {
+    "name": "Set_function_attribute",
+    "id": 1130,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "fcn",
+        "type": "Macro_Function"
+      },
+      {
+        "name": "att_name",
+        "type": "Text"
+      },
+      {
+        "name": "att",
+        "type": "Real"
+      }
+    ],
+    "description": "12dPL function Set_function_attribute"
+  },
+  {
+    "name": "Set_function_attribute",
+    "id": 1131,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "fcn",
+        "type": "Function"
+      },
+      {
+        "name": "att_no",
+        "type": "Integer"
+      },
+      {
+        "name": "att",
+        "type": "Text"
       }
     ],
     "description": "12dPL function Set_function_attribute"
@@ -112905,7 +114732,7 @@
   },
   {
     "name": "Set_function_attribute",
-    "id": 1131,
+    "id": 1132,
     "returnType": "Integer",
     "parameters": [
       {
@@ -112918,7 +114745,7 @@
       },
       {
         "name": "att",
-        "type": "Text"
+        "type": "Integer"
       }
     ],
     "description": "12dPL function Set_function_attribute"
@@ -112931,26 +114758,6 @@
       {
         "name": "fcn",
         "type": "Macro_Function"
-      },
-      {
-        "name": "att_no",
-        "type": "Integer"
-      },
-      {
-        "name": "att",
-        "type": "Integer"
-      }
-    ],
-    "description": "12dPL function Set_function_attribute"
-  },
-  {
-    "name": "Set_function_attribute",
-    "id": 1132,
-    "returnType": "Integer",
-    "parameters": [
-      {
-        "name": "fcn",
-        "type": "Function"
       },
       {
         "name": "att_no",
@@ -112970,7 +114777,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_no",
@@ -112990,7 +114797,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_no",
@@ -113170,7 +114977,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -113190,7 +114997,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -113250,7 +115057,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_no",
@@ -113270,7 +115077,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_no",
@@ -113290,7 +115097,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_no",
@@ -113310,7 +115117,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_no",
@@ -113330,7 +115137,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -113350,7 +115157,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -113450,7 +115257,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -113470,7 +115277,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -113490,7 +115297,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -113510,7 +115317,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -113530,7 +115337,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -113550,7 +115357,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -113570,7 +115377,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -113590,7 +115397,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -113610,7 +115417,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -113630,7 +115437,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -113690,7 +115497,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Function"
+        "type": "Macro_Function"
       },
       {
         "name": "att_name",
@@ -113710,7 +115517,7 @@
     "parameters": [
       {
         "name": "fcn",
-        "type": "Macro_Function"
+        "type": "Function"
       },
       {
         "name": "att_name",
@@ -113854,6 +115661,22 @@
       }
     ],
     "description": "12dPL function Set_gmt"
+  },
+  {
+    "name": "Set_good_chars",
+    "id": 8063,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "box",
+        "type": "Input_Box"
+      },
+      {
+        "name": "good_chars",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Set_good_chars"
   },
   {
     "name": "Set_graph_data",
@@ -118608,6 +120431,22 @@
       },
       {
         "name": "left_hand_side",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Set_radio"
+  },
+  {
+    "name": "Set_radio",
+    "id": 8061,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "box",
+        "type": "Named_Tick_Box"
+      },
+      {
+        "name": "radio_on",
         "type": "Integer"
       }
     ],
@@ -125043,7 +126882,7 @@
   },
   {
     "name": "Set_text_xy",
-    "id": 100462,
+    "id": 462,
     "returnType": "Integer",
     "parameters": [
       {
@@ -125193,6 +127032,22 @@
       {
         "name": "elt",
         "type": "Model"
+      },
+      {
+        "name": "time",
+        "type": "Time"
+      }
+    ],
+    "description": "12dPL function Set_time_updated"
+  },
+  {
+    "name": "Set_time_updated",
+    "id": 8087,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "line",
+        "type": "Log_Line"
       },
       {
         "name": "time",
@@ -125966,10 +127821,70 @@
     "description": "12dPL function Set_water_defaults_fs_tin"
   },
   {
+    "name": "Set_water_defaults_fs_tin",
+    "id": 8071,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "purpose",
+        "type": "Integer"
+      },
+      {
+        "name": "tin_name",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Set_water_defaults_fs_tin"
+  },
+  {
     "name": "Set_water_defaults_house_connection",
     "id": 7948,
     "returnType": "Integer",
     "parameters": [
+      {
+        "name": "view",
+        "type": "Text"
+      },
+      {
+        "name": "diameter",
+        "type": "Real"
+      },
+      {
+        "name": "grade",
+        "type": "Real"
+      },
+      {
+        "name": "cover",
+        "type": "Real"
+      },
+      {
+        "name": "length",
+        "type": "Real"
+      },
+      {
+        "name": "colour",
+        "type": "Integer"
+      },
+      {
+        "name": "name",
+        "type": "Text"
+      },
+      {
+        "name": "connection_type",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Set_water_defaults_house_connection"
+  },
+  {
+    "name": "Set_water_defaults_house_connection",
+    "id": 8075,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "purpose",
+        "type": "Integer"
+      },
       {
         "name": "view",
         "type": "Text"
@@ -126030,6 +127945,34 @@
     "description": "12dPL function Set_water_defaults_manhole"
   },
   {
+    "name": "Set_water_defaults_manhole",
+    "id": 8072,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "purpose",
+        "type": "Integer"
+      },
+      {
+        "name": "diameter",
+        "type": "Real"
+      },
+      {
+        "name": "drop",
+        "type": "Real"
+      },
+      {
+        "name": "name",
+        "type": "Text"
+      },
+      {
+        "name": "type",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Set_water_defaults_manhole"
+  },
+  {
     "name": "Set_water_defaults_pipe",
     "id": 7946,
     "returnType": "Integer",
@@ -126054,10 +127997,70 @@
     "description": "12dPL function Set_water_defaults_pipe"
   },
   {
+    "name": "Set_water_defaults_pipe",
+    "id": 8073,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "purpose",
+        "type": "Integer"
+      },
+      {
+        "name": "diameter",
+        "type": "Real"
+      },
+      {
+        "name": "minimum_grade",
+        "type": "Real"
+      },
+      {
+        "name": "minimum_cover",
+        "type": "Real"
+      },
+      {
+        "name": "type",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Set_water_defaults_pipe"
+  },
+  {
     "name": "Set_water_defaults_property_control",
     "id": 7947,
     "returnType": "Integer",
     "parameters": [
+      {
+        "name": "diameter",
+        "type": "Real"
+      },
+      {
+        "name": "grade",
+        "type": "Real"
+      },
+      {
+        "name": "cover",
+        "type": "Real"
+      },
+      {
+        "name": "colour",
+        "type": "Integer"
+      },
+      {
+        "name": "name",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Set_water_defaults_property_control"
+  },
+  {
+    "name": "Set_water_defaults_property_control",
+    "id": 8074,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "purpose",
+        "type": "Integer"
+      },
       {
         "name": "diameter",
         "type": "Real"
@@ -126114,6 +128117,22 @@
     "description": "12dPL function Set_whiteout"
   },
   {
+    "name": "Set_widget_allow_test_case",
+    "id": 8096,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "widget",
+        "type": "Widget"
+      },
+      {
+        "name": "onoff",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Set_widget_allow_test_case"
+  },
+  {
     "name": "Set_width_in_chars",
     "id": 1042,
     "returnType": "Integer",
@@ -126144,6 +128163,30 @@
       }
     ],
     "description": "12dPL function Set_wildcard"
+  },
+  {
+    "name": "Set_window_size",
+    "id": 8143,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "panel",
+        "type": "Panel"
+      },
+      {
+        "name": "width",
+        "type": "Integer"
+      },
+      {
+        "name": "height",
+        "type": "Integer"
+      },
+      {
+        "name": "redraw",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Set_window_size"
   },
   {
     "name": "Set_word_wrap",
@@ -126218,6 +128261,22 @@
     "description": "12dPL function Set_XML_declaration"
   },
   {
+    "name": "Set_xsd",
+    "id": 8097,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "box",
+        "type": "Date_Time_Box"
+      },
+      {
+        "name": "tf",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Set_xsd"
+  },
+  {
     "name": "Set_y",
     "id": 245,
     "returnType": "Real",
@@ -126248,6 +128307,22 @@
       }
     ],
     "description": "12dPL function Set_z"
+  },
+  {
+    "name": "Set_zulu",
+    "id": 8098,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "box",
+        "type": "Date_Time_Box"
+      },
+      {
+        "name": "tf",
+        "type": "Integer"
+      }
+    ],
+    "description": "12dPL function Set_zulu"
   },
   {
     "name": "Share_in_model",
@@ -130002,6 +132077,42 @@
     "description": "12dPL function Text_lower"
   },
   {
+    "name": "Text_trim",
+    "id": 8056,
+    "returnType": "Text",
+    "parameters": [
+      {
+        "name": "text",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Text_trim"
+  },
+  {
+    "name": "Text_trim_left",
+    "id": 8057,
+    "returnType": "Text",
+    "parameters": [
+      {
+        "name": "text",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Text_trim_left"
+  },
+  {
+    "name": "Text_trim_right",
+    "id": 8058,
+    "returnType": "Text",
+    "parameters": [
+      {
+        "name": "text",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Text_trim_right"
+  },
+  {
     "name": "Text_units_prompt",
     "id": 826,
     "returnType": "Integer",
@@ -130780,6 +132891,66 @@
       }
     ],
     "description": "12dPL function Tin_rename"
+  },
+  {
+    "name": "Tin_section",
+    "id": 8081,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "tin",
+        "type": "Tin"
+      },
+      {
+        "name": "x1",
+        "type": "Real"
+      },
+      {
+        "name": "y1",
+        "type": "Real"
+      },
+      {
+        "name": "x2",
+        "type": "Real"
+      },
+      {
+        "name": "y2",
+        "type": "Real"
+      },
+      {
+        "name": "num_part",
+        "type": "Integer"
+      },
+      {
+        "name": "part_length",
+        "type": "Dynamic_Integer"
+      },
+      {
+        "name": "ts",
+        "type": "Dynamic_Integer"
+      },
+      {
+        "name": "xs",
+        "type": "Dynamic_Real"
+      },
+      {
+        "name": "ys",
+        "type": "Dynamic_Real"
+      },
+      {
+        "name": "zs",
+        "type": "Dynamic_Real"
+      },
+      {
+        "name": "cs",
+        "type": "Dynamic_Real"
+      },
+      {
+        "name": "ds",
+        "type": "Dynamic_Integer"
+      }
+    ],
+    "description": "12dPL function Tin_section"
   },
   {
     "name": "Tin_slope",
@@ -134149,6 +136320,22 @@
     "description": "12dPL function Valid_attribute_xpath"
   },
   {
+    "name": "Valid_function_name",
+    "id": 8144,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "old_name",
+        "type": "Text"
+      },
+      {
+        "name": "new_name",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Valid_function_name"
+  },
+  {
     "name": "Valid_linestyle_name",
     "id": 2281,
     "returnType": "Integer",
@@ -134211,6 +136398,22 @@
       }
     ],
     "description": "12dPL function Valid_symbol_name"
+  },
+  {
+    "name": "Valid_template_name",
+    "id": 8145,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "old_name",
+        "type": "Text"
+      },
+      {
+        "name": "new_name",
+        "type": "Text"
+      }
+    ],
+    "description": "12dPL function Valid_template_name"
   },
   {
     "name": "Valid_tin_name",
@@ -136026,24 +138229,12 @@
   },
   {
     "name": "View_redraw",
-    "id": 3510001,
+    "id": 351,
     "returnType": "Integer",
     "parameters": [
       {
         "name": "view",
         "type": "View"
-      }
-    ],
-    "description": "12dPL function View_redraw"
-  },
-  {
-    "name": "View_redraw",
-    "id": 3510000,
-    "returnType": "Integer",
-    "parameters": [
-      {
-        "name": "data",
-        "type": "Dynamic_Element"
       }
     ],
     "description": "12dPL function View_redraw"
@@ -137784,6 +139975,34 @@
       {
         "name": "null_value",
         "type": "Real"
+      }
+    ],
+    "description": "12dPL function Write_XML"
+  },
+  {
+    "name": "Write_XML",
+    "id": 8079,
+    "returnType": "Integer",
+    "parameters": [
+      {
+        "name": "log_box",
+        "type": "Log_Box"
+      },
+      {
+        "name": "file",
+        "type": "File"
+      },
+      {
+        "name": "filter_level",
+        "type": "Integer"
+      },
+      {
+        "name": "indent_level",
+        "type": "Integer"
+      },
+      {
+        "name": "decimal_places",
+        "type": "Integer"
       }
     ],
     "description": "12dPL function Write_XML"
