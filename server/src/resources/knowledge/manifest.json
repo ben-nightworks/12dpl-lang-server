@@ -1,0 +1,11 @@
+{
+	"source": "MacroProgramming",
+	"commit": "781d2f7",
+	"syncedAt": "2026-10-22",
+	"guides": [
+		"guide/instructions.md",
+		"guide/create-macro.md"
+	],
+	"docs": 23,
+	"examples": 0
+}
