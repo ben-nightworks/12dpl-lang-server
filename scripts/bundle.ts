@@ -1,12 +1,13 @@
 /**
  * esbuild-based bundler for the 12dPL VS Code extension.
  *
- * Produces two single-file CJS bundles:
+ * Produces three single-file CJS bundles:
  *   client/out/extension.js  — the VS Code extension host entry
  *   server/out/server.js     — the language server process entry
+ *   server/out/mcpServer.js  — the MCP server process entry (macro assistant)
  *
- * JSON resource files are copied to server/out/resources/ so they
- * can be loaded at runtime via fs.readFileSync.
+ * Resource files (function JSON and the MCP knowledge base) are copied to
+ * server/out/resources/ so they can be loaded at runtime via fs.readFileSync.
  */
 
 import { join, resolve } from 'path';
@@ -61,6 +62,15 @@ await build({
 	plugins: [antlr4CjsPlugin],
 });
 console.log('✓ Server bundled → server/out/server.js');
+
+// ── Bundle MCP server ────────────────────────────────────────────────────────
+await build({
+	...shared,
+	entryPoints: [join(root, 'server/src/mcpServer.ts')],
+	outfile: join(root, 'server/out/mcpServer.js'),
+	plugins: [antlr4CjsPlugin],
+});
+console.log('✓ MCP server bundled → server/out/mcpServer.js');
 
 // ── Copy resource JSON files ─────────────────────────────────────────────────
 const resSrc = join(root, 'server/src/resources');

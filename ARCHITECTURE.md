@@ -438,6 +438,19 @@ registerDefinitionProvider({ connection, documents, symbolResolver });
 registerFormattingProvider({ connection, documents });
 ```
 
+### 5. MCP Server (`server/src/mcpServer.ts`, `server/src/mcp/`)
+
+A second process entry, bundled to `server/out/mcpServer.js`, that serves the **12dPL Macro Assistant** to MCP clients over stdio. The client registers it with VS Code through `lm.registerMcpServerDefinitionProvider` (`client/src/mcpFeature.ts`) and runs it on the editor's own Node runtime (`process.execPath` with `ELECTRON_RUN_AS_NODE`). Settings reach it as `TWELVEDPL_MCP_*` environment variables (`mcp/config.ts`).
+
+It reuses the service layer rather than duplicating it:
+
+- `MacroValidator` builds `DocumentService` → `IncludeService` → `DiagnosticService` around a one-document store, so a macro is validated (includes and all) exactly as an open editor tab is, then adds `gotchaRules` — static checks for mistakes that compile cleanly but fail inside 12d Model.
+- `FunctionCatalog` wraps `PrototypeService` for lookup and search, and attaches lines from the curated guides that mention the function.
+- `KnowledgeBase` loads `resources/knowledge/` (a snapshot of the macro-writing guides and docs, refreshed with `scripts/sync-mcp-knowledge.ts`) plus folders from `12dpl.mcp.knowledgePaths`, splits markdown into sections and indexes them for BM25 search.
+- `compiler.ts` runs `cc4d.exe` the same way the editor's compile command does; `scaffold.ts` produces the macro project templates.
+
+stdout carries the protocol, so `mcp/stdoutGuard.ts` (imported first) redirects `console.log` to stderr for the shared modules.
+
 ---
 
 ## Dependency Graph
@@ -457,6 +470,14 @@ server.ts
 ```
 
 No circular dependencies. Services depend on other services only in a DAG.
+
+```
+mcpServer.ts
+  └── mcp/tools                     → KnowledgeBase, FunctionCatalog, MacroValidator, compiler, scaffold
+        ├── mcp/MacroValidator      → DocumentService, IncludeService, DiagnosticService, gotchaRules
+        ├── mcp/FunctionCatalog     → PrototypeService, KnowledgeBase
+        └── mcp/KnowledgeBase       → resources/knowledge/ + 12dpl.mcp.knowledgePaths folders
+```
 
 ---
 

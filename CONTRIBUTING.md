@@ -18,6 +18,7 @@ Key folders:
 - `client/` — VS Code extension source (entry: `client/src/extension.ts`)
 - `server/` — language server source (entry: `server/src/server.ts`)
 - `server/src/resources/` — JSON resources used at runtime (`functions.enriched.json`, `functions.compiler.json`)
+- `server/src/mcp/` — the 12dPL Macro Assistant MCP server (entry: `server/src/mcpServer.ts`); its bundled knowledge is in `server/src/resources/knowledge/`
 - `tests/` — unit/integration tests run under Bun
 
 See individual modules under `server/src/providers/` for completion, hover and formatting logic.
@@ -188,6 +189,18 @@ Source artifacts and regeneration:
 - Raw compiler outputs and processing scripts are in `compiler/prototypes/`:
 	- `compiler_prototypes.xml`
 	- `compiler_prototypes_list.txt`
+
+## Macro Assistant knowledge (MCP server)
+
+The MCP server bundles a snapshot of the macro-writing guides and 12dPL reference docs in `server/src/resources/knowledge/`, taken from a MacroProgramming-style workspace (`CLAUDE.md`, `.github/skills/create-macro/SKILL.md`, `docs/*.md`). `manifest.json` records the source commit. To refresh it:
+
+```bash
+bun scripts/sync-mcp-knowledge.ts <path-to-MacroProgramming>
+```
+
+Example macros are left out by default because they are mostly third-party code; add `--with-examples` to bundle them. Users can load their own docs and examples at runtime with the `12dpl.mcp.knowledgePaths` setting.
+
+To try the server outside VS Code, run `bun server/src/mcpServer.ts` (or `node server/out/mcpServer.js` after `bun run bundle`) from an MCP client. `tests/mcpServer.test.ts` covers it end to end.
 
 ## Screenshots & GIFs (developer notes)
 
