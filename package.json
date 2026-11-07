@@ -51,6 +51,16 @@
 				"command": "12dpl.clearCompileTarget",
 				"title": "12dPL: Clear Compile Target",
 				"icon": "$(pinned)"
+			},
+			{
+				"command": "12dpl.copyMcpServerConfig",
+				"title": "12dPL: Copy MCP Server Configuration"
+			}
+		],
+		"mcpServerDefinitionProviders": [
+			{
+				"id": "12dpl.macroAssistant",
+				"label": "12dPL Macro Assistant"
 			}
 		],
 		"menus": {
@@ -263,6 +273,21 @@
 					"type": "number",
 					"default": 100,
 					"description": "Maximum line length before the formatter inserts a line break at the nearest safe point (after a comma or logical operator). Set to 0 to disable (default)."
+				},
+				"12dpl.mcp.enabled": {
+					"scope": "window",
+					"type": "boolean",
+					"default": true,
+					"description": "Offer the 12dPL Macro Assistant MCP server to chat in VS Code (requires VS Code 1.101 or later). It gives agents the macro-writing guides, function lookup, validation, cc4d compiling and project scaffolding."
+				},
+				"12dpl.mcp.knowledgePaths": {
+					"scope": "window",
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"default": [],
+					"description": "Extra folders for the 12dPL Macro Assistant to learn from, such as a MacroProgramming workspace. Markdown files become searchable docs (a root CLAUDE.md and docs/*.md replace the bundled copies) and .4dm/.h files become example macros. Folders containing a package.json are skipped. Supports ${workspaceFolder} and ${userHome}."
 				},
 				"langServer.maxNumberOfProblems": {
 					"scope": "resource",

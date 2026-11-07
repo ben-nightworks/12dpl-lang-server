@@ -14,6 +14,11 @@ export interface FunctionData {
 	returnType: string;
 	parameters: Array<{ name: string; type: string }>;
 	description: string;
+	/**
+	 * Which resource the entry came from. Compiler-only overloads borrow the
+	 * description of an enriched overload with the same name.
+	 */
+	source?: 'enriched' | 'compiler';
 }
 
 /**
@@ -34,7 +39,7 @@ export function loadPrototypes(): FunctionData[] {
 		const functions: FunctionData[] = JSON.parse(fs.readFileSync(enrichedPath, 'utf-8'));
 		for (const func of functions) {
 			baseByName.set(func.name, func);
-			results.push(func);
+			results.push({ ...func, source: 'enriched' });
 		}
 	} else {
 		console.error('Enriched functions JSON file not found:', enrichedPath);
@@ -48,7 +53,8 @@ export function loadPrototypes(): FunctionData[] {
 				...func,
 				description: (base?.description && base.description.trim().length > 0)
 					? base.description
-					: func.description
+					: func.description,
+				source: 'compiler'
 			});
 		}
 	} else {

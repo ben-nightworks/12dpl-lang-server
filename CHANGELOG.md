@@ -474,6 +474,19 @@ Release of [v1.3.0] to the VS Code Marketplace.
 
 ---
 
+## [Unreleased]
+
+### New Features
+- **12dPL Macro Assistant (MCP server)**: The extension now registers an MCP server with VS Code chat (VS Code 1.101+). It gives agents:
+	- Macro-writing guides and the 12dPL reference docs, searchable by topic (`get_macro_guide`, `search_knowledge`, `read_knowledge`).
+	- Built-in function lookup with overloads and recorded gotchas (`lookup_function`, `search_functions`).
+	- Offline validation that runs the language server's checks plus rules for mistakes that compile but crash 12d Model (`validate_macro`).
+	- Compiling with `cc4d.exe` with parsed errors (`compile_macro`), and project scaffolding for headless, panel, Source_Box and tabbed macros (`scaffold_macro`).
+	- Example macro search over user folders (`find_examples`, `read_example`) and the `create_macro` / `review_macro` prompts.
+- **New settings**: `12dpl.mcp.enabled` and `12dpl.mcp.knowledgePaths`.
+- **New command**: `12dPL: Copy MCP Server Configuration` for MCP clients outside VS Code chat.
+
+---
 # Template
 
 ## [vX.X.X] - (Date)
