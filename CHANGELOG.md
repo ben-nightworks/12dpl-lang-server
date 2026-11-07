@@ -482,6 +482,10 @@ Release of [v1.3.0] to the VS Code Marketplace.
 - **Custom knowledge sources**: Added `12dpl.mcp.knowledgePaths` so users can include their own documentation and example macros.
 - **MCP client configuration**: Added the `12dpl.mcp.enabled` setting and the `12dPL: Copy MCP Server Configuration` command for clients outside VS Code Chat.
 
+### Bug Fixes
+- **Terminal Go-To-Label** (#177): Fixed parsing labels at the end of a block so go-to-label navigation works reliably.
+- **Multiline Function Declarations** (#178): Fixed handling of function declarations where the opening parenthesis is on the following line.
+
 ### Overview
 - **AI-assisted macro development**: v1.7.0 brings 12dPL documentation, examples, validation, compilation, and project scaffolding into AI chat workflows.
 

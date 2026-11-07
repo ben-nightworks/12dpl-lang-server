@@ -51,12 +51,23 @@ This repository’s documentation is split into the following Markdown files:
 
 ### What's New in v1.7.0
 
+- **Compile Target Pinning** (#93): Added a pinned compile target workflow so compile actions can target a selected `.4dm` file while you are editing headers. Includes set/clear commands, context menu actions, and status bar integration.
+- **Unused Local Variable Detection**: Added diagnostics for local variables that are declared but never used.
+- **Dynamic Array Null Reminder** (#107): Added a reminder diagnostic for dynamic arrays to surface null-state checks and improve script robustness.
+- **Docs Website Search Relevance** (#126): Improved docs-site search with weighted token and phrase scoring for more accurate results.
+- **Dynamic Array Declaration Scope**: Fixed global declaration handling for dynamic arrays.
+- **Snippet Completion Duplicates**: Removed duplicate completion entries and kept a single maintainable snippet source.
+- **Stability and Usability Release**: focuses on safer validation, improved compile workflow in mixed `.4dm`/`.h` editing sessions, and cleaner completion/search behaviour.
 **12dPL Macro Assistant for AI Chat (MCP)**
 - Connects VS Code Chat agents to the 12dPL guides, reference documentation, built-in function lookup, and example macros
 - Provides offline macro validation, `cc4d.exe` compilation with parsed errors, and project scaffolding
 - Supports custom documentation and example folders through `12dpl.mcp.knowledgePaths`
 - Includes a command to copy the MCP server configuration for clients such as Claude Code and Claude Desktop
 - VS Code Chat integration requires VS Code 1.101 or later
+
+**Language Server Fixes**
+- Go-to-label now works for labels at the end of a block
+- Function declarations with the opening parenthesis on the next line are handled correctly
 
 
 
