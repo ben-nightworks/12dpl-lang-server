@@ -155,7 +155,7 @@ export function wrapTopLevelScriptsPreservingLines(documentText: string): string
 
 	const isIdentChar = (ch: string) => /[A-Za-z0-9_]/.test(ch);
 	const skipWhitespace = (i: number) => {
-		while (i < text.length && /[ \t\r\n]/.test(text[i])) i++;
+		while (i < text.length && /[ \t\r\n]/.test(text.charAt(i))) i++;
 		return i;
 	};
 
