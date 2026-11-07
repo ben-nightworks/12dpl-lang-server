@@ -49,21 +49,14 @@ This repository’s documentation is split into the following Markdown files:
 
 ---
 
-### What's New in v1.6.5
+### What's New in v1.7.0
 
-**Pinned Compile Target Workflow** ✨
-- You can now pin a `.4dm` file as the compile target while editing `.h` files
-- Added set/clear compile target commands, Explorer and editor context actions, and status bar support
-
-**Validation and Diagnostics Improvements** ✨
-- Added unused local variable detection
-- Added a dynamic array null-state reminder diagnostic
-- Fixed global declaration handling for dynamic arrays
-
-**Quality and Usability Fixes**
-- Removed duplicate autocompletion items by consolidating snippet completion sources
-- Improved docs website search relevance with weighted token and phrase scoring
-- Hardened dependencies and enabled stricter TypeScript checks
+**12dPL Macro Assistant for AI Chat (MCP)**
+- Connects VS Code Chat agents to the 12dPL guides, reference documentation, built-in function lookup, and example macros
+- Provides offline macro validation, `cc4d.exe` compilation with parsed errors, and project scaffolding
+- Supports custom documentation and example folders through `12dpl.mcp.knowledgePaths`
+- Includes a command to copy the MCP server configuration for clients such as Claude Code and Claude Desktop
+- VS Code Chat integration requires VS Code 1.101 or later
 
 
 

@@ -474,17 +474,20 @@ Release of [v1.3.0] to the VS Code Marketplace.
 
 ---
 
-## [Unreleased]
+## [v1.7.0] - (07/11/2026)
 
 ### New Features
-- **12dPL Macro Assistant (MCP server)**: The extension now registers an MCP server with VS Code chat (VS Code 1.101+). It gives agents:
-	- Macro-writing guides and the 12dPL reference docs, searchable by topic (`get_macro_guide`, `search_knowledge`, `read_knowledge`).
-	- Built-in function lookup with overloads and recorded gotchas (`lookup_function`, `search_functions`).
-	- Offline validation that runs the language server's checks plus rules for mistakes that compile but crash 12d Model (`validate_macro`).
-	- Compiling with `cc4d.exe` with parsed errors (`compile_macro`), and project scaffolding for headless, panel, Source_Box and tabbed macros (`scaffold_macro`).
-	- Example macro search over user folders (`find_examples`, `read_example`) and the `create_macro` / `review_macro` prompts.
-- **New settings**: `12dpl.mcp.enabled` and `12dpl.mcp.knowledgePaths`.
-- **New command**: `12dPL: Copy MCP Server Configuration` for MCP clients outside VS Code chat.
+- **12dPL Macro Assistant (MCP server)**: Integrated an MCP server with VS Code Chat (VS Code 1.101+), providing macro-writing guides and reference search, built-in function lookup, offline validation, `cc4d.exe` compilation with parsed errors, and scaffolding for headless, panel, Source_Box, and tabbed macros.
+- **Example discovery and chat prompts**: Added tools to search and read example macros, plus the `create_macro` and `review_macro` prompts.
+- **Custom knowledge sources**: Added `12dpl.mcp.knowledgePaths` so users can include their own documentation and example macros.
+- **MCP client configuration**: Added the `12dpl.mcp.enabled` setting and the `12dPL: Copy MCP Server Configuration` command for clients outside VS Code Chat.
+
+### Overview
+- **AI-assisted macro development**: v1.7.0 brings 12dPL documentation, examples, validation, compilation, and project scaffolding into AI chat workflows.
+
+---
+
+## [Unreleased]
 
 ---
 # Template
