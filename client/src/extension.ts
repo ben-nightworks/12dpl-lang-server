@@ -7,6 +7,7 @@ import * as path from 'path';
 import { ExtensionContext, workspace } from 'vscode';
 import { registerCompileFeatures } from './compileFeature';
 import { registerFormattingFeatures } from './formattingFeature';
+import { registerMcpFeatures } from './mcpFeature';
 
 import {
 	LanguageClient,
@@ -25,6 +26,9 @@ export function activate(context: ExtensionContext) {
 
 	// Register compile commands, status bar, and related UI
 	registerCompileFeatures(context);
+
+	// Register the macro assistant MCP server with VS Code chat
+	registerMcpFeatures(context);
 
 	// The server is implemented in node
 	const serverModule = context.asAbsolutePath(

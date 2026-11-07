@@ -12,7 +12,7 @@ import * as path from 'path';
 // @param options Configuration options for variable resolution* 
 // @returns The path with variables resolved*/
 
-	export function resolvePathVariables(pathStr: string, options?: { workspaceFolderPath?: string; fileFsPath?: string; cwd?: string; }): string {
+	export function resolvePathVariables(pathStr: string, options?: { workspaceFolderPath?: string | undefined; fileFsPath?: string | undefined; cwd?: string | undefined; }): string {
 		let result = pathStr; const { workspaceFolderPath, fileFsPath, cwd } = options ?? {};
 		// Resolve ${userHome}
 		const homeDir = process.env['HOME'] || process.env['USERPROFILE'];

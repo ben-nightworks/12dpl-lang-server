@@ -40,6 +40,7 @@ This repository’s documentation is split into the following Markdown files:
 - **Logical Condition Validation** - Warns on non-boolean loop/condition expressions
 - **Array Size Validation** - Flags unsized array declarations in function bodies
 - **Undeclared Symbol Detection** - Flags calls to functions not declared locally, in headers, or in built-in prototypes
+- **Macro Assistant (MCP)** - An MCP server for AI chat that looks up functions, checks and compiles macros, and scaffolds new macro projects (see [Macro Assistant for AI Chat](#macro-assistant-for-ai-chat-mcp))
 
 ### Coming Soon
 - Document Highlights: highlights all matching symbols in a text document
@@ -48,21 +49,25 @@ This repository’s documentation is split into the following Markdown files:
 
 ---
 
-### What's New in v1.6.5
+### What's New in v1.7.0
 
-**Pinned Compile Target Workflow** ✨
-- You can now pin a `.4dm` file as the compile target while editing `.h` files
-- Added set/clear compile target commands, Explorer and editor context actions, and status bar support
+- **Compile Target Pinning** (#93): Added a pinned compile target workflow so compile actions can target a selected `.4dm` file while you are editing headers. Includes set/clear commands, context menu actions, and status bar integration.
+- **Unused Local Variable Detection**: Added diagnostics for local variables that are declared but never used.
+- **Dynamic Array Null Reminder** (#107): Added a reminder diagnostic for dynamic arrays to surface null-state checks and improve script robustness.
+- **Docs Website Search Relevance** (#126): Improved docs-site search with weighted token and phrase scoring for more accurate results.
+- **Dynamic Array Declaration Scope**: Fixed global declaration handling for dynamic arrays.
+- **Snippet Completion Duplicates**: Removed duplicate completion entries and kept a single maintainable snippet source.
+- **Stability and Usability Release**: focuses on safer validation, improved compile workflow in mixed `.4dm`/`.h` editing sessions, and cleaner completion/search behaviour.
+**12dPL Macro Assistant for AI Chat (MCP)**
+- Connects VS Code Chat agents to the 12dPL guides, reference documentation, built-in function lookup, and example macros
+- Provides offline macro validation, `cc4d.exe` compilation with parsed errors, and project scaffolding
+- Supports custom documentation and example folders through `12dpl.mcp.knowledgePaths`
+- Includes a command to copy the MCP server configuration for clients such as Claude Code and Claude Desktop
+- VS Code Chat integration requires VS Code 1.101 or later
 
-**Validation and Diagnostics Improvements** ✨
-- Added unused local variable detection
-- Added a dynamic array null-state reminder diagnostic
-- Fixed global declaration handling for dynamic arrays
-
-**Quality and Usability Fixes**
-- Removed duplicate autocompletion items by consolidating snippet completion sources
-- Improved docs website search relevance with weighted token and phrase scoring
-- Hardened dependencies and enabled stricter TypeScript checks
+**Language Server Fixes**
+- Go-to-label now works for labels at the end of a block
+- Function declarations with the opening parenthesis on the next line are handled correctly
 
 
 
@@ -133,6 +138,27 @@ When working in header files you can pin a `.4dm` file as the compile target, so
 
 To go back to compiling the active file, run **“12dPL: Clear Compile Target”** (also in the right-click menu while a target is set). The target is remembered per workspace.
 
+### Macro Assistant for AI Chat (MCP)
+
+The extension includes the **12dPL Macro Assistant**, an MCP server that gives AI agents in chat (such as GitHub Copilot in agent mode) what they need to write 12dPL macros that compile and run. It needs VS Code 1.101 or later, which starts it from the extension with no extra setup.
+
+| Tool | What it does |
+|------|--------------|
+| `get_macro_guide` | Rules and patterns by topic: essentials, workflow, panels, attributes, elements, signatures, conventions, compiler, files |
+| `lookup_function` | Signatures and overloads of built-in functions, with the gotchas recorded for them |
+| `search_functions` | Finds built-in functions by name fragment or purpose |
+| `search_knowledge`, `read_knowledge` | Search and read the macro guides and the 12dPL reference docs |
+| `find_examples`, `read_example` | Search the example macros in your knowledge folders |
+| `validate_macro` | The language server's checks, plus mistakes that compile cleanly but crash 12d Model (`&&` guards that do not short-circuit, inline ternaries in `+`, held element handles, and more) |
+| `compile_macro` | Compiles with `cc4d.exe` and returns the parsed errors |
+| `scaffold_macro` | Creates a compilable macro project: headless, panel, Source_Box panel or tabbed panel |
+
+It also provides the `create_macro` and `review_macro` prompts, and serves each guide and doc as an MCP resource.
+
+**Add your own knowledge:** list folders in `12dpl.mcp.knowledgePaths`, for example a macro workspace with a `docs/` folder and example macros. Markdown files become searchable docs, `.4dm`/`.h` files become examples, and a root `CLAUDE.md` or `docs/*.md` replaces the bundled copy.
+
+**Other MCP clients (Claude Code, Claude Desktop):** run **“12dPL: Copy MCP Server Configuration”** and paste the result into the client's MCP configuration. The path includes the extension version, so copy it again after the extension updates.
+
 ---
 
 ## 🔧 Configuration
@@ -150,6 +176,10 @@ There are a few available settings that are defined for the language server that
 	- Auto-format 12dPL files when they are saved.
 - 12dpl.indentSize 
 	- Indent size (spaces) used by the 12dPL formatter.
+- 12dpl.mcp.enabled 
+	- Offer the 12dPL Macro Assistant MCP server to chat in VS Code. It uses the `12dpl.compiler.*` settings when compiling.
+- 12dpl.mcp.knowledgePaths 
+	- Extra folders for the Macro Assistant to learn from (docs and example macros). Supports `${workspaceFolder}` and `${userHome}`.
 - langServer.maxNumberOfProblems 
 	- Controls the maximum number of problems produced by the server.
 - langServer.trace.server 
