@@ -326,6 +326,20 @@ describe("functions.enriched.json validation against functions.compiler.json", (
 		expect(merged).toEqual([]);
 	});
 
+	test("enriched descriptions do not contain PDF manual headers", () => {
+		const headerPattern = /12dPL\s+Library\s+Calls|12d\s+Model\s+Macro\s+Manual/i;
+		const headers: string[] = [];
+
+		for (const fn of enrichedFunctions) {
+			const match = fn.description.match(headerPattern);
+			if (match) {
+				headers.push(`${fn.name}: "${match[0]}"`);
+			}
+		}
+
+		expect(headers).toEqual([]);
+	});
+
 	test("summary statistics", () => {
 		const matchResults = {
 			"name+params": 0,
